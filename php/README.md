@@ -17,7 +17,7 @@ incompatible with xdebug. To try and get the least-bad thing in each situation:
 
 For running in practice:
 ```
-php8.1 -dopcache.enable_cli=1 -dopcache.jit_buffer_size=100M src/main.php --args
+php8.2 -dopcache.enable_cli=1 -dopcache.jit_buffer_size=100M src/main.php --args
 ```
 
 VS Code debug configuration:

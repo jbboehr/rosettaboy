@@ -29,7 +29,6 @@ class Stat
     public static int $DRAWING = 0x03;
 }
 
-
 class GPU
 {
     private int $cycle;
@@ -42,6 +41,9 @@ class GPU
     private $hw_renderer;
     private $hw_window;
     private array $colors;
+    private array $bgp;
+    private array $obp0;
+    private array $obp1;
 
     public function __construct(CPU $cpu, bool $debug, bool $headless)
     {
