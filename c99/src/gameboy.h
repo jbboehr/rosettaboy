@@ -19,7 +19,7 @@ private:
     Clock *clock = nullptr;
 
 public:
-    GameBoy(Args *args);
+    GameBoy(struct Args *args);
     void run();
     void tick();
 };

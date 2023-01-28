@@ -1,6 +1,6 @@
 #include "gameboy.h"
 
-GameBoy::GameBoy(Args *args) {
+GameBoy::GameBoy(struct Args *args) {
     this->cart = new Cart(args->rom);
     this->ram = new RAM(this->cart, args->debug_ram);
     this->cpu = new CPU(this->ram, args->debug_cpu);

@@ -153,29 +153,29 @@ src/apu.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/apu.cpp.s
 .PHONY : src/apu.cpp.s
 
-src/args.o: src/args.cpp.o
+src/args.o: src/args.c.o
 .PHONY : src/args.o
 
 # target to build an object file
-src/args.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/args.cpp.o
-.PHONY : src/args.cpp.o
+src/args.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/args.c.o
+.PHONY : src/args.c.o
 
-src/args.i: src/args.cpp.i
+src/args.i: src/args.c.i
 .PHONY : src/args.i
 
 # target to preprocess a source file
-src/args.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/args.cpp.i
-.PHONY : src/args.cpp.i
+src/args.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/args.c.i
+.PHONY : src/args.c.i
 
-src/args.s: src/args.cpp.s
+src/args.s: src/args.c.s
 .PHONY : src/args.s
 
 # target to generate assembly for a file
-src/args.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/args.cpp.s
-.PHONY : src/args.cpp.s
+src/args.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/args.c.s
+.PHONY : src/args.c.s
 
 src/buttons.o: src/buttons.cpp.o
 .PHONY : src/buttons.o

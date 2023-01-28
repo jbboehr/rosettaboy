@@ -1,12 +1,13 @@
 #ifndef ROSETTABOY_ARGS_H
 #define ROSETTABOY_ARGS_H
 
-#include "_args.h"
+#include <stdbool.h>
+#include "common.h"
 
-class Args {
-public:
-    Args(int argc, char *argv[]);
-    int exit_code = -1;
+BEGIN_EXTERN_C()
+
+struct Args {
+    int exit_code;
     bool headless;
     bool silent;
     bool debug_cpu;
@@ -16,7 +17,11 @@ public:
     int frames;
     int profile;
     bool turbo;
-    std::string rom;
+    const char *rom;
 };
+
+struct Args parse_args(int argc, char *argv[]);
+
+END_EXTERN_C()
 
 #endif // ROSETTABOY_ARGS_H

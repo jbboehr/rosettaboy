@@ -67,8 +67,8 @@ public:
 class UserException : public EmuException {};
 class RomMissing : public UserException {
 public:
-    RomMissing(std::string filename, int err) {
-        this->set_msg("Error opening %s: %s", filename.c_str(), strerror(err));
+    RomMissing(const char *filename, int err) {
+        this->set_msg("Error opening %s: %s", filename, strerror(err));
     }
 };
 class LogoChecksumFailed : public UserException {

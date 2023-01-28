@@ -4,13 +4,14 @@
 #include <iostream>
 
 int main(int argc, char *argv[]) {
-    Args *args = new Args(argc, argv);
-    if(args->exit_code >= 0) {
-        return args->exit_code;
+    struct Args args = parse_args(argc, argv);
+
+    if (args.exit_code > 0) {
+        return args.exit_code;
     }
 
     try {
-        GameBoy *gameboy = new GameBoy(args);
+        GameBoy *gameboy = new GameBoy(&args);
         gameboy->run();
     } catch(UnitTestFailed *e) {
         std::cout << e->what() << std::endl;

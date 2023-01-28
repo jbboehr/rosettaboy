@@ -53,7 +53,7 @@ public:
     u8 complement_check;
     u16 checksum;
 
-    Cart(std::string filename);
+    Cart(const char *filename);
 
 private:
     bool debug = false;
