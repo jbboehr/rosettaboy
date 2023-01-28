@@ -26,8 +26,8 @@ void CPU::dump_regs() {
     u16 sp_val = this->ram->get(this->SP) | this->ram->get(this->SP + 1) << 8;
 
     // interrupts
-    u8 IE = this->ram->get(Mem::IE);
-    u8 IF = this->ram->get(Mem::IF);
+    u8 IE = this->ram->get(MEM_IE);
+    u8 IF = this->ram->get(MEM_IF);
     char z = 'z' ^ ((this->F >> 7) & 1) << 5;
     char n = 'n' ^ ((this->F >> 6) & 1) << 5;
     char h = 'h' ^ ((this->F >> 5) & 1) << 5;
@@ -70,8 +70,8 @@ void CPU::dump_regs() {
  * handler for this interrupt is enabled (and interrupts in general
  * are enabled), then the interrupt handler will be called.
  */
-void CPU::interrupt(Interrupt::Interrupt i) {
-    this->ram->set(Mem::IF, this->ram->get(Mem::IF) | i);
+void CPU::interrupt(Interrupt i) {
+    this->ram->set(MEM_IF, this->ram->get(MEM_IF) | i);
     this->halt = false; // interrupts interrupt HALT state
 }
 
@@ -85,17 +85,17 @@ void CPU::tick() {
 }
 
 /**
- * If there is a non-zero value in ram[Mem::DMA], eg 0x42, then
+ * If there is a non-zero value in ram[MEM_DMA], eg 0x42, then
  * we should copy memory from eg 0x4200 to OAM space.
  */
 void CPU::tick_dma() {
     // TODO: DMA should take 26 cycles, during which main RAM is inaccessible
-    if(this->ram->get(Mem::DMA)) {
-        u16 dma_src = this->ram->get(Mem::DMA) << 8;
+    if(this->ram->get(MEM_DMA)) {
+        u16 dma_src = this->ram->get(MEM_DMA) << 8;
         for(int i = 0; i < 0xA0; i++) {
-            this->ram->set(Mem::OAM_BASE + i, this->ram->get(dma_src + i));
+            this->ram->set(MEM_OAM_BASE + i, this->ram->get(dma_src + i));
         }
-        this->ram->set(Mem::DMA, 0x00);
+        this->ram->set(MEM_DMA, 0x00);
     }
 }
 
@@ -106,19 +106,19 @@ void CPU::tick_dma() {
 void CPU::tick_clock() {
     cycle++;
 
-    // TODO: writing any value to Mem::DIV should reset it to 0x00
+    // TODO: writing any value to MEM_DIV should reset it to 0x00
     // increment at 16384Hz (each 64 cycles?)
-    if(cycle % 64 == 0) this->ram->set(Mem::DIV, this->ram->get(Mem::DIV) + 1);
+    if(cycle % 64 == 0) this->ram->set(MEM_DIV, this->ram->get(MEM_DIV) + 1);
 
-    if(this->ram->get(Mem::TAC) & (1 << 2)) { // timer enable
+    if(this->ram->get(MEM_TAC) & (1 << 2)) { // timer enable
         u16 speeds[] = {256, 4, 16, 64};      // increment per X cycles
-        u16 speed = speeds[this->ram->get(Mem::TAC) & 0x03];
+        u16 speed = speeds[this->ram->get(MEM_TAC) & 0x03];
         if(cycle % speed == 0) {
-            if(this->ram->get(Mem::TIMA) == 0xFF) {
-                this->ram->set(Mem::TIMA, this->ram->get(Mem::TMA)); // if timer overflows, load base
+            if(this->ram->get(MEM_TIMA) == 0xFF) {
+                this->ram->set(MEM_TIMA, this->ram->get(MEM_TMA)); // if timer overflows, load base
                 this->interrupt(Interrupt::TIMER);
             }
-            this->ram->set(Mem::TIMA, this->ram->get(Mem::TIMA) + 1);
+            this->ram->set(MEM_TIMA, this->ram->get(MEM_TIMA) + 1);
         }
     }
 }
@@ -130,7 +130,7 @@ bool CPU::check_interrupt(u8 queue, u8 i, u16 handler) {
         // TODO: one more cycle to store new PC
         this->push(this->PC);
         this->PC = handler;
-        this->ram->set(Mem::IF, this->ram->get(Mem::IF) & ~i);
+        this->ram->set(MEM_IF, this->ram->get(MEM_IF) & ~i);
         return true;
     }
     return false;
@@ -142,15 +142,15 @@ bool CPU::check_interrupt(u8 queue, u8 i, u16 handler) {
  * clear the flag and call the handler for the first of them.
  */
 void CPU::tick_interrupts() {
-    u8 queue = this->ram->get(Mem::IE) & this->ram->get(Mem::IF);
+    u8 queue = this->ram->get(MEM_IE) & this->ram->get(MEM_IF);
     if(this->interrupts && queue) {
-        if(debug) printf("Handling interrupts: %02X & %02X\n", this->ram->get(Mem::IE), this->ram->get(Mem::IF));
+        if(debug) printf("Handling interrupts: %02X & %02X\n", this->ram->get(MEM_IE), this->ram->get(MEM_IF));
         this->interrupts = false; // no nested interrupts, RETI will re-enable
-        this->check_interrupt(queue, Interrupt::VBLANK, Mem::VBLANK_HANDLER) ||
-            this->check_interrupt(queue, Interrupt::STAT, Mem::LCD_HANDLER) ||
-            this->check_interrupt(queue, Interrupt::TIMER, Mem::TIMER_HANDLER) ||
-            this->check_interrupt(queue, Interrupt::SERIAL, Mem::SERIAL_HANDLER) ||
-            this->check_interrupt(queue, Interrupt::JOYPAD, Mem::JOYPAD_HANDLER);
+        this->check_interrupt(queue, Interrupt::VBLANK, MEM_VBLANK_HANDLER) ||
+            this->check_interrupt(queue, Interrupt::STAT, MEM_LCD_HANDLER) ||
+            this->check_interrupt(queue, Interrupt::TIMER, MEM_TIMER_HANDLER) ||
+            this->check_interrupt(queue, Interrupt::SERIAL, MEM_SERIAL_HANDLER) ||
+            this->check_interrupt(queue, Interrupt::JOYPAD, MEM_JOYPAD_HANDLER);
     }
 }
 

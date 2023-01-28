@@ -209,7 +209,7 @@ public:
 public:
     CPU(RAM *ram, bool debug);
     void tick();
-    void interrupt(Interrupt::Interrupt i);
+    void interrupt(Interrupt i);
     void dump_regs();
 
 private:

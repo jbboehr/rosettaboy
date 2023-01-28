@@ -66,7 +66,7 @@ u16 APU::get_next_sample() {
     //=================================================================
     // Control
 
-    ch_control_t *ch_control = (ch_control_t *)&this->cpu->ram->data[Mem::NR50];
+    ch_control_t *ch_control = (ch_control_t *)&this->cpu->ram->data[MEM_NR50];
 
     if(!ch_control->snd_enable) {
         // TODO: wipe all registers
@@ -74,10 +74,10 @@ u16 APU::get_next_sample() {
     }
 
     u8 *ram = this->cpu->ram->data;
-    u8 ch1 = this->get_ch1_sample(ch_control, (ch1_dat_t *)&ram[Mem::NR10]);
-    u8 ch2 = this->get_ch2_sample(ch_control, (ch2_dat_t *)&ram[Mem::NR20]);
-    u8 ch3 = this->get_ch3_sample(ch_control, (ch3_dat_t *)&ram[Mem::NR30]);
-    u8 ch4 = this->get_ch4_sample(ch_control, (ch4_dat_t *)&ram[Mem::NR40]);
+    u8 ch1 = this->get_ch1_sample(ch_control, (ch1_dat_t *)&ram[MEM_NR10]);
+    u8 ch2 = this->get_ch2_sample(ch_control, (ch2_dat_t *)&ram[MEM_NR20]);
+    u8 ch3 = this->get_ch3_sample(ch_control, (ch3_dat_t *)&ram[MEM_NR30]);
+    u8 ch4 = this->get_ch4_sample(ch_control, (ch4_dat_t *)&ram[MEM_NR40]);
 
     //=================================================================
     // Mixer

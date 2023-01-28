@@ -19,7 +19,7 @@ void Buttons::tick() {
 }
 
 void Buttons::update_buttons() {
-    u8 JOYP = ~this->cpu->ram->get(Mem::JOYP);
+    u8 JOYP = ~this->cpu->ram->get(MEM_JOYP);
     JOYP &= 0x30;
     if(JOYP & Joypad::MODE_DPAD) {
         if(this->up) JOYP |= Joypad::UP;
@@ -33,7 +33,7 @@ void Buttons::update_buttons() {
         if(this->start) JOYP |= Joypad::START;
         if(this->select) JOYP |= Joypad::SELECT;
     }
-    this->cpu->ram->set(Mem::JOYP, ~JOYP & 0x3F);
+    this->cpu->ram->set(MEM_JOYP, ~JOYP & 0x3F);
 }
 
 bool Buttons::handle_inputs() {
