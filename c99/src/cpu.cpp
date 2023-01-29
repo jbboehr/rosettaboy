@@ -677,6 +677,19 @@ static inline void cpu_tick_instructions(CPU *self) {
     }
 }
 
+static inline bool cpu_check_interrupt(CPU *self, u8 queue, u8 i, u16 handler) {
+    if(queue & i) {
+        // TODO: wait two cycles
+        // TODO: push16(PC) should also take two cycles
+        // TODO: one more cycle to store new PC
+        cpu_push(self, self->PC);
+        self->PC = handler;
+        ram_set(self->ram, MEM_IF, ram_get(self->ram, MEM_IF) & ~i);
+        return true;
+    }
+    return false;
+}
+
 /**
  * Compare Interrupt Enabled and Interrupt Flag registers - if
  * there are any interrupts which are both enabled and flagged,
@@ -689,11 +702,11 @@ static inline void cpu_tick_interrupts(CPU *self) {
             printf("Handling interrupts: %02X & %02X\n", ram_get(self->ram, MEM_IE), ram_get(self->ram, MEM_IF));
         }
         self->interrupts = false; // no nested interrupts, RETI will re-enable
-        self->check_interrupt(queue, INTERRUPT_VBLANK, MEM_VBLANK_HANDLER) ||
-        self->check_interrupt(queue, INTERRUPT_STAT, MEM_LCD_HANDLER) ||
-        self->check_interrupt(queue, INTERRUPT_TIMER, MEM_TIMER_HANDLER) ||
-        self->check_interrupt(queue, INTERRUPT_SERIAL, MEM_SERIAL_HANDLER) ||
-        self->check_interrupt(queue, INTERRUPT_JOYPAD, MEM_JOYPAD_HANDLER);
+        cpu_check_interrupt(self, queue, INTERRUPT_VBLANK, MEM_VBLANK_HANDLER) ||
+                cpu_check_interrupt(self, queue, INTERRUPT_STAT, MEM_LCD_HANDLER) ||
+                cpu_check_interrupt(self, queue, INTERRUPT_TIMER, MEM_TIMER_HANDLER) ||
+                cpu_check_interrupt(self, queue, INTERRUPT_SERIAL, MEM_SERIAL_HANDLER) ||
+                cpu_check_interrupt(self, queue, INTERRUPT_JOYPAD, MEM_JOYPAD_HANDLER);
     }
 }
 
@@ -826,18 +839,5 @@ void CPU::tick_clock() {
             ram_set(this->ram, MEM_TIMA, ram_get(this->ram, MEM_TIMA) + 1);
         }
     }
-}
-
-bool CPU::check_interrupt(u8 queue, u8 i, u16 handler) {
-    if(queue & i) {
-        // TODO: wait two cycles
-        // TODO: push16(PC) should also take two cycles
-        // TODO: one more cycle to store new PC
-        cpu_push(this, this->PC);
-        this->PC = handler;
-        ram_set(this->ram, MEM_IF, ram_get(this->ram, MEM_IF) & ~i);
-        return true;
-    }
-    return false;
 }
 

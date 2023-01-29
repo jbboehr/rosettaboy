@@ -69,7 +69,6 @@ public:
 
     void tick_dma();
     void tick_clock();
-    bool check_interrupt(u8 queue, u8 i, u16 handler);
 };
 
 BEGIN_EXTERN_C()
