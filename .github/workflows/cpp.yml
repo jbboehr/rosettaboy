@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - 'cpp/**'
     paths:
     - 'cpp/**'
     - '.github/workflows/cpp.yml'
@@ -24,3 +25,4 @@ jobs:
       cache-paths: |
         cpp/build
       cache-key: build
+      nix-flake: true
