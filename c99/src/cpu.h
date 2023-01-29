@@ -79,15 +79,6 @@ private:
     void tick_instructions();
     void tick_main(u8 op, oparg arg);
     void tick_cb(u8 op);
-
-    void _xor(u8 val);
-    void _or(u8 val);
-    void _and(u8 val);
-    void _cp(u8 val);
-    void _add(u8 val);
-    void _adc(u8 val);
-    void _sub(u8 val);
-    void _sbc(u8 val);
 };
 
 BEGIN_EXTERN_C()

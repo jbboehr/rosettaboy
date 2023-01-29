@@ -188,6 +188,75 @@ static inline u16 cpu_pop(CPU *self) {
     return val;
 }
 
+static inline void cpu_xor(CPU *self, u8 val) {
+    self->A ^= val;
+
+    self->FLAG_Z = self->A == 0;
+    self->FLAG_N = false;
+    self->FLAG_H = false;
+    self->FLAG_C = false;
+}
+
+static inline void cpu_or(CPU *self, u8 val) {
+    self->A |= val;
+
+    self->FLAG_Z = self->A == 0;
+    self->FLAG_N = false;
+    self->FLAG_H = false;
+    self->FLAG_C = false;
+}
+
+static inline void cpu_and(CPU *self, u8 val) {
+    self->A &= val;
+
+    self->FLAG_Z = self->A == 0;
+    self->FLAG_N = false;
+    self->FLAG_H = true;
+    self->FLAG_C = false;
+}
+
+static inline void cpu_cp(CPU *self, u8 val) {
+    self->FLAG_Z = self->A == val;
+    self->FLAG_N = true;
+    self->FLAG_H = (self->A & 0x0F) < (val & 0x0F);
+    self->FLAG_C = self->A < val;
+}
+
+static inline void cpu_add(CPU *self, u8 val) {
+    self->FLAG_C = self->A + val > 0xFF;
+    self->FLAG_H = (self->A & 0x0F) + (val & 0x0F) > 0x0F;
+    self->FLAG_N = false;
+    self->A += val;
+    self->FLAG_Z = self->A == 0;
+}
+
+static inline void cpu_adc(CPU *self, u8 val) {
+    int carry = self->FLAG_C ? 1 : 0;
+    self->FLAG_C = self->A + val + carry > 0xFF;
+    self->FLAG_H = (self->A & 0x0F) + (val & 0x0F) + carry > 0x0F;
+    self->FLAG_N = false;
+    self->A += val + carry;
+    self->FLAG_Z = self->A == 0;
+}
+
+static inline void cpu_sub(CPU *self, u8 val) {
+    self->FLAG_C = self->A < val;
+    self->FLAG_H = (self->A & 0x0F) < (val & 0x0F);
+    self->A -= val;
+    self->FLAG_Z = self->A == 0;
+    self->FLAG_N = true;
+}
+
+static inline void cpu_sbc(CPU *self, u8 val) {
+    u8 carry = self->FLAG_C ? 1 : 0;
+    u8 res = self->A - val - carry;
+    self->FLAG_H = ((self->A ^ val ^ (res & 0xff)) & (1 << 4)) != 0;
+    self->FLAG_C = res < 0;
+    self->A -= val + carry;
+    self->FLAG_Z = self->A == 0;
+    self->FLAG_N = true;
+}
+
 /**
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
@@ -540,14 +609,14 @@ void CPU::tick_main(u8 op, oparg arg) {
             cpu_set_reg(this, (op - 0x40)>>3, cpu_get_reg(this, op - 0x40));
             break;
 
-        case 0x80 ... 0x87: this->_add(cpu_get_reg(this, op)); break;
-        case 0x88 ... 0x8F: this->_adc(cpu_get_reg(this, op)); break;
-        case 0x90 ... 0x97: this->_sub(cpu_get_reg(this, op)); break;
-        case 0x98 ... 0x9F: this->_sbc(cpu_get_reg(this, op)); break;
-        case 0xA0 ... 0xA7: this->_and(cpu_get_reg(this, op)); break;
-        case 0xA8 ... 0xAF: this->_xor(cpu_get_reg(this, op)); break;
-        case 0xB0 ... 0xB7: this->_or(cpu_get_reg(this, op)); break;
-        case 0xB8 ... 0xBF: this->_cp(cpu_get_reg(this, op)); break;
+        case 0x80 ... 0x87: cpu_add(this, cpu_get_reg(this, op)); break;
+        case 0x88 ... 0x8F: cpu_adc(this, cpu_get_reg(this, op)); break;
+        case 0x90 ... 0x97: cpu_sub(this, cpu_get_reg(this, op)); break;
+        case 0x98 ... 0x9F: cpu_sbc(this, cpu_get_reg(this, op)); break;
+        case 0xA0 ... 0xA7: cpu_and(this, cpu_get_reg(this, op)); break;
+        case 0xA8 ... 0xAF: cpu_xor(this, cpu_get_reg(this, op)); break;
+        case 0xB0 ... 0xB7: cpu_or(this, cpu_get_reg(this, op)); break;
+        case 0xB8 ... 0xBF: cpu_cp(this, cpu_get_reg(this, op)); break;
         
         case 0xC0: if(!this->FLAG_Z) this->PC = cpu_pop(this); break;
         case 0xC1: this->BC = cpu_pop(this); break;
@@ -555,7 +624,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0xC3: this->PC = arg.as_u16; break;
         case 0xC4: if(!this->FLAG_Z) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
         case 0xC5: cpu_push(this, this->BC); break;
-        case 0xC6: this->_add(arg.as_u8); break;
+        case 0xC6: cpu_add(this, arg.as_u8); break;
         case 0xC7: cpu_push(this, this->PC); this->PC = 0x00; break;
         case 0xC8: if(this->FLAG_Z) this->PC = cpu_pop(this); break;
         case 0xC9: this->PC = cpu_pop(this); break;
@@ -563,7 +632,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         // case 0xCB: break;
         case 0xCC: if(this->FLAG_Z) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
         case 0xCD: cpu_push(this, this->PC); this->PC = arg.as_u16; break;
-        case 0xCE: this->_adc(arg.as_u8); break;
+        case 0xCE: cpu_adc(this, arg.as_u8); break;
         case 0xCF: cpu_push(this, this->PC); this->PC = 0x08; break;
 
         case 0xD0: if(!this->FLAG_C) this->PC = cpu_pop(this); break;
@@ -572,7 +641,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         // case 0xD3: break;
         case 0xD4: if(!this->FLAG_C) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
         case 0xD5: cpu_push(this, this->DE); break;
-        case 0xD6: this->_sub(arg.as_u8); break;
+        case 0xD6: cpu_sub(this, arg.as_u8); break;
         case 0xD7: cpu_push(this, this->PC); this->PC = 0x10; break;
         case 0xD8: if(this->FLAG_C) this->PC = cpu_pop(this); break;
         case 0xD9: this->PC = cpu_pop(this); this->interrupts = true; break;
@@ -580,7 +649,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         // case 0xDB: break;
         case 0xDC: if(this->FLAG_C) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
         // case 0xDD: break;
-        case 0xDE: this->_sbc(arg.as_u8); break;
+        case 0xDE: cpu_sbc(this, arg.as_u8); break;
         case 0xDF: cpu_push(this, this->PC); this->PC = 0x18; break;
 
         case 0xE0: ram_set(this->ram, 0xFF00 + arg.as_u8, this->A); if(arg.as_u8 == 0x01) {putchar(this->A);}; break;
@@ -589,7 +658,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         // case 0xE3: break;
         // case 0xE4: break;
         case 0xE5: cpu_push(this, this->HL); break;
-        case 0xE6: this->_and(arg.as_u8); break;
+        case 0xE6: cpu_and(this, arg.as_u8); break;
         case 0xE7: cpu_push(this, this->PC); this->PC = 0x20; break;
         case 0xE8:
             val16 = this->SP + arg.as_i8;
@@ -606,7 +675,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         // case 0xEB: break;
         // case 0xEC: break;
         // case 0xED: break;
-        case 0xEE: this->_xor(arg.as_u8); break;
+        case 0xEE: cpu_xor(this, arg.as_u8); break;
         case 0xEF: cpu_push(this, this->PC); this->PC = 0x28; break;
 
         case 0xF0: this->A = ram_get(this->ram, 0xFF00 + arg.as_u8); break;
@@ -615,7 +684,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0xF3: this->interrupts = false; break;
         // case 0xF4: break;
         case 0xF5: cpu_push(this, this->AF); break;
-        case 0xF6: this->_or(arg.as_u8); break;
+        case 0xF6: cpu_or(this, arg.as_u8); break;
         case 0xF7: cpu_push(this, this->PC); this->PC = 0x30; break;
         case 0xF8:
             if(arg.as_i8 >= 0) {
@@ -636,7 +705,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0xFB: this->interrupts = true; break;
         case 0xFC: throw new UnitTestPassed(); // unofficial
         case 0xFD: throw new UnitTestFailed(); // unofficial
-        case 0xFE: this->_cp(arg.as_u8); break;
+        case 0xFE: cpu_cp(this, arg.as_u8); break;
         case 0xFF: cpu_push(this, this->PC); this->PC = 0x38; break;
 
         // missing ops
@@ -766,74 +835,5 @@ void CPU::tick_cb(u8 op) {
         default: printf("Op CB %02X not implemented\n", op); throw std::invalid_argument("Op not implemented");
     }
     cpu_set_reg(this, op, val);
-}
-
-void CPU::_xor(u8 val) {
-    this->A ^= val;
-
-    this->FLAG_Z = this->A == 0;
-    this->FLAG_N = false;
-    this->FLAG_H = false;
-    this->FLAG_C = false;
-}
-
-void CPU::_or(u8 val) {
-    this->A |= val;
-
-    this->FLAG_Z = this->A == 0;
-    this->FLAG_N = false;
-    this->FLAG_H = false;
-    this->FLAG_C = false;
-}
-
-void CPU::_and(u8 val) {
-    this->A &= val;
-
-    this->FLAG_Z = this->A == 0;
-    this->FLAG_N = false;
-    this->FLAG_H = true;
-    this->FLAG_C = false;
-}
-
-void CPU::_cp(u8 val) {
-    this->FLAG_Z = this->A == val;
-    this->FLAG_N = true;
-    this->FLAG_H = (this->A & 0x0F) < (val & 0x0F);
-    this->FLAG_C = this->A < val;
-}
-
-void CPU::_add(u8 val) {
-    this->FLAG_C = this->A + val > 0xFF;
-    this->FLAG_H = (this->A & 0x0F) + (val & 0x0F) > 0x0F;
-    this->FLAG_N = false;
-    this->A += val;
-    this->FLAG_Z = this->A == 0;
-}
-
-void CPU::_adc(u8 val) {
-    int carry = this->FLAG_C ? 1 : 0;
-    this->FLAG_C = this->A + val + carry > 0xFF;
-    this->FLAG_H = (this->A & 0x0F) + (val & 0x0F) + carry > 0x0F;
-    this->FLAG_N = false;
-    this->A += val + carry;
-    this->FLAG_Z = this->A == 0;
-}
-
-void CPU::_sub(u8 val) {
-    this->FLAG_C = this->A < val;
-    this->FLAG_H = (this->A & 0x0F) < (val & 0x0F);
-    this->A -= val;
-    this->FLAG_Z = this->A == 0;
-    this->FLAG_N = true;
-}
-
-void CPU::_sbc(u8 val) {
-    int carry = this->FLAG_C ? 1 : 0;
-    auto res = this->A - val - carry;
-    this->FLAG_H = ((this->A ^ val ^ (res & 0xff)) & (1 << 4)) != 0;
-    this->FLAG_C = res < 0;
-    this->A -= val + carry;
-    this->FLAG_Z = this->A == 0;
-    this->FLAG_N = true;
 }
 
