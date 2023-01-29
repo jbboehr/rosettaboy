@@ -232,9 +232,6 @@ private:
 
     void push(u16 val);
     u16 pop();
-
-    u8 get_reg(u8 n);
-    void set_reg(u8 n, u8 val);
 };
 
 BEGIN_EXTERN_C()

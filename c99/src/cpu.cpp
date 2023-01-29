@@ -5,6 +5,34 @@
 #include "cpu.h"
 #include "errors.h"
 
+static inline void cpu_set_reg(CPU *self, u8 n, u8 val) {
+    switch(n & 0x07) {
+        case 0: self->B = val; break;
+        case 1: self->C = val; break;
+        case 2: self->D = val; break;
+        case 3: self->E = val; break;
+        case 4: self->H = val; break;
+        case 5: self->L = val; break;
+        case 6: ram_set(self->ram, self->HL, val); break;
+        case 7: self->A = val; break;
+        default: printf("Invalid register %d\n", n);
+    }
+}
+
+static inline u8 cpu_get_reg(CPU *self, u8 n) {
+    switch(n & 0x07) {
+        case 0: return self->B; break;
+        case 1: return self->C; break;
+        case 2: return self->D; break;
+        case 3: return self->E; break;
+        case 4: return self->H; break;
+        case 5: return self->L; break;
+        case 6: return ram_get(self->ram, self->HL); break;
+        case 7: return self->A; break;
+        default: printf("Invalid register %d\n", n); return 0;
+    }
+}
+
 /**
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
@@ -281,31 +309,31 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0x14: case 0x1C:
         case 0x24: case 0x2C:
         case 0x34: case 0x3C:
-            val = this->get_reg((op-0x04)/8);
+            val = cpu_get_reg(this, (op-0x04)/8);
             this->FLAG_H = (val & 0x0F) == 0x0F;
             val++;
             this->FLAG_Z = val == 0;
             this->FLAG_N = false;
-            this->set_reg((op-0x04)/8, val);
+            cpu_set_reg(this, (op-0x04)/8, val);
             break;
 
         case 0x05: case 0x0D: // DEC r
         case 0x15: case 0x1D:
         case 0x25: case 0x2D:
         case 0x35: case 0x3D:
-            val = this->get_reg((op-0x05)/8);
+            val = cpu_get_reg(this, (op-0x05)/8);
             val--;
             this->FLAG_H = (val & 0x0F) == 0x0F;
             this->FLAG_Z = val == 0;
             this->FLAG_N = true;
-            this->set_reg((op-0x05)/8, val);
+            cpu_set_reg(this, (op-0x05)/8, val);
             break;
 
         case 0x06: case 0x0E: // LD r,n
         case 0x16: case 0x1E:
         case 0x26: case 0x2E:
         case 0x36: case 0x3E:
-            this->set_reg((op-0x06)/8, arg.as_u8);
+            cpu_set_reg(this, (op-0x06)/8, arg.as_u8);
             break;
 
         case 0x07: // RCLA
@@ -354,17 +382,17 @@ void CPU::tick_main(u8 op, oparg arg) {
                 this->halt = true;
                 break;
             }
-            this->set_reg((op - 0x40)>>3, this->get_reg(op - 0x40));
+            cpu_set_reg(this, (op - 0x40)>>3, cpu_get_reg(this, op - 0x40));
             break;
 
-        case 0x80 ... 0x87: this->_add(this->get_reg(op)); break;
-        case 0x88 ... 0x8F: this->_adc(this->get_reg(op)); break;
-        case 0x90 ... 0x97: this->_sub(this->get_reg(op)); break;
-        case 0x98 ... 0x9F: this->_sbc(this->get_reg(op)); break;
-        case 0xA0 ... 0xA7: this->_and(this->get_reg(op)); break;
-        case 0xA8 ... 0xAF: this->_xor(this->get_reg(op)); break;
-        case 0xB0 ... 0xB7: this->_or(this->get_reg(op)); break;
-        case 0xB8 ... 0xBF: this->_cp(this->get_reg(op)); break;
+        case 0x80 ... 0x87: this->_add(cpu_get_reg(this, op)); break;
+        case 0x88 ... 0x8F: this->_adc(cpu_get_reg(this, op)); break;
+        case 0x90 ... 0x97: this->_sub(cpu_get_reg(this, op)); break;
+        case 0x98 ... 0x9F: this->_sbc(cpu_get_reg(this, op)); break;
+        case 0xA0 ... 0xA7: this->_and(cpu_get_reg(this, op)); break;
+        case 0xA8 ... 0xAF: this->_xor(cpu_get_reg(this, op)); break;
+        case 0xB0 ... 0xB7: this->_or(cpu_get_reg(this, op)); break;
+        case 0xB8 ... 0xBF: this->_cp(cpu_get_reg(this, op)); break;
         
         case 0xC0: if(!this->FLAG_Z) this->PC = this->pop(); break;
         case 0xC1: this->BC = this->pop(); break;
@@ -477,7 +505,7 @@ void CPU::tick_cb(u8 op) {
     u8 val, bit;
     bool orig_c;
 
-    val = this->get_reg(op);
+    val = cpu_get_reg(this, op);
     switch(op & 0xF8) {
         // RLC
         case 0x00 ... 0x07:
@@ -582,7 +610,7 @@ void CPU::tick_cb(u8 op) {
         // Should never get here
         default: printf("Op CB %02X not implemented\n", op); throw std::invalid_argument("Op not implemented");
     }
-    this->set_reg(op, val);
+    cpu_set_reg(this, op, val);
 }
 
 void CPU::_xor(u8 val) {
@@ -664,32 +692,4 @@ u16 CPU::pop() {
     u16 val = (ram_get(this->ram, this->SP + 1) << 8) | ram_get(this->ram, this->SP);
     this->SP += 2;
     return val;
-}
-
-u8 CPU::get_reg(u8 n) {
-    switch(n & 0x07) {
-        case 0: return this->B; break;
-        case 1: return this->C; break;
-        case 2: return this->D; break;
-        case 3: return this->E; break;
-        case 4: return this->H; break;
-        case 5: return this->L; break;
-        case 6: return ram_get(this->ram, this->HL); break;
-        case 7: return this->A; break;
-        default: printf("Invalid register %d\n", n); return 0;
-    }
-}
-
-void CPU::set_reg(u8 n, u8 val) {
-    switch(n & 0x07) {
-        case 0: this->B = val; break;
-        case 1: this->C = val; break;
-        case 2: this->D = val; break;
-        case 3: this->E = val; break;
-        case 4: this->H = val; break;
-        case 5: this->L = val; break;
-        case 6: ram_set(this->ram, this->HL, val); break;
-        case 7: this->A = val; break;
-        default: printf("Invalid register %d\n", n);
-    }
 }
