@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -78,18 +79,20 @@ struct Cart cart_ctor(const char *filename, bool debug) {
     }
 
     if(self.ram_size) {
-        // @TODO
-//        std::string fn2 = filename;
-//        fn2.replace(fn2.end() - 2, fn2.end(), "sav");
-//        int ram_fd = open(fn2.c_str(), O_RDWR | O_CREAT, 0600);
-//        if(ram_fd < 0) {
-//            throw new rom_missing_err(fn2, errno);
-//        }
-//        if(ftruncate(ram_fd, self.ram_size) != 0) {
-//            throw new rom_missing_err(fn2, errno);
-//        }
-//        self.ram =
-//            (unsigned char *)mmap(NULL, (size_t)self.ram_size, PROT_READ | PROT_WRITE, MAP_SHARED, ram_fd, 0);
+        size_t filename_len = strlen(filename);
+        char *filename2 = calloc(filename_len + 2, sizeof(char));
+        strncpy(filename2, filename, filename_len - 2);
+        strncpy(filename2 + filename_len - 2, "sav", 3);
+
+        int ram_fd = open(filename2, O_RDWR | O_CREAT, 0600);
+        if(ram_fd < 0) {
+            rom_missing_err(filename2, errno);
+        }
+        if(ftruncate(ram_fd, self.ram_size) != 0) {
+            rom_missing_err(filename2, errno);
+        }
+        self.ram = (unsigned char *)mmap(NULL, (size_t)self.ram_size, PROT_READ | PROT_WRITE, MAP_SHARED, ram_fd, 0);
+        free(filename2);
     }
 
     if(self.debug) {
