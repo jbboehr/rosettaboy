@@ -7,16 +7,14 @@ GameBoy::GameBoy(struct Args *args) {
     this->gpu = gpu_ctor(this->cpu, &this->ram, this->cart.name, args->headless, args->debug_gpu);
     this->buttons = buttons_ctor(this->cpu, &this->ram, args->headless);
     if(!args->silent) {
-        this->apu = new APU(this->cpu, args->debug_apu);
+        apu_ctor(&this->apu, this->cpu, args->debug_apu);
     }
     this->clock = clock_ctor(&this->buttons, args->frames, args->profile, args->turbo);
 }
 
 GameBoy::~GameBoy() {
     gpu_dtor(&this->gpu);
-    if (this->apu) {
-        apu_dtor(this->apu);
-    }
+    apu_dtor(&this->apu);
 }
 
 /**

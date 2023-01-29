@@ -133,8 +133,7 @@ struct ch_control_t {
     unsigned int snd_enable : 1;
 };
 
-class APU {
-public:
+struct APU {
     bool debug = false;
     int ch1_freq_timer = 0, ch2_freq_timer = 0, ch3_freq_timer = 0, ch4_freq_timer = 0;
     int ch1_envelope_vol = 0, ch2_envelope_vol = 0, ch4_envelope_vol = 0;
@@ -148,12 +147,11 @@ public:
     u8 ch3_sample = 0;
     u16 ch4_lfsr = 0xFFFF;
     CPU *cpu = nullptr;
-
-    APU(CPU *cpu, bool debug);
 };
 
 BEGIN_EXTERN_C()
 
+void apu_ctor(struct APU *self, CPU *cpu, bool debug);
 void apu_dtor(APU *apu);
 
 END_EXTERN_C()

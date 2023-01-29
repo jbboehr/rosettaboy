@@ -265,11 +265,11 @@ static void audio_callback(void *_sound, Uint8 *_stream, int _length) {
     }
 }
 
-APU::APU(CPU *cpu, bool debug) {
-    SDL_InitSubSystem(SDL_INIT_AUDIO);
+void apu_ctor(struct APU *self, CPU *cpu, bool debug) {
+    self->cpu = cpu;
+    self->debug = debug;
 
-    this->cpu = cpu;
-    this->debug = debug;
+    SDL_InitSubSystem(SDL_INIT_AUDIO);
 
     SDL_AudioSpec desiredSpec, obtainedSpec;
     desiredSpec.freq = HZ;
@@ -277,7 +277,7 @@ APU::APU(CPU *cpu, bool debug) {
     desiredSpec.channels = 2;
     desiredSpec.samples = (HZ / 60); // generate audio for one frame at a time, 735 samples per frame
     desiredSpec.callback = audio_callback;
-    desiredSpec.userdata = this;
+    desiredSpec.userdata = self;
     SDL_OpenAudio(&desiredSpec, &obtainedSpec); // check for errors?
     SDL_PauseAudio(false);
 }
