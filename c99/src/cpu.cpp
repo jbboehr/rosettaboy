@@ -735,6 +735,21 @@ static inline void cpu_tick_clock(CPU *self) {
 }
 
 /**
+ * If there is a non-zero value in ram[MEM_DMA], eg 0x42, then
+ * we should copy memory from eg 0x4200 to OAM space.
+ */
+static inline void cpu_tick_dma(CPU *self) {
+    // TODO: DMA should take 26 cycles, during which main RAM is inaccessible
+    if(ram_get(self->ram, MEM_DMA)) {
+        u16 dma_src = ram_get(self->ram, MEM_DMA) << 8;
+        for(int i = 0; i < 0xA0; i++) {
+            ram_set(self->ram, MEM_OAM_BASE + i, ram_get(self->ram, dma_src + i));
+        }
+        ram_set(self->ram, MEM_DMA, 0x00);
+    }
+}
+
+/**
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
  */
@@ -818,27 +833,12 @@ void cpu_interrupt(CPU *cpu, enum Interrupt i) {
 }
 
 void CPU::tick() {
-    this->tick_dma();
+    cpu_tick_dma(this);
     cpu_tick_clock(this);
     cpu_tick_interrupts(this);
     if(this->halt) return;
     if(this->stop) return;
     cpu_tick_instructions(this);
-}
-
-/**
- * If there is a non-zero value in ram[MEM_DMA], eg 0x42, then
- * we should copy memory from eg 0x4200 to OAM space.
- */
-void CPU::tick_dma() {
-    // TODO: DMA should take 26 cycles, during which main RAM is inaccessible
-    if(ram_get(this->ram, MEM_DMA)) {
-        u16 dma_src = ram_get(this->ram, MEM_DMA) << 8;
-        for(int i = 0; i < 0xA0; i++) {
-            ram_set(this->ram, MEM_OAM_BASE + i, ram_get(this->ram, dma_src + i));
-        }
-        ram_set(this->ram, MEM_DMA, 0x00);
-    }
 }
 
 

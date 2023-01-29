@@ -66,8 +66,6 @@ public:
     void tick();
     void interrupt(Interrupt i);
     void dump_regs();
-
-    void tick_dma();
 };
 
 BEGIN_EXTERN_C()
