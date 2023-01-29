@@ -88,9 +88,6 @@ private:
     void _adc(u8 val);
     void _sub(u8 val);
     void _sbc(u8 val);
-
-    void push(u16 val);
-    u16 pop();
 };
 
 BEGIN_EXTERN_C()

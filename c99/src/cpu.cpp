@@ -176,6 +176,18 @@ static inline u8 cpu_get_reg(CPU *self, u8 n) {
     }
 }
 
+static inline void cpu_push(CPU *self, u16 val) {
+    ram_set(self->ram, self->SP - 1, ((val & 0xFF00) >> 8) & 0xFF);
+    ram_set(self->ram, self->SP - 2, val & 0xFF);
+    self->SP -= 2;
+}
+
+static inline u16 cpu_pop(CPU *self) {
+    u16 val = (ram_get(self->ram, self->SP + 1) << 8) | ram_get(self->ram, self->SP);
+    self->SP += 2;
+    return val;
+}
+
 /**
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
@@ -312,7 +324,7 @@ bool CPU::check_interrupt(u8 queue, u8 i, u16 handler) {
         // TODO: wait two cycles
         // TODO: push16(PC) should also take two cycles
         // TODO: one more cycle to store new PC
-        this->push(this->PC);
+        cpu_push(this, this->PC);
         this->PC = handler;
         ram_set(this->ram, MEM_IF, ram_get(this->ram, MEM_IF) & ~i);
         return true;
@@ -537,48 +549,48 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0xB0 ... 0xB7: this->_or(cpu_get_reg(this, op)); break;
         case 0xB8 ... 0xBF: this->_cp(cpu_get_reg(this, op)); break;
         
-        case 0xC0: if(!this->FLAG_Z) this->PC = this->pop(); break;
-        case 0xC1: this->BC = this->pop(); break;
+        case 0xC0: if(!this->FLAG_Z) this->PC = cpu_pop(this); break;
+        case 0xC1: this->BC = cpu_pop(this); break;
         case 0xC2: if(!this->FLAG_Z) this->PC = arg.as_u16; break;
         case 0xC3: this->PC = arg.as_u16; break;
-        case 0xC4: if(!this->FLAG_Z) {this->push(this->PC); this->PC = arg.as_u16;} break;
-        case 0xC5: this->push(this->BC); break;
+        case 0xC4: if(!this->FLAG_Z) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
+        case 0xC5: cpu_push(this, this->BC); break;
         case 0xC6: this->_add(arg.as_u8); break;
-        case 0xC7: this->push(this->PC); this->PC = 0x00; break;
-        case 0xC8: if(this->FLAG_Z) this->PC = this->pop(); break;
-        case 0xC9: this->PC = this->pop(); break;
+        case 0xC7: cpu_push(this, this->PC); this->PC = 0x00; break;
+        case 0xC8: if(this->FLAG_Z) this->PC = cpu_pop(this); break;
+        case 0xC9: this->PC = cpu_pop(this); break;
         case 0xCA: if(this->FLAG_Z) this->PC = arg.as_u16; break;
         // case 0xCB: break;
-        case 0xCC: if(this->FLAG_Z) {this->push(this->PC); this->PC = arg.as_u16;} break;
-        case 0xCD: this->push(this->PC); this->PC = arg.as_u16; break;
+        case 0xCC: if(this->FLAG_Z) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
+        case 0xCD: cpu_push(this, this->PC); this->PC = arg.as_u16; break;
         case 0xCE: this->_adc(arg.as_u8); break;
-        case 0xCF: this->push(this->PC); this->PC = 0x08; break;
+        case 0xCF: cpu_push(this, this->PC); this->PC = 0x08; break;
 
-        case 0xD0: if(!this->FLAG_C) this->PC = this->pop(); break;
-        case 0xD1: this->DE = this->pop(); break;
+        case 0xD0: if(!this->FLAG_C) this->PC = cpu_pop(this); break;
+        case 0xD1: this->DE = cpu_pop(this); break;
         case 0xD2: if(!this->FLAG_C) this->PC = arg.as_u16; break;
         // case 0xD3: break;
-        case 0xD4: if(!this->FLAG_C) {this->push(this->PC); this->PC = arg.as_u16;} break;
-        case 0xD5: this->push(this->DE); break;
+        case 0xD4: if(!this->FLAG_C) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
+        case 0xD5: cpu_push(this, this->DE); break;
         case 0xD6: this->_sub(arg.as_u8); break;
-        case 0xD7: this->push(this->PC); this->PC = 0x10; break;
-        case 0xD8: if(this->FLAG_C) this->PC = this->pop(); break;
-        case 0xD9: this->PC = this->pop(); this->interrupts = true; break;
+        case 0xD7: cpu_push(this, this->PC); this->PC = 0x10; break;
+        case 0xD8: if(this->FLAG_C) this->PC = cpu_pop(this); break;
+        case 0xD9: this->PC = cpu_pop(this); this->interrupts = true; break;
         case 0xDA: if(this->FLAG_C) this->PC = arg.as_u16; break;
         // case 0xDB: break;
-        case 0xDC: if(this->FLAG_C) {this->push(this->PC); this->PC = arg.as_u16;} break;
+        case 0xDC: if(this->FLAG_C) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
         // case 0xDD: break;
         case 0xDE: this->_sbc(arg.as_u8); break;
-        case 0xDF: this->push(this->PC); this->PC = 0x18; break;
+        case 0xDF: cpu_push(this, this->PC); this->PC = 0x18; break;
 
         case 0xE0: ram_set(this->ram, 0xFF00 + arg.as_u8, this->A); if(arg.as_u8 == 0x01) {putchar(this->A);}; break;
-        case 0xE1: this->HL = this->pop(); break;
+        case 0xE1: this->HL = cpu_pop(this); break;
         case 0xE2: ram_set(this->ram, 0xFF00 + this->C, this->A); if(this->C == 0x01) {putchar(this->A);}; break;
         // case 0xE3: break;
         // case 0xE4: break;
-        case 0xE5: this->push(this->HL); break;
+        case 0xE5: cpu_push(this, this->HL); break;
         case 0xE6: this->_and(arg.as_u8); break;
-        case 0xE7: this->push(this->PC); this->PC = 0x20; break;
+        case 0xE7: cpu_push(this, this->PC); this->PC = 0x20; break;
         case 0xE8:
             val16 = this->SP + arg.as_i8;
             //this->FLAG_H = ((this->SP & 0x0FFF) + (arg.as_i8 & 0x0FFF) > 0x0FFF);
@@ -595,16 +607,16 @@ void CPU::tick_main(u8 op, oparg arg) {
         // case 0xEC: break;
         // case 0xED: break;
         case 0xEE: this->_xor(arg.as_u8); break;
-        case 0xEF: this->push(this->PC); this->PC = 0x28; break;
+        case 0xEF: cpu_push(this, this->PC); this->PC = 0x28; break;
 
         case 0xF0: this->A = ram_get(this->ram, 0xFF00 + arg.as_u8); break;
-        case 0xF1: this->AF = (this->pop() & 0xFFF0); break;
+        case 0xF1: this->AF = (cpu_pop(this) & 0xFFF0); break;
         case 0xF2: this->A = ram_get(this->ram, 0xFF00 + this->C); break;
         case 0xF3: this->interrupts = false; break;
         // case 0xF4: break;
-        case 0xF5: this->push(this->AF); break;
+        case 0xF5: cpu_push(this, this->AF); break;
         case 0xF6: this->_or(arg.as_u8); break;
-        case 0xF7: this->push(this->PC); this->PC = 0x30; break;
+        case 0xF7: cpu_push(this, this->PC); this->PC = 0x30; break;
         case 0xF8:
             if(arg.as_i8 >= 0) {
                 this->FLAG_C = ((this->SP & 0xFF) + (arg.as_i8 & 0xFF)) > 0xFF;
@@ -625,7 +637,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0xFC: throw new UnitTestPassed(); // unofficial
         case 0xFD: throw new UnitTestFailed(); // unofficial
         case 0xFE: this->_cp(arg.as_u8); break;
-        case 0xFF: this->push(this->PC); this->PC = 0x38; break;
+        case 0xFF: cpu_push(this, this->PC); this->PC = 0x38; break;
 
         // missing ops
         default: throw new InvalidOpcode(op);
@@ -825,14 +837,3 @@ void CPU::_sbc(u8 val) {
     this->FLAG_N = true;
 }
 
-void CPU::push(u16 val) {
-    ram_set(this->ram, this->SP - 1, ((val & 0xFF00) >> 8) & 0xFF);
-    ram_set(this->ram, this->SP - 2, val & 0xFF);
-    this->SP -= 2;
-}
-
-u16 CPU::pop() {
-    u16 val = (ram_get(this->ram, this->SP + 1) << 8) | ram_get(this->ram, this->SP);
-    this->SP += 2;
-    return val;
-}
