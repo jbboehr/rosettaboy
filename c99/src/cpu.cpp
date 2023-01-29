@@ -71,7 +71,7 @@ void CPU::dump_regs() {
  * are enabled), then the interrupt handler will be called.
  */
 void CPU::interrupt(Interrupt i) {
-    this->ram->set(MEM_IF, this->ram->get(MEM_IF) | i);
+    ram_set(this->ram, MEM_IF, this->ram->get(MEM_IF) | i);
     this->halt = false; // interrupts interrupt HALT state
 }
 
@@ -93,9 +93,9 @@ void CPU::tick_dma() {
     if(this->ram->get(MEM_DMA)) {
         u16 dma_src = this->ram->get(MEM_DMA) << 8;
         for(int i = 0; i < 0xA0; i++) {
-            this->ram->set(MEM_OAM_BASE + i, this->ram->get(dma_src + i));
+            ram_set(this->ram, MEM_OAM_BASE + i, this->ram->get(dma_src + i));
         }
-        this->ram->set(MEM_DMA, 0x00);
+        ram_set(this->ram, MEM_DMA, 0x00);
     }
 }
 
@@ -108,17 +108,17 @@ void CPU::tick_clock() {
 
     // TODO: writing any value to MEM_DIV should reset it to 0x00
     // increment at 16384Hz (each 64 cycles?)
-    if(cycle % 64 == 0) this->ram->set(MEM_DIV, this->ram->get(MEM_DIV) + 1);
+    if(cycle % 64 == 0) ram_set(this->ram, MEM_DIV, this->ram->get(MEM_DIV) + 1);
 
     if(this->ram->get(MEM_TAC) & (1 << 2)) { // timer enable
         u16 speeds[] = {256, 4, 16, 64};      // increment per X cycles
         u16 speed = speeds[this->ram->get(MEM_TAC) & 0x03];
         if(cycle % speed == 0) {
             if(this->ram->get(MEM_TIMA) == 0xFF) {
-                this->ram->set(MEM_TIMA, this->ram->get(MEM_TMA)); // if timer overflows, load base
+                ram_set(this->ram, MEM_TIMA, this->ram->get(MEM_TMA)); // if timer overflows, load base
                 this->interrupt(Interrupt::TIMER);
             }
-            this->ram->set(MEM_TIMA, this->ram->get(MEM_TIMA) + 1);
+            ram_set(this->ram, MEM_TIMA, this->ram->get(MEM_TIMA) + 1);
         }
     }
 }
@@ -130,7 +130,7 @@ bool CPU::check_interrupt(u8 queue, u8 i, u16 handler) {
         // TODO: one more cycle to store new PC
         this->push(this->PC);
         this->PC = handler;
-        this->ram->set(MEM_IF, this->ram->get(MEM_IF) & ~i);
+        ram_set(this->ram, MEM_IF, this->ram->get(MEM_IF) & ~i);
         return true;
     }
     return false;
@@ -210,18 +210,18 @@ void CPU::tick_main(u8 op, oparg arg) {
         // clang-format off
         case 0x00: /* NOP */; break;
         case 0x01: this->BC = arg.as_u16; break;
-        case 0x02: this->ram->set(this->BC, this->A); break;
+        case 0x02: ram_set(this->ram, this->BC, this->A); break;
         case 0x03: this->BC++; break;
         case 0x08:
-            this->ram->set(arg.as_u16+1, ((this->SP >> 8) & 0xFF));
-            this->ram->set(arg.as_u16, (this->SP & 0xFF));
+            ram_set(this->ram, arg.as_u16+1, ((this->SP >> 8) & 0xFF));
+            ram_set(this->ram, arg.as_u16, (this->SP & 0xFF));
             break;  // how does this fit?
         case 0x0A: this->A = this->ram->get(this->BC); break;
         case 0x0B: this->BC--; break;
 
         case 0x10: this->stop = true; break;
         case 0x11: this->DE = arg.as_u16; break;
-        case 0x12: this->ram->set(this->DE, this->A); break;
+        case 0x12: ram_set(this->ram, this->DE, this->A); break;
         case 0x13: this->DE++; break;
         case 0x18: this->PC += arg.as_i8; break;
         case 0x1A: this->A = this->ram->get(this->DE); break;
@@ -229,7 +229,7 @@ void CPU::tick_main(u8 op, oparg arg) {
 
         case 0x20: if(!this->FLAG_Z) this->PC += arg.as_i8; break;
         case 0x21: this->HL = arg.as_u16; break;
-        case 0x22: this->ram->set(this->HL++, this->A); break;
+        case 0x22: ram_set(this->ram, this->HL++, this->A); break;
         case 0x23: this->HL++; break;
         case 0x27:
             val16 = this->A;
@@ -256,7 +256,7 @@ void CPU::tick_main(u8 op, oparg arg) {
 
         case 0x30: if(!this->FLAG_C) this->PC += arg.as_i8; break;
         case 0x31: this->SP = arg.as_u16; break;
-        case 0x32: this->ram->set(this->HL--, this->A); break;
+        case 0x32: ram_set(this->ram, this->HL--, this->A); break;
         case 0x33: this->SP++; break;
         case 0x37: this->FLAG_N = false; this->FLAG_H = false; this->FLAG_C = true; break;
         case 0x38: if(this->FLAG_C) this->PC += arg.as_i8; break;
@@ -387,9 +387,9 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0xDE: this->_sbc(arg.as_u8); break;
         case 0xDF: this->push(this->PC); this->PC = 0x18; break;
 
-        case 0xE0: this->ram->set(0xFF00 + arg.as_u8, this->A); if(arg.as_u8 == 0x01) {putchar(this->A);}; break;
+        case 0xE0: ram_set(this->ram, 0xFF00 + arg.as_u8, this->A); if(arg.as_u8 == 0x01) {putchar(this->A);}; break;
         case 0xE1: this->HL = this->pop(); break;
-        case 0xE2: this->ram->set(0xFF00 + this->C, this->A); if(this->C == 0x01) {putchar(this->A);}; break;
+        case 0xE2: ram_set(this->ram, 0xFF00 + this->C, this->A); if(this->C == 0x01) {putchar(this->A);}; break;
         // case 0xE3: break;
         // case 0xE4: break;
         case 0xE5: this->push(this->HL); break;
@@ -406,7 +406,7 @@ void CPU::tick_main(u8 op, oparg arg) {
             this->FLAG_N = false;
             break;
         case 0xE9: this->PC = this->HL; break;
-        case 0xEA: this->ram->set(arg.as_u16, this->A); break;
+        case 0xEA: ram_set(this->ram, arg.as_u16, this->A); break;
         // case 0xEB: break;
         // case 0xEC: break;
         // case 0xED: break;
@@ -642,8 +642,8 @@ void CPU::_sbc(u8 val) {
 }
 
 void CPU::push(u16 val) {
-    this->ram->set(this->SP - 1, ((val & 0xFF00) >> 8) & 0xFF);
-    this->ram->set(this->SP - 2, val & 0xFF);
+    ram_set(this->ram, this->SP - 1, ((val & 0xFF00) >> 8) & 0xFF);
+    ram_set(this->ram, this->SP - 2, val & 0xFF);
     this->SP -= 2;
 }
 
@@ -675,7 +675,7 @@ void CPU::set_reg(u8 n, u8 val) {
         case 3: this->E = val; break;
         case 4: this->H = val; break;
         case 5: this->L = val; break;
-        case 6: this->ram->set(this->HL, val); break;
+        case 6: ram_set(this->ram, this->HL, val); break;
         case 7: this->A = val; break;
         default: printf("Invalid register %d\n", n);
     }

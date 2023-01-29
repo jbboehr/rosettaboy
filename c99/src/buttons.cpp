@@ -33,7 +33,7 @@ void Buttons::update_buttons() {
         if(this->start) JOYP |= Joypad::START;
         if(this->select) JOYP |= Joypad::SELECT;
     }
-    this->cpu->ram->set(MEM_JOYP, ~JOYP & 0x3F);
+    ram_set(this->cpu->ram, MEM_JOYP, ~JOYP & 0x3F);
 }
 
 bool Buttons::handle_inputs() {

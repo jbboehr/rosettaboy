@@ -79,7 +79,7 @@ void GPU::tick() {
     if(!(lcdc & LCDC::ENABLED)) {
         // When LCD is re-enabled, LY is 0
         // Does it become 0 as soon as disabled??
-        this->cpu->ram->set(MEM_LY, 0);
+        ram_set(this->cpu->ram, MEM_LY, 0);
         if(!this->debug) {
             return;
         }
@@ -87,7 +87,7 @@ void GPU::tick() {
 
     u8 lx = this->cycle % 114;
     u8 ly = (this->cycle / 114) % 154;
-    this->cpu->ram->set(MEM_LY, ly);
+    ram_set(this->cpu->ram, MEM_LY, ly);
 
     u8 stat = this->cpu->ram->get(MEM_STAT);
     stat &= ~Stat::MODE_BITS;
@@ -140,7 +140,7 @@ void GPU::tick() {
         }
         this->cpu->interrupt(Interrupt::VBLANK);
     }
-    this->cpu->ram->set(MEM_STAT, stat);
+    ram_set(this->cpu->ram, MEM_STAT, stat);
 }
 
 void GPU::update_palettes() {
