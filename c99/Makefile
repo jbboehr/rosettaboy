@@ -345,29 +345,29 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
-src/ram.o: src/ram.cpp.o
+src/ram.o: src/ram.c.o
 .PHONY : src/ram.o
 
 # target to build an object file
-src/ram.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/ram.cpp.o
-.PHONY : src/ram.cpp.o
+src/ram.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/ram.c.o
+.PHONY : src/ram.c.o
 
-src/ram.i: src/ram.cpp.i
+src/ram.i: src/ram.c.i
 .PHONY : src/ram.i
 
 # target to preprocess a source file
-src/ram.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/ram.cpp.i
-.PHONY : src/ram.cpp.i
+src/ram.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/ram.c.i
+.PHONY : src/ram.c.i
 
-src/ram.s: src/ram.cpp.s
+src/ram.s: src/ram.c.s
 .PHONY : src/ram.s
 
 # target to generate assembly for a file
-src/ram.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/ram.cpp.s
-.PHONY : src/ram.cpp.s
+src/ram.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/ram.c.s
+.PHONY : src/ram.c.s
 
 # Help Target
 help:

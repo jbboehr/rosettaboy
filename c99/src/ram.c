@@ -31,10 +31,18 @@ u8 BOOT[0x100] = {
     0xC3, 0xFD, 0x00, // JP 0x00FD
 };
 
-RAM::RAM(Cart *cart, bool debug) {
-    this->debug = debug;
-    this->cart = cart;
-    this->boot = BOOT;
+struct RAM ram_ctor(struct Cart *cart, bool debug) {
+    struct RAM self = {
+            .debug = debug,
+            .ram_enable = false,
+            .ram_bank_mode = false,
+            .rom_bank_low = 1,
+            .rom_bank_high = 0,
+            .rom_bank = 1,
+            .ram_bank = 0,
+            .cart = cart,
+            .boot = BOOT,
+    };
 
     // this instruction must be at the end of ROM --
     // after these finish executing, PC needs to be 0x100
@@ -53,9 +61,11 @@ RAM::RAM(Cart *cart, bool debug) {
         BOOT[0xFA] = 0x00;
         BOOT[0xFB] = 0x00;
     }
+
+    return self;
 }
 
-void ram_dump(RAM *self) {
+void ram_dump(struct RAM *self) {
     FILE *fp = fopen("mem.dat", "wb");
     fwrite(self->data, sizeof(u8), 0xFFFF + 1, fp);
     fclose(fp);

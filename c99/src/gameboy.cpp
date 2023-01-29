@@ -2,8 +2,8 @@
 
 GameBoy::GameBoy(struct Args *args) {
     this->cart = cart_ctor(args->rom, false);
-    this->ram = new RAM(&this->cart, args->debug_ram);
-    this->cpu = new CPU(this->ram, args->debug_cpu);
+    this->ram = ram_ctor(&this->cart, args->debug_ram);
+    this->cpu = new CPU(&this->ram, args->debug_cpu);
     this->gpu = new GPU(this->cpu, this->cart.name, args->headless, args->debug_gpu);
     this->buttons = new Buttons(this->cpu, args->headless);
     if(!args->silent) new APU(this->cpu, args->debug_apu);

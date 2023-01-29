@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <stdexcept>
 
 #include "consts.h"
 #include "cpu.h"
@@ -8,7 +9,7 @@
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
  */
-CPU::CPU(RAM *ram, bool debug) {
+CPU::CPU(struct RAM *ram, bool debug) {
     this->ram = ram;
     this->debug = debug;
     this->interrupts = false;

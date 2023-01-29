@@ -1,34 +1,34 @@
 #ifndef ROSETTABOY_RAM_H
 #define ROSETTABOY_RAM_H
 
-#include <stdexcept>
-
+#include "common.h"
 #include "cart.h"
 #include "consts.h"
 #include "errors.h"
 
+BEGIN_EXTERN_C()
+
 const u16 ROM_BANK_SIZE = 0x4000;
 const u16 RAM_BANK_SIZE = 0x2000;
 
-class RAM {
-public:
-    Cart *cart;
-    bool ram_enable = false;
-    bool ram_bank_mode = false;
-    u8 rom_bank_low = 1;
-    u8 rom_bank_high = 0;
-    u8 rom_bank = 1;
-    u8 ram_bank = 0;
+struct RAM {
+    struct Cart *cart;
+    bool ram_enable;
+    bool ram_bank_mode;
+    u8 rom_bank_low;
+    u8 rom_bank_high;
+    u8 rom_bank;
+    u8 ram_bank;
     u8 *boot;
-    bool debug = false;
-
-    RAM(Cart *cart, bool debug);
+    bool debug;
     u8 data[0xFFFF + 1];
 };
 
-void ram_dump(RAM *self);
+struct RAM ram_ctor(struct Cart *cart, bool debug);
 
-inline u8 ram_get(RAM *self, u16 addr) {
+void ram_dump(struct RAM *self);
+
+static inline u8 ram_get(struct RAM *self, u16 addr) {
     u8 val = self->data[addr];
     switch(addr) {
         case 0x0000 ... 0x3FFF: {
@@ -60,7 +60,7 @@ inline u8 ram_get(RAM *self, u16 addr) {
             int bank = self->ram_bank * RAM_BANK_SIZE;
             int offset = addr - 0xA000;
             if(bank + offset >= self->cart->ram_size) {
-                throw new InvalidRamRead(self->ram_bank, offset, self->cart->ram_size);
+                invalid_ram_read_err(self->ram_bank, offset, self->cart->ram_size);
             }
             val = self->cart->ram[bank + offset];
             break;
@@ -100,7 +100,7 @@ inline u8 ram_get(RAM *self, u16 addr) {
     return val;
 }
 
-inline void ram_set(RAM *self, u16 addr, u8 val) {
+static inline void ram_set(struct RAM *self, u16 addr, u8 val) {
     if(self->debug) {
         printf("ram[%04X] <- %02X\n", addr, val);
     }
@@ -116,7 +116,7 @@ inline void ram_set(RAM *self, u16 addr, u8 val) {
             self->rom_bank = (self->rom_bank_high << 5) | self->rom_bank_low;
             if(self->debug) printf("rom_bank set to %u/%u\n", self->rom_bank, self->cart->rom_size / ROM_BANK_SIZE);
             if(self->rom_bank * ROM_BANK_SIZE > self->cart->rom_size) {
-                throw std::invalid_argument("Set rom_bank beyond the size of ROM");
+                invalid_argument_err("Set rom_bank beyond the size of ROM");
             }
             break;
         }
@@ -125,14 +125,14 @@ inline void ram_set(RAM *self, u16 addr, u8 val) {
                 self->ram_bank = val;
                 if(self->debug) printf("ram_bank set to %u/%u\n", self->ram_bank, self->cart->ram_size / RAM_BANK_SIZE);
                 if(self->ram_bank * RAM_BANK_SIZE > self->cart->ram_size) {
-                    throw std::invalid_argument("Set ram_bank beyond the size of RAM");
+                    invalid_argument_err("Set ram_bank beyond the size of RAM");
                 }
             } else {
                 self->rom_bank_high = val;
                 self->rom_bank = (self->rom_bank_high << 5) | self->rom_bank_low;
                 if(self->debug) printf("rom_bank set to %u/%u\n", self->rom_bank, self->cart->rom_size / ROM_BANK_SIZE);
                 if(self->rom_bank * ROM_BANK_SIZE > self->cart->rom_size) {
-                    throw std::invalid_argument("Set rom_bank beyond the size of ROM");
+                    invalid_argument_err("Set rom_bank beyond the size of ROM");
                 }
             }
             break;
@@ -157,7 +157,7 @@ inline void ram_set(RAM *self, u16 addr, u8 val) {
             if(self->debug)
                 printf("Writing external RAM: %04X=%02X (%02X:%04X)\n", bank + offset, val, self->ram_bank, offset);
             if(bank + offset >= self->cart->ram_size) {
-                throw new InvalidRamWrite(self->ram_bank, offset, self->cart->ram_size);
+                invalid_ram_write_err(self->ram_bank, offset, self->cart->ram_size);
             }
             self->cart->ram[bank + offset] = val;
             break;
@@ -194,5 +194,7 @@ inline void ram_set(RAM *self, u16 addr, u8 val) {
 
     self->data[addr] = val;
 }
+
+END_EXTERN_C()
 
 #endif // ROSETTABOY_RAM_H

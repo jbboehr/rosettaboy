@@ -155,7 +155,7 @@ union oparg {
 
 class CPU {
 public:
-    RAM *ram;
+    struct RAM *ram;
     bool stop = false;
     bool stepping = false;
 
@@ -207,7 +207,7 @@ public:
     u16 PC;
 
 public:
-    CPU(RAM *ram, bool debug);
+    CPU(struct RAM *ram, bool debug);
     void tick();
     void interrupt(Interrupt i);
     void dump_regs();

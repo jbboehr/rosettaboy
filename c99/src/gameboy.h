@@ -12,7 +12,7 @@
 class GameBoy {
 private:
     struct Cart cart;
-    RAM *ram = nullptr;
+    struct RAM ram;
     CPU *cpu = nullptr;
     GPU *gpu = nullptr;
     Buttons *buttons = nullptr;

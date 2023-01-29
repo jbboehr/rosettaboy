@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "consts.h"
 
@@ -55,21 +56,28 @@ class InvalidOpcode : public GameException {
 public:
     InvalidOpcode(u8 opcode) { this->set_msg("Invalid opcode: 0x%02X", opcode); }
 };
-class InvalidRamRead : public GameException {
-public:
-    InvalidRamRead(u8 ram_bank, int offset, u32 ram_size) {
-        this->set_msg("Read from RAM bank 0x%02X offset 0x%04X >= ram size 0x%04X", ram_bank, offset, ram_size);
-    }
-};
-class InvalidRamWrite : public GameException {
-public:
-    InvalidRamWrite(u8 ram_bank, int offset, u32 ram_size) {
-        this->set_msg("Write to RAM bank 0x%02X offset 0x%04X >= ram size 0x%04X", ram_bank, offset, ram_size);
-    }
-};
-
 class UserException : public EmuException {};
 #endif
+
+NORETURN static void invalid_argument_err(const char *msg) {
+    fprintf(stdout, "%s", msg);
+    fflush(stdout);
+    abort();
+}
+
+NORETURN static void invalid_ram_read_err(u8 ram_bank, int offset, u32 ram_size) {
+    fprintf(stdout, "Read from RAM bank 0x%02X offset 0x%04X >= ram size 0x%04X", ram_bank, offset, ram_size);
+    fflush(stdout);
+    abort();
+}
+
+NORETURN static void invalid_ram_write_err(u8 ram_bank, int offset, u32 ram_size) {
+    fprintf(stdout, "Write to RAM bank 0x%02X offset 0x%04X >= ram size 0x%04X", ram_bank, offset, ram_size);
+    fflush(stdout);
+    abort();
+}
+
+
 
 // User error, ie the user gave us an invalid or corrupt input file
 NORETURN static void rom_missing_err(const char *filename, int err) {
