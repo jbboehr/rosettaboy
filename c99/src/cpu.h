@@ -68,7 +68,6 @@ public:
     void dump_regs();
 
     void tick_dma();
-    void tick_clock();
 };
 
 BEGIN_EXTERN_C()

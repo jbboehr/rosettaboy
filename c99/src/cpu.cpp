@@ -711,6 +711,30 @@ static inline void cpu_tick_interrupts(CPU *self) {
 }
 
 /**
+ * Increment the timer registers, and send an interrupt
+ * when TIMA wraps around.
+ */
+static inline void cpu_tick_clock(CPU *self) {
+    self->cycle++;
+
+    // TODO: writing any value to MEM_DIV should reset it to 0x00
+    // increment at 16384Hz (each 64 cycles?)
+    if(self->cycle % 64 == 0) ram_set(self->ram, MEM_DIV, ram_get(self->ram, MEM_DIV) + 1);
+
+    if(ram_get(self->ram, MEM_TAC) & (1 << 2)) { // timer enable
+        u16 speeds[] = {256, 4, 16, 64};      // increment per X cycles
+        u16 speed = speeds[ram_get(self->ram, MEM_TAC) & 0x03];
+        if(self->cycle % speed == 0) {
+            if(ram_get(self->ram, MEM_TIMA) == 0xFF) {
+                ram_set(self->ram, MEM_TIMA, ram_get(self->ram, MEM_TMA)); // if timer overflows, load base
+                self->interrupt(INTERRUPT_TIMER);
+            }
+            ram_set(self->ram, MEM_TIMA, ram_get(self->ram, MEM_TIMA) + 1);
+        }
+    }
+}
+
+/**
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
  */
@@ -795,7 +819,7 @@ void cpu_interrupt(CPU *cpu, enum Interrupt i) {
 
 void CPU::tick() {
     this->tick_dma();
-    this->tick_clock();
+    cpu_tick_clock(this);
     cpu_tick_interrupts(this);
     if(this->halt) return;
     if(this->stop) return;
@@ -817,27 +841,4 @@ void CPU::tick_dma() {
     }
 }
 
-/**
- * Increment the timer registers, and send an interrupt
- * when TIMA wraps around.
- */
-void CPU::tick_clock() {
-    cycle++;
-
-    // TODO: writing any value to MEM_DIV should reset it to 0x00
-    // increment at 16384Hz (each 64 cycles?)
-    if(cycle % 64 == 0) ram_set(this->ram, MEM_DIV, ram_get(this->ram, MEM_DIV) + 1);
-
-    if(ram_get(this->ram, MEM_TAC) & (1 << 2)) { // timer enable
-        u16 speeds[] = {256, 4, 16, 64};      // increment per X cycles
-        u16 speed = speeds[ram_get(this->ram, MEM_TAC) & 0x03];
-        if(cycle % speed == 0) {
-            if(ram_get(this->ram, MEM_TIMA) == 0xFF) {
-                ram_set(this->ram, MEM_TIMA, ram_get(this->ram, MEM_TMA)); // if timer overflows, load base
-                this->interrupt(INTERRUPT_TIMER);
-            }
-            ram_set(this->ram, MEM_TIMA, ram_get(this->ram, MEM_TIMA) + 1);
-        }
-    }
-}
 
