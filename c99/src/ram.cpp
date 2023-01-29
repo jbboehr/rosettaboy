@@ -55,8 +55,8 @@ RAM::RAM(Cart *cart, bool debug) {
     }
 }
 
-void RAM::dump() {
+void ram_dump(RAM *self) {
     FILE *fp = fopen("mem.dat", "wb");
-    fwrite(this->data, sizeof(u8), 0xFFFF + 1, fp);
+    fwrite(self->data, sizeof(u8), 0xFFFF + 1, fp);
     fclose(fp);
 }

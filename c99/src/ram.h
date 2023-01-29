@@ -24,8 +24,9 @@ public:
 
     RAM(Cart *cart, bool debug);
     u8 data[0xFFFF + 1];
-    void dump();
 };
+
+void ram_dump(RAM *self);
 
 inline u8 ram_get(RAM *self, u16 addr) {
     u8 val = self->data[addr];
