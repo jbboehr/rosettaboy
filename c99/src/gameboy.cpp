@@ -29,7 +29,7 @@ void GameBoy::run() {
 }
 
 void GameBoy::tick() {
-    this->cpu->tick();
+    cpu_tick(this->cpu);
     gpu_tick(&this->gpu);
     buttons_tick(&this->buttons);
     clock_tick(&this->clock);

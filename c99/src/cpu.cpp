@@ -832,13 +832,13 @@ void cpu_interrupt(CPU *cpu, enum Interrupt i) {
     cpu->interrupt(i);
 }
 
-void CPU::tick() {
-    cpu_tick_dma(this);
-    cpu_tick_clock(this);
-    cpu_tick_interrupts(this);
-    if(this->halt) return;
-    if(this->stop) return;
-    cpu_tick_instructions(this);
+void cpu_tick(CPU *self) {
+    cpu_tick_dma(self);
+    cpu_tick_clock(self);
+    cpu_tick_interrupts(self);
+    if(self->halt) return;
+    if(self->stop) return;
+    cpu_tick_instructions(self);
 }
 
 

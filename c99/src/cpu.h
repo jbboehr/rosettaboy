@@ -63,7 +63,6 @@ public:
     u16 PC;
 
     CPU(struct RAM *ram, bool debug);
-    void tick();
     void interrupt(Interrupt i);
 };
 
@@ -72,6 +71,7 @@ BEGIN_EXTERN_C()
 void cpu_interrupt(CPU *cpu, enum Interrupt i);
 void cpu_stop(CPU *cpu, bool stop);
 bool cpu_is_stopped(CPU *cpu);
+void cpu_tick(CPU *self);
 
 END_EXTERN_C()
 
