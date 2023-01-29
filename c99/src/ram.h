@@ -25,34 +25,26 @@ public:
     RAM(Cart *cart, bool debug);
     u8 data[0xFFFF + 1];
     void dump();
-
-    /**
-     * Inline these in the header because many calls
-     * can be optimised into a single instruction
-     */
-public:
-    inline u8 get(u16 addr);
-    inline void set(u16 addr, u8 val);
 };
 
-inline u8 RAM::get(u16 addr) {
-    u8 val = this->data[addr];
+inline u8 ram_get(RAM *self, u16 addr) {
+    u8 val = self->data[addr];
     switch(addr) {
         case 0x0000 ... 0x3FFF: {
             // ROM bank 0
-            if(this->data[MEM_BOOT] == 0 && addr < 0x0100) {
-                val = this->boot[addr];
+            if(self->data[MEM_BOOT] == 0 && addr < 0x0100) {
+                val = self->boot[addr];
             } else {
-                val = this->cart->data[addr];
+                val = self->cart->data[addr];
             }
             break;
         }
         case 0x4000 ... 0x7FFF: {
             // Switchable ROM bank
-            int bank = this->rom_bank * ROM_BANK_SIZE;
+            int bank = self->rom_bank * ROM_BANK_SIZE;
             int offset = addr - 0x4000;
             // printf("fetching %04X from bank %04X (total = %04X)\n", offset, bank, offset + bank);
-            val = this->cart->data[bank + offset];
+            val = self->cart->data[bank + offset];
             break;
         }
         case 0x8000 ... 0x9FFF:
@@ -60,16 +52,16 @@ inline u8 RAM::get(u16 addr) {
             break;
         case 0xA000 ... 0xBFFF: {
             // 8KB Switchable RAM bank
-            if(!this->ram_enable) {
+            if(!self->ram_enable) {
                 printf("ERR: Reading from external ram while disabled: %04X\n", addr);
                 return 0;
             }
-            int bank = this->ram_bank * RAM_BANK_SIZE;
+            int bank = self->ram_bank * RAM_BANK_SIZE;
             int offset = addr - 0xA000;
-            if(bank + offset >= this->cart->ram_size) {
-                throw new InvalidRamRead(this->ram_bank, offset, this->cart->ram_size);
+            if(bank + offset >= self->cart->ram_size) {
+                throw new InvalidRamRead(self->ram_bank, offset, self->cart->ram_size);
             }
-            val = this->cart->ram[bank + offset];
+            val = self->cart->ram[bank + offset];
             break;
         }
         case 0xC000 ... 0xCFFF:
@@ -80,7 +72,7 @@ inline u8 RAM::get(u16 addr) {
             break;
         case 0xE000 ... 0xFDFF: {
             // ram[E000-FE00] mirrors ram[C000-DE00]
-            val = this->data[addr - 0x2000];
+            val = self->data[addr - 0x2000];
             break;
         }
         case 0xFE00 ... 0xFE9F:
@@ -101,7 +93,7 @@ inline u8 RAM::get(u16 addr) {
             break;
     }
 
-    if(this->debug) {
+    if(self->debug) {
         printf("ram[%04X] -> %02X\n", addr, val);
     }
     return val;

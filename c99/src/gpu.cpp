@@ -75,7 +75,7 @@ void GPU::tick() {
     }
 
     // Check if LCD enabled at all
-    u8 lcdc = this->cpu->ram->get(MEM_LCDC);
+    u8 lcdc = ram_get(this->cpu->ram, MEM_LCDC);
     if(!(lcdc & LCDC::ENABLED)) {
         // When LCD is re-enabled, LY is 0
         // Does it become 0 as soon as disabled??
@@ -89,12 +89,12 @@ void GPU::tick() {
     u8 ly = (this->cycle / 114) % 154;
     ram_set(this->cpu->ram, MEM_LY, ly);
 
-    u8 stat = this->cpu->ram->get(MEM_STAT);
+    u8 stat = ram_get(this->cpu->ram, MEM_STAT);
     stat &= ~Stat::MODE_BITS;
     stat &= ~Stat::LYC_EQUAL;
 
     // LYC compare & interrupt
-    if(ly == this->cpu->ram->get(MEM_LYC)) {
+    if(ly == ram_get(this->cpu->ram, MEM_LYC)) {
         stat |= Stat::LYC_EQUAL;
         if(stat & Stat::LYC_INTERRUPT) {
             this->cpu->interrupt(Interrupt::STAT);
@@ -144,19 +144,19 @@ void GPU::tick() {
 }
 
 void GPU::update_palettes() {
-    u8 raw_bgp = this->cpu->ram->get(MEM_BGP);
+    u8 raw_bgp = ram_get(this->cpu->ram, MEM_BGP);
     this->bgp[0] = this->colors[(raw_bgp >> 0) & 0x3];
     this->bgp[1] = this->colors[(raw_bgp >> 2) & 0x3];
     this->bgp[2] = this->colors[(raw_bgp >> 4) & 0x3];
     this->bgp[3] = this->colors[(raw_bgp >> 6) & 0x3];
 
-    u8 raw_obp0 = this->cpu->ram->get(MEM_OBP0);
+    u8 raw_obp0 = ram_get(this->cpu->ram, MEM_OBP0);
     this->obp0[0] = this->colors[(raw_obp0 >> 0) & 0x3];
     this->obp0[1] = this->colors[(raw_obp0 >> 2) & 0x3];
     this->obp0[2] = this->colors[(raw_obp0 >> 4) & 0x3];
     this->obp0[3] = this->colors[(raw_obp0 >> 6) & 0x3];
 
-    u8 raw_obp1 = this->cpu->ram->get(MEM_OBP1);
+    u8 raw_obp1 = ram_get(this->cpu->ram, MEM_OBP1);
     this->obp1[0] = this->colors[(raw_obp1 >> 0) & 0x3];
     this->obp1[1] = this->colors[(raw_obp1 >> 2) & 0x3];
     this->obp1[2] = this->colors[(raw_obp1 >> 4) & 0x3];
@@ -164,7 +164,7 @@ void GPU::update_palettes() {
 }
 
 void GPU::draw_debug() {
-    u8 lcdc = this->cpu->ram->get(MEM_LCDC);
+    u8 lcdc = ram_get(this->cpu->ram, MEM_LCDC);
 
     // Tile data
     u8 tile_display_width = 32;
@@ -185,8 +185,8 @@ void GPU::draw_debug() {
 
     // Window tiles
     if(lcdc & LCDC::WINDOW_ENABLED) {
-        u8 wnd_y = this->cpu->ram->get(MEM_WY);
-        u8 wnd_x = this->cpu->ram->get(MEM_WX);
+        u8 wnd_y = ram_get(this->cpu->ram, MEM_WY);
+        u8 wnd_x = ram_get(this->cpu->ram, MEM_WX);
         SDL_Rect rect = {.x = wnd_x - 7, .y = wnd_y, .w = 160, .h = 144};
         SDL_SetRenderDrawColor(this->renderer, 0, 0, 255, 0xFF);
         SDL_RenderDrawRect(this->renderer, &rect);
@@ -194,12 +194,12 @@ void GPU::draw_debug() {
 }
 
 void GPU::draw_line(i32 ly) {
-    auto lcdc = this->cpu->ram->get(MEM_LCDC);
+    auto lcdc = ram_get(this->cpu->ram, MEM_LCDC);
 
     // Background tiles
     if(lcdc & LCDC::BG_WIN_ENABLED) {
-        auto scroll_y = this->cpu->ram->get(MEM_SCY);
-        auto scroll_x = this->cpu->ram->get(MEM_SCX);
+        auto scroll_y = ram_get(this->cpu->ram, MEM_SCY);
+        auto scroll_x = ram_get(this->cpu->ram, MEM_SCX);
         auto tile_offset = !(lcdc & LCDC::DATA_SRC);
         auto tile_map = (lcdc & LCDC::BG_MAP) ? MEM_MAP_1 : MEM_MAP_0;
 
@@ -218,7 +218,7 @@ void GPU::draw_line(i32 ly) {
             auto tile_x = x_in_bgmap / 8;
             auto tile_sub_x = x_in_bgmap % 8;
 
-            i16 tile_id = this->cpu->ram->get(tile_map + tile_y * 32 + tile_x);
+            i16 tile_id = ram_get(this->cpu->ram, tile_map + tile_y * 32 + tile_x);
             if(tile_offset && tile_id < 0x80) {
                 tile_id += 0x100;
             }
@@ -232,8 +232,8 @@ void GPU::draw_line(i32 ly) {
 
     // Window tiles
     if(lcdc & LCDC::WINDOW_ENABLED) {
-        auto wnd_y = this->cpu->ram->get(MEM_WY);
-        auto wnd_x = this->cpu->ram->get(MEM_WX);
+        auto wnd_y = ram_get(this->cpu->ram, MEM_WY);
+        auto wnd_x = ram_get(this->cpu->ram, MEM_WX);
         auto tile_offset = !(lcdc & LCDC::DATA_SRC);
         auto tile_map = (lcdc & LCDC::WINDOW_MAP) ? MEM_MAP_1 : MEM_MAP_0;
 
@@ -253,7 +253,7 @@ void GPU::draw_line(i32 ly) {
         auto tile_sub_y = y_in_bgmap % 8;
 
         for(int tile_x = 0; tile_x < 20; tile_x++) {
-            auto tile_id = this->cpu->ram->get(tile_map + tile_y * 32 + tile_x);
+            auto tile_id = ram_get(this->cpu->ram, tile_map + tile_y * 32 + tile_x);
             if(tile_offset && tile_id < 0x80) {
                 tile_id += 0x100;
             }
@@ -275,10 +275,10 @@ void GPU::draw_line(i32 ly) {
         // for sprite in sprites.iter() {
         for(int n = 0; n < 40; n++) {
             Sprite sprite;
-            sprite.y = this->cpu->ram->get(MEM_OAM_BASE + 4 * n + 0);
-            sprite.x = this->cpu->ram->get(MEM_OAM_BASE + 4 * n + 1);
-            sprite.tile_id = this->cpu->ram->get(MEM_OAM_BASE + 4 * n + 2);
-            sprite.flags = this->cpu->ram->get(MEM_OAM_BASE + 4 * n + 3);
+            sprite.y = ram_get(this->cpu->ram, MEM_OAM_BASE + 4 * n + 0);
+            sprite.x = ram_get(this->cpu->ram, MEM_OAM_BASE + 4 * n + 1);
+            sprite.tile_id = ram_get(this->cpu->ram, MEM_OAM_BASE + 4 * n + 2);
+            sprite.flags = ram_get(this->cpu->ram, MEM_OAM_BASE + 4 * n + 3);
 
             if(sprite.is_live()) {
                 auto palette = sprite.palette ? this->obp1 : this->obp0;
@@ -318,8 +318,8 @@ void GPU::paint_tile(i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool fl
 
 void GPU::paint_tile_line(i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool flip_x, bool flip_y, i32 y) {
     u16 addr = (MEM_TILE_DATA + tile_id * 16 + y * 2);
-    u8 low_byte = this->cpu->ram->get(addr);
-    u8 high_byte = this->cpu->ram->get(addr + 1);
+    u8 low_byte = ram_get(this->cpu->ram, addr);
+    u8 high_byte = ram_get(this->cpu->ram, addr + 1);
     for(int x = 0; x < 8; x++) {
         u8 low_bit = (low_byte >> (7 - x)) & 0x01;
         u8 high_bit = (high_byte >> (7 - x)) & 0x01;

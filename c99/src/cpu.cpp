@@ -23,11 +23,11 @@ CPU::CPU(RAM *ram, bool debug) {
 
 void CPU::dump_regs() {
     // stack
-    u16 sp_val = this->ram->get(this->SP) | this->ram->get(this->SP + 1) << 8;
+    u16 sp_val = ram_get(this->ram, this->SP) | ram_get(this->ram, this->SP + 1) << 8;
 
     // interrupts
-    u8 IE = this->ram->get(MEM_IE);
-    u8 IF = this->ram->get(MEM_IF);
+    u8 IE = ram_get(this->ram, MEM_IE);
+    u8 IF = ram_get(this->ram, MEM_IF);
     char z = 'z' ^ ((this->F >> 7) & 1) << 5;
     char n = 'n' ^ ((this->F >> 6) & 1) << 5;
     char h = 'h' ^ ((this->F >> 5) & 1) << 5;
@@ -39,17 +39,17 @@ void CPU::dump_regs() {
     char j = (IE >> 4) & 1 ? 'j' ^ ((IF >> 4) & 1) << 5 : '_';
 
     // opcode & args
-    u8 op = this->ram->get(PC);
+    u8 op = ram_get(this->ram, PC);
     char op_str[16] = "";
     if(op == 0xCB) {
-        op = this->ram->get(PC + 1);
+        op = ram_get(this->ram, PC + 1);
         snprintf(op_str, 16, "%s", CB_OP_NAMES[op].c_str());
     } else {
         if(OP_ARG_TYPES[op] == 0) snprintf(op_str, 16, "%s", OP_NAMES[op].c_str());
-        if(OP_ARG_TYPES[op] == 1) snprintf(op_str, 16, OP_NAMES[op].c_str(), this->ram->get(PC + 1));
+        if(OP_ARG_TYPES[op] == 1) snprintf(op_str, 16, OP_NAMES[op].c_str(), ram_get(this->ram, PC + 1));
         if(OP_ARG_TYPES[op] == 2)
-            snprintf(op_str, 16, OP_NAMES[op].c_str(), this->ram->get(PC + 1) | this->ram->get(PC + 2) << 8);
-        if(OP_ARG_TYPES[op] == 3) snprintf(op_str, 16, OP_NAMES[op].c_str(), (i8)this->ram->get(PC + 1));
+            snprintf(op_str, 16, OP_NAMES[op].c_str(), ram_get(this->ram, PC + 1) | ram_get(this->ram, PC + 2) << 8);
+        if(OP_ARG_TYPES[op] == 3) snprintf(op_str, 16, OP_NAMES[op].c_str(), (i8)ram_get(this->ram, PC + 1));
     }
 
     // print
@@ -71,7 +71,7 @@ void CPU::dump_regs() {
  * are enabled), then the interrupt handler will be called.
  */
 void CPU::interrupt(Interrupt i) {
-    ram_set(this->ram, MEM_IF, this->ram->get(MEM_IF) | i);
+    ram_set(this->ram, MEM_IF, ram_get(this->ram, MEM_IF) | i);
     this->halt = false; // interrupts interrupt HALT state
 }
 
@@ -90,10 +90,10 @@ void CPU::tick() {
  */
 void CPU::tick_dma() {
     // TODO: DMA should take 26 cycles, during which main RAM is inaccessible
-    if(this->ram->get(MEM_DMA)) {
-        u16 dma_src = this->ram->get(MEM_DMA) << 8;
+    if(ram_get(this->ram, MEM_DMA)) {
+        u16 dma_src = ram_get(this->ram, MEM_DMA) << 8;
         for(int i = 0; i < 0xA0; i++) {
-            ram_set(this->ram, MEM_OAM_BASE + i, this->ram->get(dma_src + i));
+            ram_set(this->ram, MEM_OAM_BASE + i, ram_get(this->ram, dma_src + i));
         }
         ram_set(this->ram, MEM_DMA, 0x00);
     }
@@ -108,17 +108,17 @@ void CPU::tick_clock() {
 
     // TODO: writing any value to MEM_DIV should reset it to 0x00
     // increment at 16384Hz (each 64 cycles?)
-    if(cycle % 64 == 0) ram_set(this->ram, MEM_DIV, this->ram->get(MEM_DIV) + 1);
+    if(cycle % 64 == 0) ram_set(this->ram, MEM_DIV, ram_get(this->ram, MEM_DIV) + 1);
 
-    if(this->ram->get(MEM_TAC) & (1 << 2)) { // timer enable
+    if(ram_get(this->ram, MEM_TAC) & (1 << 2)) { // timer enable
         u16 speeds[] = {256, 4, 16, 64};      // increment per X cycles
-        u16 speed = speeds[this->ram->get(MEM_TAC) & 0x03];
+        u16 speed = speeds[ram_get(this->ram, MEM_TAC) & 0x03];
         if(cycle % speed == 0) {
-            if(this->ram->get(MEM_TIMA) == 0xFF) {
-                ram_set(this->ram, MEM_TIMA, this->ram->get(MEM_TMA)); // if timer overflows, load base
+            if(ram_get(this->ram, MEM_TIMA) == 0xFF) {
+                ram_set(this->ram, MEM_TIMA, ram_get(this->ram, MEM_TMA)); // if timer overflows, load base
                 this->interrupt(Interrupt::TIMER);
             }
-            ram_set(this->ram, MEM_TIMA, this->ram->get(MEM_TIMA) + 1);
+            ram_set(this->ram, MEM_TIMA, ram_get(this->ram, MEM_TIMA) + 1);
         }
     }
 }
@@ -130,7 +130,7 @@ bool CPU::check_interrupt(u8 queue, u8 i, u16 handler) {
         // TODO: one more cycle to store new PC
         this->push(this->PC);
         this->PC = handler;
-        ram_set(this->ram, MEM_IF, this->ram->get(MEM_IF) & ~i);
+        ram_set(this->ram, MEM_IF, ram_get(this->ram, MEM_IF) & ~i);
         return true;
     }
     return false;
@@ -142,9 +142,9 @@ bool CPU::check_interrupt(u8 queue, u8 i, u16 handler) {
  * clear the flag and call the handler for the first of them.
  */
 void CPU::tick_interrupts() {
-    u8 queue = this->ram->get(MEM_IE) & this->ram->get(MEM_IF);
+    u8 queue = ram_get(this->ram, MEM_IE) & ram_get(this->ram, MEM_IF);
     if(this->interrupts && queue) {
-        if(debug) printf("Handling interrupts: %02X & %02X\n", this->ram->get(MEM_IE), this->ram->get(MEM_IF));
+        if(debug) printf("Handling interrupts: %02X & %02X\n", ram_get(this->ram, MEM_IE), ram_get(this->ram, MEM_IF));
         this->interrupts = false; // no nested interrupts, RETI will re-enable
         this->check_interrupt(queue, Interrupt::VBLANK, MEM_VBLANK_HANDLER) ||
             this->check_interrupt(queue, Interrupt::STAT, MEM_LCD_HANDLER) ||
@@ -171,9 +171,9 @@ void CPU::tick_instructions() {
         this->dump_regs();
     }
 
-    u8 op = this->ram->get(this->PC);
+    u8 op = ram_get(this->ram, this->PC);
     if(op == 0xCB) {
-        op = this->ram->get(this->PC + 1);
+        op = ram_get(this->ram, this->PC + 1);
         this->PC += 2;
         this->tick_cb(op);
         owed_cycles = OP_CB_CYCLES[op];
@@ -182,11 +182,11 @@ void CPU::tick_instructions() {
         arg.as_u16 = 0xCA75;
         u8 arg_len = OP_ARG_BYTES[OP_ARG_TYPES[op]];
         if(arg_len == 1) {
-            arg.as_u8 = this->ram->get(this->PC + 1);
+            arg.as_u8 = ram_get(this->ram, this->PC + 1);
         }
         if(arg_len == 2) {
-            u16 low = this->ram->get(this->PC + 1);
-            u16 high = this->ram->get(this->PC + 2);
+            u16 low = ram_get(this->ram, this->PC + 1);
+            u16 high = ram_get(this->ram, this->PC + 2);
             arg.as_u16 = high << 8 | low;
         }
         this->PC += 1 + arg_len;
@@ -216,7 +216,7 @@ void CPU::tick_main(u8 op, oparg arg) {
             ram_set(this->ram, arg.as_u16+1, ((this->SP >> 8) & 0xFF));
             ram_set(this->ram, arg.as_u16, (this->SP & 0xFF));
             break;  // how does this fit?
-        case 0x0A: this->A = this->ram->get(this->BC); break;
+        case 0x0A: this->A = ram_get(this->ram, this->BC); break;
         case 0x0B: this->BC--; break;
 
         case 0x10: this->stop = true; break;
@@ -224,7 +224,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0x12: ram_set(this->ram, this->DE, this->A); break;
         case 0x13: this->DE++; break;
         case 0x18: this->PC += arg.as_i8; break;
-        case 0x1A: this->A = this->ram->get(this->DE); break;
+        case 0x1A: this->A = ram_get(this->ram, this->DE); break;
         case 0x1B: this->DE--; break;
 
         case 0x20: if(!this->FLAG_Z) this->PC += arg.as_i8; break;
@@ -250,7 +250,7 @@ void CPU::tick_main(u8 op, oparg arg) {
             this->FLAG_Z = this->A == 0;
             break;
         case 0x28: if(this->FLAG_Z) this->PC += arg.as_i8; break;
-        case 0x2A: this->A = this->ram->get(this->HL++); break;
+        case 0x2A: this->A = ram_get(this->ram, this->HL++); break;
         case 0x2B: this->HL--; break;
         case 0x2F: this->A ^= 0xFF; this->FLAG_N = true; this->FLAG_H = true; break;
 
@@ -260,7 +260,7 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0x33: this->SP++; break;
         case 0x37: this->FLAG_N = false; this->FLAG_H = false; this->FLAG_C = true; break;
         case 0x38: if(this->FLAG_C) this->PC += arg.as_i8; break;
-        case 0x3A: this->A = this->ram->get(this->HL--); break;
+        case 0x3A: this->A = ram_get(this->ram, this->HL--); break;
         case 0x3B: this->SP--; break;
         case 0x3F: this->FLAG_C = !this->FLAG_C; this->FLAG_N = false; this->FLAG_H = false; break;
 
@@ -413,9 +413,9 @@ void CPU::tick_main(u8 op, oparg arg) {
         case 0xEE: this->_xor(arg.as_u8); break;
         case 0xEF: this->push(this->PC); this->PC = 0x28; break;
 
-        case 0xF0: this->A = this->ram->get(0xFF00 + arg.as_u8); break;
+        case 0xF0: this->A = ram_get(this->ram, 0xFF00 + arg.as_u8); break;
         case 0xF1: this->AF = (this->pop() & 0xFFF0); break;
-        case 0xF2: this->A = this->ram->get(0xFF00 + this->C); break;
+        case 0xF2: this->A = ram_get(this->ram, 0xFF00 + this->C); break;
         case 0xF3: this->interrupts = false; break;
         // case 0xF4: break;
         case 0xF5: this->push(this->AF); break;
@@ -436,7 +436,7 @@ void CPU::tick_main(u8 op, oparg arg) {
             this->FLAG_N = false;
             break;
         case 0xF9: this->SP = this->HL; break;
-        case 0xFA: this->A = this->ram->get(arg.as_u16); break;
+        case 0xFA: this->A = ram_get(this->ram, arg.as_u16); break;
         case 0xFB: this->interrupts = true; break;
         case 0xFC: throw new UnitTestPassed(); // unofficial
         case 0xFD: throw new UnitTestFailed(); // unofficial
@@ -648,7 +648,7 @@ void CPU::push(u16 val) {
 }
 
 u16 CPU::pop() {
-    u16 val = (this->ram->get(this->SP + 1) << 8) | this->ram->get(this->SP);
+    u16 val = (ram_get(this->ram, this->SP + 1) << 8) | ram_get(this->ram, this->SP);
     this->SP += 2;
     return val;
 }
@@ -661,7 +661,7 @@ u8 CPU::get_reg(u8 n) {
         case 3: return this->E; break;
         case 4: return this->H; break;
         case 5: return this->L; break;
-        case 6: return this->ram->get(this->HL); break;
+        case 6: return ram_get(this->ram, this->HL); break;
         case 7: return this->A; break;
         default: printf("Invalid register %d\n", n); return 0;
     }
