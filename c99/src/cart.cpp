@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include "cart.h"
 #include "consts.h"
@@ -31,7 +32,10 @@ Cart::Cart(const char *filename) {
         throw new RomMissing(filename, errno);
     }
 
-    if(debug) std::cout << "Reading " << statbuf.st_size << " bytes of cart data from " << filename << "\n";
+    if(debug) {
+        printf("Reading %ld bytes of cart data from %s\n", statbuf.st_size, filename);
+    }
+
     int fd = open(filename, O_RDONLY);
     if(fd < 0) {
         throw new RomMissing(filename, errno);
