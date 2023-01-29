@@ -15,7 +15,7 @@ private:
     struct RAM ram;
     CPU *cpu = nullptr;
     GPU *gpu = nullptr;
-    Buttons *buttons = nullptr;
+    struct Buttons buttons;
     Clock *clock = nullptr;
 
 public:

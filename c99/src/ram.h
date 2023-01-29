@@ -8,8 +8,8 @@
 
 BEGIN_EXTERN_C()
 
-const u16 ROM_BANK_SIZE = 0x4000;
-const u16 RAM_BANK_SIZE = 0x2000;
+static const u16 ROM_BANK_SIZE = 0x4000;
+static const u16 RAM_BANK_SIZE = 0x2000;
 
 struct RAM {
     struct Cart *cart;

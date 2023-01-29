@@ -1,5 +1,6 @@
 #include "buttons.h"
 #include "errors.h"
+#include "ram.h"
 
 static const u8 JOYPAD_MODE_BUTTONS = 1 << 5;
 static const u8 JOYPAD_MODE_DPAD = 1 << 4;
@@ -12,19 +13,33 @@ static const u8 JOYPAD_B = 1 << 1;
 static const u8 JOYPAD_RIGHT = 1 << 0;
 static const u8 JOYPAD_A = 1 << 0;
 
-static bool handle_inputs(Buttons *self);
-static void update_buttons(Buttons *self);
+static bool handle_inputs(struct Buttons *self);
+static void update_buttons(struct Buttons *self);
 
-Buttons::Buttons(CPU *cpu, struct RAM *ram, bool headless) {
+struct Buttons buttons_ctor(struct CPU *cpu, struct RAM *ram, bool headless) {
     if(!headless) {
         SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
     }
-    this->cpu = cpu;
-    this->ram = ram;
-    this->cycle = 0;
+
+    struct Buttons self = {
+        .cpu = cpu,
+        .ram = ram,
+        .cycle = 0,
+        .up = false,
+        .down = false,
+        .left = false,
+        .right = false,
+        .a = false,
+        .b = false,
+        .start = false,
+        .select = false,
+        .turbo = false,
+    };
+
+    return self;
 }
 
-void buttons_tick(Buttons *self) {
+void buttons_tick(struct Buttons *self) {
     self->cycle++;
     update_buttons(self);
     if(self->cycle % 17556 == 20) {
@@ -35,7 +50,7 @@ void buttons_tick(Buttons *self) {
     }
 }
 
-static void update_buttons(Buttons *self) {
+static void update_buttons(struct Buttons *self) {
     u8 JOYP = ~ram_get(self->ram, MEM_JOYP);
     JOYP &= 0x30;
     if(JOYP & JOYPAD_MODE_DPAD) {
@@ -53,7 +68,7 @@ static void update_buttons(Buttons *self) {
     ram_set(self->ram, MEM_JOYP, ~JOYP & 0x3F);
 }
 
-static bool handle_inputs(Buttons *self) {
+static bool handle_inputs(struct Buttons *self) {
     bool need_interrupt = false;
 
     SDL_Event event;

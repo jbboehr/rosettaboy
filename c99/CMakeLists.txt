@@ -10,7 +10,7 @@ check_ipo_supported(RESULT supported OUTPUT error)
 
 include_directories(/usr/local/include/)
 
-add_executable(rosettaboy-cpp src/main.cpp src/args.c src/cpu.cpp src/cart.c src/gameboy.cpp src/gpu.cpp src/consts.h src/cart.h src/cpu.h src/gpu.h src/args.h src/apu.cpp src/apu.h src/ram.c src/ram.h src/buttons.cpp src/buttons.h src/clock.cpp src/clock.h)
+add_executable(rosettaboy-cpp src/main.cpp src/args.c src/cpu.cpp src/cart.c src/gameboy.cpp src/gpu.cpp src/consts.h src/cart.h src/cpu.h src/gpu.h src/args.h src/apu.cpp src/apu.h src/ram.c src/ram.h src/buttons.c src/buttons.h src/clock.cpp src/clock.h)
 
 if( ENABLE_LTO AND supported )
     message(STATUS "IPO / LTO enabled")
