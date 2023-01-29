@@ -154,12 +154,6 @@ public:
     APU(CPU *cpu, bool debug);
     ~APU();
     u16 get_next_sample();
-
-private:
-    u8 get_ch1_sample(ch_control_t *ch_control, ch1_dat_t *ch_dat);
-    u8 get_ch2_sample(ch_control_t *ch_control, ch2_dat_t *ch_dat);
-    u8 get_ch3_sample(ch_control_t *ch_control, ch3_dat_t *ch_dat);
-    u8 get_ch4_sample(ch_control_t *ch_control, ch4_dat_t *ch_dat);
 };
 
 void audio_callback(void *, Uint8 *, int);

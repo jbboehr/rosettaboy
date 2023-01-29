@@ -6,7 +6,9 @@ GameBoy::GameBoy(struct Args *args) {
     this->cpu = new CPU(&this->ram, args->debug_cpu);
     this->gpu = gpu_ctor(this->cpu, &this->ram, this->cart.name, args->headless, args->debug_gpu);
     this->buttons = buttons_ctor(this->cpu, &this->ram, args->headless);
-    if(!args->silent) new APU(this->cpu, args->debug_apu);
+    if(!args->silent) {
+        this->apu = new APU(this->cpu, args->debug_apu);
+    }
     this->clock = clock_ctor(&this->buttons, args->frames, args->profile, args->turbo);
 }
 

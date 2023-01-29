@@ -14,6 +14,7 @@ private:
     struct Cart cart;
     struct RAM ram;
     CPU *cpu = nullptr;
+    APU *apu = nullptr;
     struct GPU gpu;
     struct Buttons buttons;
     struct Clock clock;
