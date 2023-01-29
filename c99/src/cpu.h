@@ -1,10 +1,9 @@
 #ifndef ROSETTABOY_CPU_H
 #define ROSETTABOY_CPU_H
 
-#include <cstdint>
+BEGIN_EXTERN_C()
 
-#include "cart.h"
-#include "ram.h"
+struct RAM;
 
 union oparg {
     u8 as_u8;   // B
@@ -12,16 +11,15 @@ union oparg {
     u16 as_u16; // H
 };
 
-class CPU {
-public:
+struct CPU {
     struct RAM *ram;
-    bool stop = false;
-    bool stepping = false;
-    bool interrupts = true;
-    bool halt = false;
-    bool debug = true;
-    int cycle = 0;
-    int owed_cycles = 0;
+    bool stop;
+    bool stepping;
+    bool interrupts;
+    bool halt;
+    bool debug;
+    int cycle;
+    int owed_cycles;
 
     union {
         u16 AF;
@@ -61,16 +59,13 @@ public:
     };
     u16 SP;
     u16 PC;
-
-    CPU(struct RAM *ram, bool debug);
 };
 
-BEGIN_EXTERN_C()
-
-void cpu_interrupt(CPU *cpu, enum Interrupt i);
-void cpu_stop(CPU *cpu, bool stop);
-bool cpu_is_stopped(CPU *cpu);
-void cpu_tick(CPU *self);
+struct CPU cpu_ctor(struct RAM *ram, bool debug);
+void cpu_interrupt(struct CPU *cpu, enum Interrupt i);
+void cpu_stop(struct CPU *cpu, bool stop);
+bool cpu_is_stopped(struct CPU *cpu);
+void cpu_tick(struct CPU *self);
 
 END_EXTERN_C()
 

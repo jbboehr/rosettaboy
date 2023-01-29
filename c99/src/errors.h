@@ -35,19 +35,23 @@ class Quit : public ControlledExit {
 public:
     Quit() { this->set_msg("User exited the emulator"); }
 };
-class UnitTestPassed : public ControlledExit {
-public:
-    UnitTestPassed() { this->set_msg("Unit test passed"); }
-};
-class UnitTestFailed : public ControlledExit {
-public:
-    UnitTestFailed() { this->set_msg("Unit test failed"); }
-};
 
 // Game error, ie the game developer has a bug
 class GameException : public EmuException {};
 class UserException : public EmuException {};
 #endif
+
+NORETURN static void unit_test_failed() {
+    fprintf(stdout, "Unit test failed");
+    fflush(stdout);
+    exit(2);
+}
+
+NORETURN static void unit_test_passed() {
+    fprintf(stdout, "Unit test passed");
+    fflush(stdout);
+    exit(0);
+}
 
 NORETURN static void invalid_opcode_err(u8 opcode) {
     fprintf(stdout, "Invalid opcode: 0x%02X", opcode);

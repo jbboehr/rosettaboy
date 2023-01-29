@@ -1,7 +1,7 @@
-#include <cstdio>
-#include <stdexcept>
 
 #include "consts.h"
+#include "cart.h"
+#include "ram.h"
 #include "cpu.h"
 #include "errors.h"
 
@@ -148,7 +148,7 @@ const char* const CB_OP_NAMES[] = {
         "SET 7,B", "SET 7,C", "SET 7,D", "SET 7,E", "SET 7,H", "SET 7,L", "SET 7,[HL]", "SET 7,A"
 };
 
-static inline void cpu_set_reg(CPU *self, u8 n, u8 val) {
+static inline void cpu_set_reg(struct CPU *self, u8 n, u8 val) {
     switch(n & 0x07) {
         case 0: self->B = val; break;
         case 1: self->C = val; break;
@@ -162,7 +162,7 @@ static inline void cpu_set_reg(CPU *self, u8 n, u8 val) {
     }
 }
 
-static inline u8 cpu_get_reg(CPU *self, u8 n) {
+static inline u8 cpu_get_reg(struct CPU *self, u8 n) {
     switch(n & 0x07) {
         case 0: return self->B; break;
         case 1: return self->C; break;
@@ -176,19 +176,19 @@ static inline u8 cpu_get_reg(CPU *self, u8 n) {
     }
 }
 
-static inline void cpu_push(CPU *self, u16 val) {
+static inline void cpu_push(struct CPU *self, u16 val) {
     ram_set(self->ram, self->SP - 1, ((val & 0xFF00) >> 8) & 0xFF);
     ram_set(self->ram, self->SP - 2, val & 0xFF);
     self->SP -= 2;
 }
 
-static inline u16 cpu_pop(CPU *self) {
+static inline u16 cpu_pop(struct CPU *self) {
     u16 val = (ram_get(self->ram, self->SP + 1) << 8) | ram_get(self->ram, self->SP);
     self->SP += 2;
     return val;
 }
 
-static inline void cpu_xor(CPU *self, u8 val) {
+static inline void cpu_xor(struct CPU *self, u8 val) {
     self->A ^= val;
 
     self->FLAG_Z = self->A == 0;
@@ -197,7 +197,7 @@ static inline void cpu_xor(CPU *self, u8 val) {
     self->FLAG_C = false;
 }
 
-static inline void cpu_or(CPU *self, u8 val) {
+static inline void cpu_or(struct CPU *self, u8 val) {
     self->A |= val;
 
     self->FLAG_Z = self->A == 0;
@@ -206,7 +206,7 @@ static inline void cpu_or(CPU *self, u8 val) {
     self->FLAG_C = false;
 }
 
-static inline void cpu_and(CPU *self, u8 val) {
+static inline void cpu_and(struct CPU *self, u8 val) {
     self->A &= val;
 
     self->FLAG_Z = self->A == 0;
@@ -215,14 +215,14 @@ static inline void cpu_and(CPU *self, u8 val) {
     self->FLAG_C = false;
 }
 
-static inline void cpu_cp(CPU *self, u8 val) {
+static inline void cpu_cp(struct CPU *self, u8 val) {
     self->FLAG_Z = self->A == val;
     self->FLAG_N = true;
     self->FLAG_H = (self->A & 0x0F) < (val & 0x0F);
     self->FLAG_C = self->A < val;
 }
 
-static inline void cpu_add(CPU *self, u8 val) {
+static inline void cpu_add(struct CPU *self, u8 val) {
     self->FLAG_C = self->A + val > 0xFF;
     self->FLAG_H = (self->A & 0x0F) + (val & 0x0F) > 0x0F;
     self->FLAG_N = false;
@@ -230,7 +230,7 @@ static inline void cpu_add(CPU *self, u8 val) {
     self->FLAG_Z = self->A == 0;
 }
 
-static inline void cpu_adc(CPU *self, u8 val) {
+static inline void cpu_adc(struct CPU *self, u8 val) {
     int carry = self->FLAG_C ? 1 : 0;
     self->FLAG_C = self->A + val + carry > 0xFF;
     self->FLAG_H = (self->A & 0x0F) + (val & 0x0F) + carry > 0x0F;
@@ -239,7 +239,7 @@ static inline void cpu_adc(CPU *self, u8 val) {
     self->FLAG_Z = self->A == 0;
 }
 
-static inline void cpu_sub(CPU *self, u8 val) {
+static inline void cpu_sub(struct CPU *self, u8 val) {
     self->FLAG_C = self->A < val;
     self->FLAG_H = (self->A & 0x0F) < (val & 0x0F);
     self->A -= val;
@@ -247,7 +247,7 @@ static inline void cpu_sub(CPU *self, u8 val) {
     self->FLAG_N = true;
 }
 
-static inline void cpu_sbc(CPU *self, u8 val) {
+static inline void cpu_sbc(struct CPU *self, u8 val) {
     u8 carry = self->FLAG_C ? 1 : 0;
     u8 res = self->A - val - carry;
     self->FLAG_H = ((self->A ^ val ^ (res & 0xff)) & (1 << 4)) != 0;
@@ -268,7 +268,7 @@ static inline void cpu_sbc(CPU *self, u8 val) {
  * an instruction based on the 5, and then storing the
  * data based on the 3 again.
  */
-static inline void cpu_tick_cb(CPU *self, u8 op) {
+static inline void cpu_tick_cb(struct CPU *self, u8 op) {
     u8 val, bit;
     bool orig_c;
 
@@ -375,7 +375,9 @@ static inline void cpu_tick_cb(CPU *self, u8 op) {
             break;
 
             // Should never get here
-        default: printf("Op CB %02X not implemented\n", op); throw std::invalid_argument("Op not implemented");
+        default:
+            invalid_opcode_err(op);
+            break;
     }
     cpu_set_reg(self, op, val);
 }
@@ -384,7 +386,7 @@ static inline void cpu_tick_cb(CPU *self, u8 op) {
  * Execute a normal instruction (everything except for those
  * prefixed with 0xCB)
  */
-static inline void cpu_tick_main(CPU *self, u8 op, oparg arg) {
+static inline void cpu_tick_main(struct CPU *self, u8 op, union oparg arg) {
     // Load args
 
     // Execute
@@ -622,8 +624,8 @@ static inline void cpu_tick_main(CPU *self, u8 op, oparg arg) {
         case 0xF9: self->SP = self->HL; break;
         case 0xFA: self->A = ram_get(self->ram, arg.as_u16); break;
         case 0xFB: self->interrupts = true; break;
-        case 0xFC: throw new UnitTestPassed(); // unofficial
-        case 0xFD: throw new UnitTestFailed(); // unofficial
+        case 0xFC: unit_test_passed(); // unofficial
+        case 0xFD: unit_test_failed(); // unofficial
         case 0xFE: cpu_cp(self, arg.as_u8); break;
         case 0xFF: cpu_push(self, self->PC); self->PC = 0x38; break;
 
@@ -633,7 +635,7 @@ static inline void cpu_tick_main(CPU *self, u8 op, oparg arg) {
     }
 }
 
-static void cpu_dump_regs(CPU *self) {
+static void cpu_dump_regs(struct CPU *self) {
     // stack
     u16 sp_val = ram_get(self->ram, self->SP) | ram_get(self->ram, self->SP + 1) << 8;
 
@@ -682,7 +684,7 @@ static void cpu_dump_regs(CPU *self) {
  * Program Counter register; if the instruction takes
  * an argument then pick that too; then execute it.
  */
-static inline void cpu_tick_instructions(CPU *self) {
+static inline void cpu_tick_instructions(struct CPU *self) {
     // if the previous instruction was large, let's not run any
     // more instructions until other subsystems have caught up
     if(self->owed_cycles) {
@@ -701,7 +703,7 @@ static inline void cpu_tick_instructions(CPU *self) {
         cpu_tick_cb(self, op);
         self->owed_cycles = OP_CB_CYCLES[op];
     } else {
-        oparg arg;
+        union oparg arg;
         arg.as_u16 = 0xCA75;
         u8 arg_len = OP_ARG_BYTES[OP_ARG_TYPES[op]];
         if(arg_len == 1) {
@@ -721,7 +723,7 @@ static inline void cpu_tick_instructions(CPU *self) {
     }
 }
 
-static inline bool cpu_check_interrupt(CPU *self, u8 queue, u8 i, u16 handler) {
+static inline bool cpu_check_interrupt(struct CPU *self, u8 queue, u8 i, u16 handler) {
     if(queue & i) {
         // TODO: wait two cycles
         // TODO: push16(PC) should also take two cycles
@@ -739,7 +741,7 @@ static inline bool cpu_check_interrupt(CPU *self, u8 queue, u8 i, u16 handler) {
  * there are any interrupts which are both enabled and flagged,
  * clear the flag and call the handler for the first of them.
  */
-static inline void cpu_tick_interrupts(CPU *self) {
+static inline void cpu_tick_interrupts(struct CPU *self) {
     u8 queue = ram_get(self->ram, MEM_IE) & ram_get(self->ram, MEM_IF);
     if(self->interrupts && queue) {
         if(self->debug) {
@@ -758,7 +760,7 @@ static inline void cpu_tick_interrupts(CPU *self) {
  * Increment the timer registers, and send an interrupt
  * when TIMA wraps around.
  */
-static inline void cpu_tick_clock(CPU *self) {
+static inline void cpu_tick_clock(struct CPU *self) {
     self->cycle++;
 
     // TODO: writing any value to MEM_DIV should reset it to 0x00
@@ -782,7 +784,7 @@ static inline void cpu_tick_clock(CPU *self) {
  * If there is a non-zero value in ram[MEM_DMA], eg 0x42, then
  * we should copy memory from eg 0x4200 to OAM space.
  */
-static inline void cpu_tick_dma(CPU *self) {
+static inline void cpu_tick_dma(struct CPU *self) {
     // TODO: DMA should take 26 cycles, during which main RAM is inaccessible
     if(ram_get(self->ram, MEM_DMA)) {
         u16 dma_src = ram_get(self->ram, MEM_DMA) << 8;
@@ -797,24 +799,27 @@ static inline void cpu_tick_dma(CPU *self) {
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
  */
-CPU::CPU(struct RAM *ram, bool debug) {
-    this->ram = ram;
-    this->debug = debug;
-    this->interrupts = false;
+struct CPU cpu_ctor(struct RAM *ram, bool debug) {
+    struct CPU self = {
+        .ram = ram,
+        .debug = debug,
+        .interrupts = false,
+        .AF = 0x0000,
+        .BC = 0x0000,
+        .DE = 0x0000,
+        .HL = 0x0000,
+        .SP = 0x0000,
+        .PC = 0x0000,
+    };
 
-    this->AF = 0x0000;
-    this->BC = 0x0000;
-    this->DE = 0x0000;
-    this->HL = 0x0000;
-    this->SP = 0x0000;
-    this->PC = 0x0000;
+    return self;
 }
 
-void cpu_stop(CPU *cpu, bool stop) {
+void cpu_stop(struct CPU *cpu, bool stop) {
     cpu->stop = stop;
 }
 
-bool cpu_is_stopped(CPU *cpu) {
+bool cpu_is_stopped(struct CPU *cpu) {
     return cpu->stop;
 }
 
@@ -823,12 +828,12 @@ bool cpu_is_stopped(CPU *cpu) {
  * handler for this interrupt is enabled (and interrupts in general
  * are enabled), then the interrupt handler will be called.
  */
-void cpu_interrupt(CPU *self, enum Interrupt i) {
+void cpu_interrupt(struct CPU *self, enum Interrupt i) {
     ram_set(self->ram, MEM_IF, ram_get(self->ram, MEM_IF) | i);
     self->halt = false; // interrupts interrupt HALT state
 }
 
-void cpu_tick(CPU *self) {
+void cpu_tick(struct CPU *self) {
     cpu_tick_dma(self);
     cpu_tick_clock(self);
     cpu_tick_interrupts(self);
@@ -836,5 +841,3 @@ void cpu_tick(CPU *self) {
     if(self->stop) return;
     cpu_tick_instructions(self);
 }
-
-

@@ -8,12 +8,13 @@
 #include "clock.h"
 #include "cpu.h"
 #include "gpu.h"
+#include "ram.h"
 
 class GameBoy {
 private:
     struct Cart cart;
     struct RAM ram;
-    CPU *cpu = nullptr;
+    struct CPU cpu;
     struct APU apu;
     struct GPU gpu;
     struct Buttons buttons;

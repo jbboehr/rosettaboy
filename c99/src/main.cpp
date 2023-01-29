@@ -10,22 +10,8 @@ int main(int argc, char *argv[]) {
         return args.exit_code;
     }
 
-    try {
-        GameBoy *gameboy = new GameBoy(&args);
-        gameboy->run();
-    } catch(UnitTestFailed *e) {
-        std::cout << e->what() << std::endl;
-        return 2;
-    } catch(ControlledExit *e) {
-        std::cout << e->what() << std::endl;
-        return 0;
-    } catch(GameException *e) {
-        std::cout << e->what() << std::endl;
-        return 3;
-    } catch(UserException *e) {
-        std::cout << e->what() << std::endl;
-        return 4;
-    }
+    GameBoy *gameboy = new GameBoy(&args);
+    gameboy->run();
 
     printf("\n");
     return 0;
