@@ -22,7 +22,7 @@ struct Sprite {
 };
 
 class GPU {
-private:
+public:
     bool debug;
     SDL_Window *hw_window;
     SDL_Texture *hw_buffer;
@@ -38,13 +38,6 @@ public:
     GPU(CPU *cpu, char *title, bool headless, bool debug);
     ~GPU();
     void tick();
-
-private:
-    void update_palettes();
-    void draw_debug();
-    void draw_line(i32 ly);
-    void paint_tile(i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool flip_x, bool flip_y);
-    void paint_tile_line(i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool flip_x, bool flip_y, i32 y);
 };
 
 #endif // ROSETTABOY_GPU_H
