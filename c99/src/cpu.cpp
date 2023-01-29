@@ -678,6 +678,26 @@ static inline void cpu_tick_instructions(CPU *self) {
 }
 
 /**
+ * Compare Interrupt Enabled and Interrupt Flag registers - if
+ * there are any interrupts which are both enabled and flagged,
+ * clear the flag and call the handler for the first of them.
+ */
+static inline void cpu_tick_interrupts(CPU *self) {
+    u8 queue = ram_get(self->ram, MEM_IE) & ram_get(self->ram, MEM_IF);
+    if(self->interrupts && queue) {
+        if(self->debug) {
+            printf("Handling interrupts: %02X & %02X\n", ram_get(self->ram, MEM_IE), ram_get(self->ram, MEM_IF));
+        }
+        self->interrupts = false; // no nested interrupts, RETI will re-enable
+        self->check_interrupt(queue, INTERRUPT_VBLANK, MEM_VBLANK_HANDLER) ||
+        self->check_interrupt(queue, INTERRUPT_STAT, MEM_LCD_HANDLER) ||
+        self->check_interrupt(queue, INTERRUPT_TIMER, MEM_TIMER_HANDLER) ||
+        self->check_interrupt(queue, INTERRUPT_SERIAL, MEM_SERIAL_HANDLER) ||
+        self->check_interrupt(queue, INTERRUPT_JOYPAD, MEM_JOYPAD_HANDLER);
+    }
+}
+
+/**
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
  */
@@ -763,7 +783,7 @@ void cpu_interrupt(CPU *cpu, enum Interrupt i) {
 void CPU::tick() {
     this->tick_dma();
     this->tick_clock();
-    this->tick_interrupts();
+    cpu_tick_interrupts(this);
     if(this->halt) return;
     if(this->stop) return;
     cpu_tick_instructions(this);
@@ -821,20 +841,3 @@ bool CPU::check_interrupt(u8 queue, u8 i, u16 handler) {
     return false;
 }
 
-/**
- * Compare Interrupt Enabled and Interrupt Flag registers - if
- * there are any interrupts which are both enabled and flagged,
- * clear the flag and call the handler for the first of them.
- */
-void CPU::tick_interrupts() {
-    u8 queue = ram_get(this->ram, MEM_IE) & ram_get(this->ram, MEM_IF);
-    if(this->interrupts && queue) {
-        if(debug) printf("Handling interrupts: %02X & %02X\n", ram_get(this->ram, MEM_IE), ram_get(this->ram, MEM_IF));
-        this->interrupts = false; // no nested interrupts, RETI will re-enable
-        this->check_interrupt(queue, INTERRUPT_VBLANK, MEM_VBLANK_HANDLER) ||
-            this->check_interrupt(queue, INTERRUPT_STAT, MEM_LCD_HANDLER) ||
-            this->check_interrupt(queue, INTERRUPT_TIMER, MEM_TIMER_HANDLER) ||
-            this->check_interrupt(queue, INTERRUPT_SERIAL, MEM_SERIAL_HANDLER) ||
-            this->check_interrupt(queue, INTERRUPT_JOYPAD, MEM_JOYPAD_HANDLER);
-    }
-}

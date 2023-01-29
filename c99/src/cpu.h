@@ -67,11 +67,9 @@ public:
     void interrupt(Interrupt i);
     void dump_regs();
 
-private:
     void tick_dma();
     void tick_clock();
     bool check_interrupt(u8 queue, u8 i, u16 handler);
-    void tick_interrupts();
 };
 
 BEGIN_EXTERN_C()
