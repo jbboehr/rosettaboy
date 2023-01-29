@@ -133,7 +133,7 @@ struct ch_control_t {
 };
 
 class APU {
-private:
+public:
     bool debug = false;
     int ch1_freq_timer = 0, ch2_freq_timer = 0, ch3_freq_timer = 0, ch4_freq_timer = 0;
     int ch1_envelope_vol = 0, ch2_envelope_vol = 0, ch4_envelope_vol = 0;
@@ -146,14 +146,10 @@ private:
     u8 ch2_duty_pos = 0;
     u8 ch3_sample = 0;
     u16 ch4_lfsr = 0xFFFF;
-
-public:
     CPU *cpu = nullptr;
 
-public:
     APU(CPU *cpu, bool debug);
     ~APU();
-    u16 get_next_sample();
 };
 
 void audio_callback(void *, Uint8 *, int);

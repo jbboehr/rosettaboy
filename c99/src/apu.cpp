@@ -18,9 +18,9 @@ static inline int hz_to_samples(int hz) {
 
 #define LENGTH_COUNTER(ch)                                                                                             \
     if(ch##_dat->length_enable == 1) {                                                                                 \
-        if(this->ch##_length > 0) {                                                                                    \
-            this->ch##_length_timer = (this->ch##_length_timer + 1) % hz_to_samples(256);                              \
-            if(this->ch##_length_timer == 0) this->ch##_length--;                                                      \
+        if(self->ch##_length > 0) {                                                                                    \
+            self->ch##_length_timer = (self->ch##_length_timer + 1) % hz_to_samples(256);                              \
+            if(self->ch##_length_timer == 0) self->ch##_length--;                                                      \
             ch_control->ch##_active = true;                                                                            \
         } else {                                                                                                       \
             ch_control->ch##_active = false;                                                                           \
@@ -32,16 +32,16 @@ static inline int hz_to_samples(int hz) {
 
 #define ENVELOPE(ch)                                                                                                   \
     if(ch##_dat->envelope_period) {                                                                                    \
-        this->ch##_envelope_timer = (this->ch##_envelope_timer + 1) % (ch##_dat->envelope_period * hz_to_samples(64)); \
-        if(this->ch##_envelope_timer == 0) {                                                                           \
+        self->ch##_envelope_timer = (self->ch##_envelope_timer + 1) % (ch##_dat->envelope_period * hz_to_samples(64)); \
+        if(self->ch##_envelope_timer == 0) {                                                                           \
             if(ch##_dat->envelope_direction == 0) {                                                                    \
-                if(ch##_envelope_vol > 0) ch##_envelope_vol--;                                                         \
+                if(self->ch##_envelope_vol > 0) self->ch##_envelope_vol--;                                                         \
             } else {                                                                                                   \
-                if(ch##_envelope_vol < 0x0F) ch##_envelope_vol++;                                                      \
+                if(self->ch##_envelope_vol < 0x0F) self->ch##_envelope_vol++;                                                      \
             }                                                                                                          \
         }                                                                                                              \
     }                                                                                                                  \
-    ch = ch * ch##_envelope_vol / 0x0F;
+    ch = ch * self->ch##_envelope_vol / 0x0F;
 
 static inline u8 apu_get_ch1_sample(APU *self, ch_control_t *ch_control, ch1_dat_t *ch1_dat) {
     //=================================================================
@@ -100,7 +100,7 @@ static inline u8 apu_get_ch2_sample(APU *self, ch_control_t *ch_control, ch2_dat
     self->ch2_freq_timer = (self->ch2_freq_timer + 1) % hz_to_samples(ch2_freq * 8);
 
     // Duty
-    if(ch2_freq_timer == 0) {
+    if(self->ch2_freq_timer == 0) {
         self->ch2_duty_pos = (self->ch2_duty_pos + 1) % 8;
     }
     u8 ch2 = duty[ch2_dat->duty][self->ch2_duty_pos] * 0xFF;
@@ -191,12 +191,12 @@ static inline u8 apu_get_ch4_sample(APU *self, ch_control_t *ch_control, ch4_dat
 
     // LFSR
     if(self->ch4_freq_timer == 0) {
-        u8 new_bit = ((ch4_lfsr & 0b10) >> 1) ^ (ch4_lfsr & 0b01);                      // xor two low bits
-        ch4_lfsr >>= 1;                                                                 // shift right
-        ch4_lfsr |= new_bit << 14;                                                      // bit15 = new
-        if(ch4_dat->lfsr_mode == 1) ch4_lfsr = (ch4_lfsr & ~(1 << 6)) | (new_bit << 6); // bit7 = new
+        u8 new_bit = ((self->ch4_lfsr & 0b10) >> 1) ^ (self->ch4_lfsr & 0b01);                      // xor two low bits
+        self->ch4_lfsr >>= 1;                                                                 // shift right
+        self->ch4_lfsr |= new_bit << 14;                                                      // bit15 = new
+        if(ch4_dat->lfsr_mode == 1) self->ch4_lfsr = (self->ch4_lfsr & ~(1 << 6)) | (new_bit << 6); // bit7 = new
     }
-    u8 ch4 = 0xFF - ((ch4_lfsr & 0b01) * 0xFF); // bit0, inverted
+    u8 ch4 = 0xFF - ((self->ch4_lfsr & 0b01) * 0xFF); // bit0, inverted
 
     // Length Counter
     LENGTH_COUNTER(ch4);
@@ -218,6 +218,43 @@ static inline u8 apu_get_ch4_sample(APU *self, ch_control_t *ch_control, ch4_dat
     return ch4;
 }
 
+static inline u16 apu_get_next_sample(APU *self) {
+    //=================================================================
+    // Control
+
+    ch_control_t *ch_control = (ch_control_t *)&self->cpu->ram->data[MEM_NR50];
+
+    if(!ch_control->snd_enable) {
+        // TODO: wipe all registers
+        return 0;
+    }
+
+    u8 *ram = self->cpu->ram->data;
+    u8 ch1 = apu_get_ch1_sample(self, ch_control, (ch1_dat_t *)&ram[MEM_NR10]);
+    u8 ch2 = apu_get_ch2_sample(self, ch_control, (ch2_dat_t *)&ram[MEM_NR20]);
+    u8 ch3 = apu_get_ch3_sample(self, ch_control, (ch3_dat_t *)&ram[MEM_NR30]);
+    u8 ch4 = apu_get_ch4_sample(self, ch_control, (ch4_dat_t *)&ram[MEM_NR40]);
+
+    //=================================================================
+    // Mixer
+
+    // clang-format off
+    u8 s01 = (
+                     (ch1 >> 2) * ch_control->ch1_to_s01 +
+                     (ch2 >> 2) * ch_control->ch2_to_s01 +
+                     (ch3 >> 2) * ch_control->ch3_to_s01 +
+                     (ch4 >> 2) * ch_control->ch4_to_s01
+             ) * ch_control->s01_volume / 4;
+    u8 s02 = (
+                     (ch1 >> 2) * ch_control->ch1_to_s02 +
+                     (ch2 >> 2) * ch_control->ch2_to_s02 +
+                     (ch3 >> 2) * ch_control->ch3_to_s02 +
+                     (ch4 >> 2) * ch_control->ch4_to_s02
+             ) * ch_control->s02_volume / 4;
+    // clang-format on
+    return s01 << 8 | s02; // s01 = right, s02 = left
+}
+
 APU::APU(CPU *cpu, bool debug) {
     SDL_InitSubSystem(SDL_INIT_AUDIO);
 
@@ -237,49 +274,12 @@ APU::APU(CPU *cpu, bool debug) {
 
 APU::~APU() { SDL_CloseAudio(); }
 
-u16 APU::get_next_sample() {
-    //=================================================================
-    // Control
-
-    ch_control_t *ch_control = (ch_control_t *)&this->cpu->ram->data[MEM_NR50];
-
-    if(!ch_control->snd_enable) {
-        // TODO: wipe all registers
-        return 0;
-    }
-
-    u8 *ram = this->cpu->ram->data;
-    u8 ch1 = apu_get_ch1_sample(this, ch_control, (ch1_dat_t *)&ram[MEM_NR10]);
-    u8 ch2 = apu_get_ch2_sample(this, ch_control, (ch2_dat_t *)&ram[MEM_NR20]);
-    u8 ch3 = apu_get_ch3_sample(this, ch_control, (ch3_dat_t *)&ram[MEM_NR30]);
-    u8 ch4 = apu_get_ch4_sample(this, ch_control, (ch4_dat_t *)&ram[MEM_NR40]);
-
-    //=================================================================
-    // Mixer
-
-    // clang-format off
-    u8 s01 = (
-        (ch1 >> 2) * ch_control->ch1_to_s01 +
-        (ch2 >> 2) * ch_control->ch2_to_s01 +
-        (ch3 >> 2) * ch_control->ch3_to_s01 +
-        (ch4 >> 2) * ch_control->ch4_to_s01
-    ) * ch_control->s01_volume / 4;
-    u8 s02 = (
-        (ch1 >> 2) * ch_control->ch1_to_s02 +
-        (ch2 >> 2) * ch_control->ch2_to_s02 +
-        (ch3 >> 2) * ch_control->ch3_to_s02 +
-        (ch4 >> 2) * ch_control->ch4_to_s02
-    ) * ch_control->s02_volume / 4;
-    // clang-format on
-    return s01 << 8 | s02; // s01 = right, s02 = left
-}
-
 void audio_callback(void *_sound, Uint8 *_stream, int _length) {
     u16 *stream = (u16 *)_stream;
     APU *sound = (APU *)_sound;
     int length = _length / sizeof(stream[0]);
 
     for(int i = 0; i < length; i++) {
-        stream[i] = sound->get_next_sample();
+        stream[i] = apu_get_next_sample(sound);
     }
 }
