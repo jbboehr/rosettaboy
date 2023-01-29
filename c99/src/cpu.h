@@ -78,7 +78,6 @@ private:
     void tick_interrupts();
     void tick_instructions();
     void tick_main(u8 op, oparg arg);
-    void tick_cb(u8 op);
 };
 
 BEGIN_EXTERN_C()

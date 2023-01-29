@@ -258,6 +258,129 @@ static inline void cpu_sbc(CPU *self, u8 val) {
 }
 
 /**
+ * CB instructions all share a format where the first
+ * 5 bits of the opcode defines the instruction, and
+ * the latter 3 bits of the opcode define the data to
+ * work with (7 registers + 1 "RAM at HL").
+ *
+ * We can take advantage of this to avoid copy-pasting,
+ * by loading the data based on the 3 bits, executing
+ * an instruction based on the 5, and then storing the
+ * data based on the 3 again.
+ */
+static inline void cpu_tick_cb(CPU *self, u8 op) {
+    u8 val, bit;
+    bool orig_c;
+
+    val = cpu_get_reg(self, op);
+    switch(op & 0xF8) {
+        // RLC
+        case 0x00 ... 0x07:
+            self->FLAG_C = (val & (1 << 7)) != 0;
+            val <<= 1;
+            if(self->FLAG_C) val |= (1 << 0);
+            self->FLAG_N = false;
+            self->FLAG_H = false;
+            self->FLAG_Z = val == 0;
+            break;
+
+            // RRC
+        case 0x08 ... 0x0F:
+            self->FLAG_C = (val & (1 << 0)) != 0;
+            val >>= 1;
+            if(self->FLAG_C) val |= (1 << 7);
+            self->FLAG_N = false;
+            self->FLAG_H = false;
+            self->FLAG_Z = val == 0;
+            break;
+
+            // RL
+        case 0x10 ... 0x17:
+            orig_c = self->FLAG_C;
+            self->FLAG_C = (val & (1 << 7)) != 0;
+            val <<= 1;
+            if(orig_c) val |= (1 << 0);
+            self->FLAG_N = false;
+            self->FLAG_H = false;
+            self->FLAG_Z = val == 0;
+            break;
+
+            // RR
+        case 0x18 ... 0x1F:
+            orig_c = self->FLAG_C;
+            self->FLAG_C = (val & (1 << 0)) != 0;
+            val >>= 1;
+            if(orig_c) val |= (1 << 7);
+            self->FLAG_N = false;
+            self->FLAG_H = false;
+            self->FLAG_Z = val == 0;
+            break;
+
+            // SLA
+        case 0x20 ... 0x27:
+            self->FLAG_C = (val & (1 << 7)) != 0;
+            val <<= 1;
+            val &= 0xFF;
+            self->FLAG_N = false;
+            self->FLAG_H = false;
+            self->FLAG_Z = val == 0;
+            break;
+
+            // SRA
+        case 0x28 ... 0x2F:
+            self->FLAG_C = (val & (1 << 0)) != 0;
+            val >>= 1;
+            if(val & (1 << 6)) val |= (1 << 7);
+            self->FLAG_N = false;
+            self->FLAG_H = false;
+            self->FLAG_Z = val == 0;
+            break;
+
+            // SWAP
+        case 0x30 ... 0x37:
+            val = ((val & 0xF0) >> 4) | ((val & 0x0F) << 4);
+            self->FLAG_C = false;
+            self->FLAG_N = false;
+            self->FLAG_H = false;
+            self->FLAG_Z = val == 0;
+            break;
+
+            // SRL
+        case 0x38 ... 0x3F:
+            self->FLAG_C = (val & (1 << 0)) != 0;
+            val >>= 1;
+            self->FLAG_N = false;
+            self->FLAG_H = false;
+            self->FLAG_Z = val == 0;
+            break;
+
+            // BIT
+        case 0x40 ... 0x7F:
+            bit = (op & 0b00111000) >> 3;
+            self->FLAG_Z = (val & (1 << bit)) == 0;
+            self->FLAG_N = false;
+            self->FLAG_H = true;
+            break;
+
+            // RES
+        case 0x80 ... 0xBF:
+            bit = (op & 0b00111000) >> 3;
+            val &= ((1 << bit) ^ 0xFF);
+            break;
+
+            // SET
+        case 0xC0 ... 0xFF:
+            bit = (op & 0b00111000) >> 3;
+            val |= (1 << bit);
+            break;
+
+            // Should never get here
+        default: printf("Op CB %02X not implemented\n", op); throw std::invalid_argument("Op not implemented");
+    }
+    cpu_set_reg(self, op, val);
+}
+
+/**
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
  */
@@ -440,7 +563,7 @@ void CPU::tick_instructions() {
     if(op == 0xCB) {
         op = ram_get(this->ram, this->PC + 1);
         this->PC += 2;
-        this->tick_cb(op);
+        cpu_tick_cb(this, op);
         owed_cycles = OP_CB_CYCLES[op];
     } else {
         oparg arg;
@@ -713,127 +836,3 @@ void CPU::tick_main(u8 op, oparg arg) {
             // clang-format on
     }
 }
-
-/**
- * CB instructions all share a format where the first
- * 5 bits of the opcode defines the instruction, and
- * the latter 3 bits of the opcode define the data to
- * work with (7 registers + 1 "RAM at HL").
- *
- * We can take advantage of this to avoid copy-pasting,
- * by loading the data based on the 3 bits, executing
- * an instruction based on the 5, and then storing the
- * data based on the 3 again.
- */
-void CPU::tick_cb(u8 op) {
-    u8 val, bit;
-    bool orig_c;
-
-    val = cpu_get_reg(this, op);
-    switch(op & 0xF8) {
-        // RLC
-        case 0x00 ... 0x07:
-            this->FLAG_C = (val & (1 << 7)) != 0;
-            val <<= 1;
-            if(this->FLAG_C) val |= (1 << 0);
-            this->FLAG_N = false;
-            this->FLAG_H = false;
-            this->FLAG_Z = val == 0;
-            break;
-
-        // RRC
-        case 0x08 ... 0x0F:
-            this->FLAG_C = (val & (1 << 0)) != 0;
-            val >>= 1;
-            if(this->FLAG_C) val |= (1 << 7);
-            this->FLAG_N = false;
-            this->FLAG_H = false;
-            this->FLAG_Z = val == 0;
-            break;
-
-        // RL
-        case 0x10 ... 0x17:
-            orig_c = this->FLAG_C;
-            this->FLAG_C = (val & (1 << 7)) != 0;
-            val <<= 1;
-            if(orig_c) val |= (1 << 0);
-            this->FLAG_N = false;
-            this->FLAG_H = false;
-            this->FLAG_Z = val == 0;
-            break;
-
-        // RR
-        case 0x18 ... 0x1F:
-            orig_c = this->FLAG_C;
-            this->FLAG_C = (val & (1 << 0)) != 0;
-            val >>= 1;
-            if(orig_c) val |= (1 << 7);
-            this->FLAG_N = false;
-            this->FLAG_H = false;
-            this->FLAG_Z = val == 0;
-            break;
-
-        // SLA
-        case 0x20 ... 0x27:
-            this->FLAG_C = (val & (1 << 7)) != 0;
-            val <<= 1;
-            val &= 0xFF;
-            this->FLAG_N = false;
-            this->FLAG_H = false;
-            this->FLAG_Z = val == 0;
-            break;
-
-        // SRA
-        case 0x28 ... 0x2F:
-            this->FLAG_C = (val & (1 << 0)) != 0;
-            val >>= 1;
-            if(val & (1 << 6)) val |= (1 << 7);
-            this->FLAG_N = false;
-            this->FLAG_H = false;
-            this->FLAG_Z = val == 0;
-            break;
-
-        // SWAP
-        case 0x30 ... 0x37:
-            val = ((val & 0xF0) >> 4) | ((val & 0x0F) << 4);
-            this->FLAG_C = false;
-            this->FLAG_N = false;
-            this->FLAG_H = false;
-            this->FLAG_Z = val == 0;
-            break;
-
-        // SRL
-        case 0x38 ... 0x3F:
-            this->FLAG_C = (val & (1 << 0)) != 0;
-            val >>= 1;
-            this->FLAG_N = false;
-            this->FLAG_H = false;
-            this->FLAG_Z = val == 0;
-            break;
-
-        // BIT
-        case 0x40 ... 0x7F:
-            bit = (op & 0b00111000) >> 3;
-            this->FLAG_Z = (val & (1 << bit)) == 0;
-            this->FLAG_N = false;
-            this->FLAG_H = true;
-            break;
-
-        // RES
-        case 0x80 ... 0xBF:
-            bit = (op & 0b00111000) >> 3;
-            val &= ((1 << bit) ^ 0xFF);
-            break;
-
-        // SET
-        case 0xC0 ... 0xFF:
-            bit = (op & 0b00111000) >> 3;
-            val |= (1 << bit);
-            break;
-
-        // Should never get here
-        default: printf("Op CB %02X not implemented\n", op); throw std::invalid_argument("Op not implemented");
-    }
-    cpu_set_reg(this, op, val);
-}
-
