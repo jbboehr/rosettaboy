@@ -273,29 +273,29 @@ src/cpu.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/cpu.c.s
 .PHONY : src/cpu.c.s
 
-src/gameboy.o: src/gameboy.cpp.o
+src/gameboy.o: src/gameboy.c.o
 .PHONY : src/gameboy.o
 
 # target to build an object file
-src/gameboy.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/gameboy.cpp.o
-.PHONY : src/gameboy.cpp.o
+src/gameboy.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/gameboy.c.o
+.PHONY : src/gameboy.c.o
 
-src/gameboy.i: src/gameboy.cpp.i
+src/gameboy.i: src/gameboy.c.i
 .PHONY : src/gameboy.i
 
 # target to preprocess a source file
-src/gameboy.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/gameboy.cpp.i
-.PHONY : src/gameboy.cpp.i
+src/gameboy.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/gameboy.c.i
+.PHONY : src/gameboy.c.i
 
-src/gameboy.s: src/gameboy.cpp.s
+src/gameboy.s: src/gameboy.c.s
 .PHONY : src/gameboy.s
 
 # target to generate assembly for a file
-src/gameboy.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/gameboy.cpp.s
-.PHONY : src/gameboy.cpp.s
+src/gameboy.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/gameboy.c.s
+.PHONY : src/gameboy.c.s
 
 src/gpu.o: src/gpu.c.o
 .PHONY : src/gpu.o
@@ -321,29 +321,29 @@ src/gpu.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/gpu.c.s
 .PHONY : src/gpu.c.s
 
-src/main.o: src/main.cpp.o
+src/main.o: src/main.c.o
 .PHONY : src/main.o
 
 # target to build an object file
-src/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/main.cpp.o
-.PHONY : src/main.cpp.o
+src/main.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/main.c.o
+.PHONY : src/main.c.o
 
-src/main.i: src/main.cpp.i
+src/main.i: src/main.c.i
 .PHONY : src/main.i
 
 # target to preprocess a source file
-src/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/main.cpp.i
-.PHONY : src/main.cpp.i
+src/main.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/main.c.i
+.PHONY : src/main.c.i
 
-src/main.s: src/main.cpp.s
+src/main.s: src/main.c.s
 .PHONY : src/main.s
 
 # target to generate assembly for a file
-src/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/main.cpp.s
-.PHONY : src/main.cpp.s
+src/main.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/main.c.s
+.PHONY : src/main.c.s
 
 src/ram.o: src/ram.c.o
 .PHONY : src/ram.o

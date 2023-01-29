@@ -1,7 +1,6 @@
 #include "args.h"
 #include "errors.h"
 #include "gameboy.h"
-#include <iostream>
 
 int main(int argc, char *argv[]) {
     struct Args args = parse_args(argc, argv);
