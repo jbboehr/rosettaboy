@@ -21,7 +21,12 @@ public:
     bool turbo = false;
 
     Buttons(CPU *cpu, bool headless);
-    void tick();
 };
+
+BEGIN_EXTERN_C()
+
+void buttons_tick(Buttons *self);
+
+END_EXTERN_C()
 
 #endif // ROSETTABOY_BUTTONS_H

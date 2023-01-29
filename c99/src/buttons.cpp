@@ -23,13 +23,13 @@ Buttons::Buttons(CPU *cpu, bool headless) {
     this->cycle = 0;
 }
 
-void Buttons::tick() {
-    this->cycle++;
-    update_buttons(this);
-    if(this->cycle % 17556 == 20) {
-        if(handle_inputs(this)) {
-            this->cpu->stop = false;
-            this->cpu->interrupt(Interrupt::JOYPAD);
+void buttons_tick(Buttons *self) {
+    self->cycle++;
+    update_buttons(self);
+    if(self->cycle % 17556 == 20) {
+        if(handle_inputs(self)) {
+            self->cpu->stop = false;
+            self->cpu->interrupt(Interrupt::JOYPAD);
         }
     }
 }
