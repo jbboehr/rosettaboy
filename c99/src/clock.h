@@ -1,28 +1,25 @@
 #ifndef ROSETTABOY_CLOCK_H
 #define ROSETTABOY_CLOCK_H
 
-#include <SDL2/SDL.h>
-
-#include "buttons.h"
-#include "consts.h"
-
-class Clock {
-public:
-    Buttons *buttons = nullptr;
-    int cycle = 0;
-    int frame = 0;
-    int last_frame_start = SDL_GetTicks();
-    int start = SDL_GetTicks();
-    int frames = 0;
-    int profile = 0;
-    bool turbo = false;
-
-    Clock(Buttons *buttons, int frames, int profile, bool turbo);
-};
+#include <stdbool.h>
 
 BEGIN_EXTERN_C()
 
-void clock_tick(Clock *self);
+struct Buttons;
+
+struct Clock {
+    struct Buttons *buttons;
+    int cycle;
+    int frame;
+    int last_frame_start;
+    int start;
+    int frames;
+    int profile;
+    bool turbo;
+};
+
+struct Clock clock_ctor(struct Buttons *buttons, int frames, int profile, bool turbo);
+void clock_tick(struct Clock *self);
 
 END_EXTERN_C()
 

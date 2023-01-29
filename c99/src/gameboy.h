@@ -16,7 +16,7 @@ private:
     CPU *cpu = nullptr;
     GPU *gpu = nullptr;
     struct Buttons buttons;
-    Clock *clock = nullptr;
+    struct Clock clock;
 
 public:
     GameBoy(struct Args *args);

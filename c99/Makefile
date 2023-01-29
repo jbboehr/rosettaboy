@@ -225,29 +225,29 @@ src/cart.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/cart.c.s
 .PHONY : src/cart.c.s
 
-src/clock.o: src/clock.cpp.o
+src/clock.o: src/clock.c.o
 .PHONY : src/clock.o
 
 # target to build an object file
-src/clock.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/clock.cpp.o
-.PHONY : src/clock.cpp.o
+src/clock.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/clock.c.o
+.PHONY : src/clock.c.o
 
-src/clock.i: src/clock.cpp.i
+src/clock.i: src/clock.c.i
 .PHONY : src/clock.i
 
 # target to preprocess a source file
-src/clock.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/clock.cpp.i
-.PHONY : src/clock.cpp.i
+src/clock.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/clock.c.i
+.PHONY : src/clock.c.i
 
-src/clock.s: src/clock.cpp.s
+src/clock.s: src/clock.c.s
 .PHONY : src/clock.s
 
 # target to generate assembly for a file
-src/clock.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/clock.cpp.s
-.PHONY : src/clock.cpp.s
+src/clock.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/clock.c.s
+.PHONY : src/clock.c.s
 
 src/cpu.o: src/cpu.cpp.o
 .PHONY : src/cpu.o

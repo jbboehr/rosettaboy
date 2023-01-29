@@ -1,14 +1,24 @@
+
+#include <SDL2/SDL.h>
+
+#include "buttons.h"
+#include "consts.h"
 #include "clock.h"
 #include "errors.h"
 
-Clock::Clock(Buttons *buttons, int frames, int profile, bool turbo) {
-    this->buttons = buttons;
-    this->frames = frames;
-    this->profile = profile;
-    this->turbo = turbo;
+struct Clock clock_ctor(struct Buttons *buttons, int frames, int profile, bool turbo) {
+    struct Clock self = {
+        .buttons = buttons,
+        .frames = frames,
+        .profile = profile,
+        .turbo = turbo,
+        .last_frame_start = SDL_GetTicks(),
+        .start = SDL_GetTicks(),
+    };
+    return self;
 }
 
-void clock_tick(Clock *self) {
+void clock_tick(struct Clock *self) {
     self->cycle++;
 
     // Do a whole frame's worth of sleeping at the start of each frame
@@ -22,7 +32,7 @@ void clock_tick(Clock *self) {
         self->last_frame_start = SDL_GetTicks();
 
         // Exit if we've hit the frame or time limit
-        auto duration = (double)(self->last_frame_start - self->start) / 1000.0;
+        double duration = (double)(self->last_frame_start - self->start) / 1000.0;
         if((self->frames != 0 && self->frame >= self->frames) || (self->profile != 0 && duration >= self->profile)) {
             timeout_err(self->frame, duration);
         }
