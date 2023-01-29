@@ -14,6 +14,9 @@ GameBoy::GameBoy(struct Args *args) {
 
 GameBoy::~GameBoy() {
     gpu_dtor(&this->gpu);
+    if (this->apu) {
+        apu_dtor(this->apu);
+    }
 }
 
 /**

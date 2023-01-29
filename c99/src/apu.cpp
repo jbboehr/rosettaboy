@@ -255,6 +255,16 @@ static inline u16 apu_get_next_sample(APU *self) {
     return s01 << 8 | s02; // s01 = right, s02 = left
 }
 
+static void audio_callback(void *_sound, Uint8 *_stream, int _length) {
+    u16 *stream = (u16 *)_stream;
+    APU *sound = (APU *)_sound;
+    int length = _length / sizeof(stream[0]);
+
+    for(int i = 0; i < length; i++) {
+        stream[i] = apu_get_next_sample(sound);
+    }
+}
+
 APU::APU(CPU *cpu, bool debug) {
     SDL_InitSubSystem(SDL_INIT_AUDIO);
 
@@ -272,14 +282,6 @@ APU::APU(CPU *cpu, bool debug) {
     SDL_PauseAudio(false);
 }
 
-APU::~APU() { SDL_CloseAudio(); }
-
-void audio_callback(void *_sound, Uint8 *_stream, int _length) {
-    u16 *stream = (u16 *)_stream;
-    APU *sound = (APU *)_sound;
-    int length = _length / sizeof(stream[0]);
-
-    for(int i = 0; i < length; i++) {
-        stream[i] = apu_get_next_sample(sound);
-    }
+void apu_dtor(APU *apu) {
+    SDL_CloseAudio();
 }

@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 
+#include "common.h"
 #include "cpu.h"
 
 static int WAVE_LEN = 32;
@@ -149,9 +150,12 @@ public:
     CPU *cpu = nullptr;
 
     APU(CPU *cpu, bool debug);
-    ~APU();
 };
 
-void audio_callback(void *, Uint8 *, int);
+BEGIN_EXTERN_C()
+
+void apu_dtor(APU *apu);
+
+END_EXTERN_C()
 
 #endif // ROSETTABOY_APU_H
