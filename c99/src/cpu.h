@@ -65,7 +65,6 @@ public:
     CPU(struct RAM *ram, bool debug);
     void tick();
     void interrupt(Interrupt i);
-    void dump_regs();
 };
 
 BEGIN_EXTERN_C()

@@ -633,6 +633,50 @@ static inline void cpu_tick_main(CPU *self, u8 op, oparg arg) {
     }
 }
 
+static void cpu_dump_regs(CPU *self) {
+    // stack
+    u16 sp_val = ram_get(self->ram, self->SP) | ram_get(self->ram, self->SP + 1) << 8;
+
+    // interrupts
+    u8 IE = ram_get(self->ram, MEM_IE);
+    u8 IF = ram_get(self->ram, MEM_IF);
+    char z = 'z' ^ ((self->F >> 7) & 1) << 5;
+    char n = 'n' ^ ((self->F >> 6) & 1) << 5;
+    char h = 'h' ^ ((self->F >> 5) & 1) << 5;
+    char c = 'c' ^ ((self->F >> 4) & 1) << 5;
+    char v = (IE >> 0) & 1 ? 'v' ^ ((IF >> 0) & 1) << 5 : '_';
+    char l = (IE >> 1) & 1 ? 'l' ^ ((IF >> 1) & 1) << 5 : '_';
+    char t = (IE >> 2) & 1 ? 't' ^ ((IF >> 2) & 1) << 5 : '_';
+    char s = (IE >> 3) & 1 ? 's' ^ ((IF >> 3) & 1) << 5 : '_';
+    char j = (IE >> 4) & 1 ? 'j' ^ ((IF >> 4) & 1) << 5 : '_';
+
+    // opcode & args
+    u8 op = ram_get(self->ram, self->PC);
+    char op_str[16] = "";
+    if(op == 0xCB) {
+        op = ram_get(self->ram, self->PC + 1);
+        snprintf(op_str, 16, "%s", CB_OP_NAMES[op]);
+    } else {
+        if(OP_ARG_TYPES[op] == 0) snprintf(op_str, 16, "%s", OP_NAMES[op]);
+        if(OP_ARG_TYPES[op] == 1) snprintf(op_str, 16, OP_NAMES[op], ram_get(self->ram, self->PC + 1));
+        if(OP_ARG_TYPES[op] == 2)
+            snprintf(op_str, 16, OP_NAMES[op], ram_get(self->ram, self->PC + 1) | ram_get(self->ram, self->PC + 2) << 8);
+        if(OP_ARG_TYPES[op] == 3) snprintf(op_str, 16, OP_NAMES[op], (i8)ram_get(self->ram, self->PC + 1));
+    }
+
+    // print
+    // clang-format off
+    printf(
+        "%04X %04X %04X %04X : %04X = %04X : %c%c%c%c : %c%c%c%c%c : %04X = %02X : %s\n",
+        self->AF, self->BC, self->DE, self->HL,
+        self->SP, sp_val,
+        z, n, h, c,
+        v, l, t, s, j,
+        self->PC, op, op_str
+    );
+    // clang-format on
+}
+
 /**
  * Pick an instruction from RAM as pointed to by the
  * Program Counter register; if the instruction takes
@@ -647,7 +691,7 @@ static inline void cpu_tick_instructions(CPU *self) {
     }
 
     if(self->debug) {
-        self->dump_regs();
+        cpu_dump_regs(self);
     }
 
     u8 op = ram_get(self->ram, self->PC);
@@ -764,50 +808,6 @@ CPU::CPU(struct RAM *ram, bool debug) {
     this->HL = 0x0000;
     this->SP = 0x0000;
     this->PC = 0x0000;
-}
-
-void CPU::dump_regs() {
-    // stack
-    u16 sp_val = ram_get(this->ram, this->SP) | ram_get(this->ram, this->SP + 1) << 8;
-
-    // interrupts
-    u8 IE = ram_get(this->ram, MEM_IE);
-    u8 IF = ram_get(this->ram, MEM_IF);
-    char z = 'z' ^ ((this->F >> 7) & 1) << 5;
-    char n = 'n' ^ ((this->F >> 6) & 1) << 5;
-    char h = 'h' ^ ((this->F >> 5) & 1) << 5;
-    char c = 'c' ^ ((this->F >> 4) & 1) << 5;
-    char v = (IE >> 0) & 1 ? 'v' ^ ((IF >> 0) & 1) << 5 : '_';
-    char l = (IE >> 1) & 1 ? 'l' ^ ((IF >> 1) & 1) << 5 : '_';
-    char t = (IE >> 2) & 1 ? 't' ^ ((IF >> 2) & 1) << 5 : '_';
-    char s = (IE >> 3) & 1 ? 's' ^ ((IF >> 3) & 1) << 5 : '_';
-    char j = (IE >> 4) & 1 ? 'j' ^ ((IF >> 4) & 1) << 5 : '_';
-
-    // opcode & args
-    u8 op = ram_get(this->ram, PC);
-    char op_str[16] = "";
-    if(op == 0xCB) {
-        op = ram_get(this->ram, PC + 1);
-        snprintf(op_str, 16, "%s", CB_OP_NAMES[op]);
-    } else {
-        if(OP_ARG_TYPES[op] == 0) snprintf(op_str, 16, "%s", OP_NAMES[op]);
-        if(OP_ARG_TYPES[op] == 1) snprintf(op_str, 16, OP_NAMES[op], ram_get(this->ram, PC + 1));
-        if(OP_ARG_TYPES[op] == 2)
-            snprintf(op_str, 16, OP_NAMES[op], ram_get(this->ram, PC + 1) | ram_get(this->ram, PC + 2) << 8);
-        if(OP_ARG_TYPES[op] == 3) snprintf(op_str, 16, OP_NAMES[op], (i8)ram_get(this->ram, PC + 1));
-    }
-
-    // print
-    // clang-format off
-    printf(
-        "%04X %04X %04X %04X : %04X = %04X : %c%c%c%c : %c%c%c%c%c : %04X = %02X : %s\n",
-        AF, BC, DE, HL,
-        SP, sp_val,
-        z, n, h, c,
-        v, l, t, s, j,
-        PC, op, op_str
-    );
-    // clang-format on
 }
 
 /**
