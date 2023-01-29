@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 
+#include "common.h"
 #include "cpu.h"
 
 struct Sprite {
@@ -37,7 +38,12 @@ public:
 public:
     GPU(CPU *cpu, char *title, bool headless, bool debug);
     ~GPU();
-    void tick();
 };
+
+BEGIN_EXTERN_C()
+
+void gpu_tick(GPU *self);
+
+END_EXTERN_C()
 
 #endif // ROSETTABOY_GPU_H

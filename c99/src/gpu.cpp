@@ -302,38 +302,38 @@ GPU::~GPU() {
     SDL_Quit();
 }
 
-void GPU::tick() {
-    this->cycle++;
+void gpu_tick(GPU *self) {
+    self->cycle++;
 
     // CPU STOP stops all LCD activity until a button is pressed
-    if(this->cpu->stop) {
+    if(self->cpu->stop) {
         return;
     }
 
     // Check if LCD enabled at all
-    u8 lcdc = ram_get(this->cpu->ram, MEM_LCDC);
+    u8 lcdc = ram_get(self->cpu->ram, MEM_LCDC);
     if(!(lcdc & LCDC_ENABLED)) {
         // When LCD is re-enabled, LY is 0
         // Does it become 0 as soon as disabled??
-        ram_set(this->cpu->ram, MEM_LY, 0);
-        if(!this->debug) {
+        ram_set(self->cpu->ram, MEM_LY, 0);
+        if(!self->debug) {
             return;
         }
     }
 
-    u8 lx = this->cycle % 114;
-    u8 ly = (this->cycle / 114) % 154;
-    ram_set(this->cpu->ram, MEM_LY, ly);
+    u8 lx = self->cycle % 114;
+    u8 ly = (self->cycle / 114) % 154;
+    ram_set(self->cpu->ram, MEM_LY, ly);
 
-    u8 stat = ram_get(this->cpu->ram, MEM_STAT);
+    u8 stat = ram_get(self->cpu->ram, MEM_STAT);
     stat &= ~STAT_MODE_BITS;
     stat &= ~STAT_LYC_EQUAL;
 
     // LYC compare & interrupt
-    if(ly == ram_get(this->cpu->ram, MEM_LYC)) {
+    if(ly == ram_get(self->cpu->ram, MEM_LYC)) {
         stat |= STAT_LYC_EQUAL;
         if(stat & STAT_LYC_INTERRUPT) {
-            this->cpu->interrupt(INTERRUPT_STAT);
+            self->cpu->interrupt(INTERRUPT_STAT);
         }
     }
 
@@ -341,41 +341,41 @@ void GPU::tick() {
     if(lx == 0 && ly < 144) {
         stat |= STAT_OAM;
         if(stat & STAT_OAM_INTERRUPT) {
-            this->cpu->interrupt(INTERRUPT_STAT);
+            self->cpu->interrupt(INTERRUPT_STAT);
         }
     } else if(lx == 20 && ly < 144) {
         stat |= STAT_DRAWING;
         if(ly == 0) {
             // TODO: how often should we update palettes?
             // Should every pixel reference them directly?
-            gpu_update_palettes(this);
-            auto c = this->bgp[0];
-            SDL_SetRenderDrawColor(this->renderer, c.r, c.g, c.b, c.a);
-            SDL_RenderClear(this->renderer);
+            gpu_update_palettes(self);
+            auto c = self->bgp[0];
+            SDL_SetRenderDrawColor(self->renderer, c.r, c.g, c.b, c.a);
+            SDL_RenderClear(self->renderer);
         }
-        gpu_draw_line(this, ly);
+        gpu_draw_line(self, ly);
         if(ly == 143) {
-            if(this->debug) {
-                gpu_draw_debug(this);
+            if(self->debug) {
+                gpu_draw_debug(self);
             }
-            if(this->hw_renderer) {
-                SDL_UpdateTexture(this->hw_buffer, NULL, this->buffer->pixels, this->buffer->pitch);
-                SDL_RenderCopy(this->hw_renderer, this->hw_buffer, NULL, NULL);
-                SDL_RenderPresent(this->hw_renderer);
+            if(self->hw_renderer) {
+                SDL_UpdateTexture(self->hw_buffer, NULL, self->buffer->pixels, self->buffer->pitch);
+                SDL_RenderCopy(self->hw_renderer, self->hw_buffer, NULL, NULL);
+                SDL_RenderPresent(self->hw_renderer);
             }
         }
     } else if(lx == 63 && ly < 144) {
         stat |= STAT_HBLANK;
         if(stat & STAT_HBLANK_INTERRUPT) {
-            this->cpu->interrupt(INTERRUPT_STAT);
+            self->cpu->interrupt(INTERRUPT_STAT);
         }
     } else if(lx == 0 && ly == 144) {
         stat |= STAT_VBLANK;
         if(stat & STAT_VBLANK_INTERRUPT) {
-            this->cpu->interrupt(INTERRUPT_STAT);
+            self->cpu->interrupt(INTERRUPT_STAT);
         }
-        this->cpu->interrupt(INTERRUPT_VBLANK);
+        self->cpu->interrupt(INTERRUPT_VBLANK);
     }
-    ram_set(this->cpu->ram, MEM_STAT, stat);
+    ram_set(self->cpu->ram, MEM_STAT, stat);
 }
 
