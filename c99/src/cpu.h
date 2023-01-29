@@ -17,15 +17,12 @@ public:
     struct RAM *ram;
     bool stop = false;
     bool stepping = false;
-
-private:
     bool interrupts = true;
     bool halt = false;
     bool debug = true;
     int cycle = 0;
     int owed_cycles = 0;
 
-public:
     union {
         u16 AF;
         struct {
@@ -65,7 +62,6 @@ public:
     u16 SP;
     u16 PC;
 
-public:
     CPU(struct RAM *ram, bool debug);
     void tick();
     void interrupt(Interrupt i);

@@ -46,12 +46,14 @@ public:
 
 // Game error, ie the game developer has a bug
 class GameException : public EmuException {};
-class InvalidOpcode : public GameException {
-public:
-    InvalidOpcode(u8 opcode) { this->set_msg("Invalid opcode: 0x%02X", opcode); }
-};
 class UserException : public EmuException {};
 #endif
+
+NORETURN static void invalid_opcode_err(u8 opcode) {
+    fprintf(stdout, "Invalid opcode: 0x%02X", opcode);
+    fflush(stdout);
+    exit(3);
+}
 
 NORETURN static void timeout_err(int frames, double duration) {
     fprintf(stdout, "Emulated %5d frames in %5.2fs (%.0ffps)", frames, duration, frames / duration);

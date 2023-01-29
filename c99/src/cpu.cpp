@@ -381,6 +381,259 @@ static inline void cpu_tick_cb(CPU *self, u8 op) {
 }
 
 /**
+ * Execute a normal instruction (everything except for those
+ * prefixed with 0xCB)
+ */
+static inline void cpu_tick_main(CPU *self, u8 op, oparg arg) {
+    // Load args
+
+    // Execute
+    u8 val = 0, carry = 0;
+    u16 val16 = 0;
+    switch(op) {
+        // clang-format off
+        case 0x00: /* NOP */; break;
+        case 0x01: self->BC = arg.as_u16; break;
+        case 0x02: ram_set(self->ram, self->BC, self->A); break;
+        case 0x03: self->BC++; break;
+        case 0x08:
+            ram_set(self->ram, arg.as_u16+1, ((self->SP >> 8) & 0xFF));
+            ram_set(self->ram, arg.as_u16, (self->SP & 0xFF));
+            break;  // how does self fit?
+        case 0x0A: self->A = ram_get(self->ram, self->BC); break;
+        case 0x0B: self->BC--; break;
+
+        case 0x10: self->stop = true; break;
+        case 0x11: self->DE = arg.as_u16; break;
+        case 0x12: ram_set(self->ram, self->DE, self->A); break;
+        case 0x13: self->DE++; break;
+        case 0x18: self->PC += arg.as_i8; break;
+        case 0x1A: self->A = ram_get(self->ram, self->DE); break;
+        case 0x1B: self->DE--; break;
+
+        case 0x20: if(!self->FLAG_Z) self->PC += arg.as_i8; break;
+        case 0x21: self->HL = arg.as_u16; break;
+        case 0x22: ram_set(self->ram, self->HL++, self->A); break;
+        case 0x23: self->HL++; break;
+        case 0x27:
+            val16 = self->A;
+            if(self->FLAG_N == 0) {
+                if (self->FLAG_H || (val16 & 0x0F) > 9) val16 += 6;
+                if (self->FLAG_C || val16 > 0x9F) val16 += 0x60;
+            }
+            else {
+                if(self->FLAG_H) {
+                    val16 -= 6;
+                    if (self->FLAG_C == 0) val16 &= 0xFF;
+                }
+                if(self->FLAG_C) val16 -= 0x60;
+            }
+            self->FLAG_H = false;
+            if(val16 & 0x100) self->FLAG_C = true;
+            self->A = val16 & 0xFF;
+            self->FLAG_Z = self->A == 0;
+            break;
+        case 0x28: if(self->FLAG_Z) self->PC += arg.as_i8; break;
+        case 0x2A: self->A = ram_get(self->ram, self->HL++); break;
+        case 0x2B: self->HL--; break;
+        case 0x2F: self->A ^= 0xFF; self->FLAG_N = true; self->FLAG_H = true; break;
+
+        case 0x30: if(!self->FLAG_C) self->PC += arg.as_i8; break;
+        case 0x31: self->SP = arg.as_u16; break;
+        case 0x32: ram_set(self->ram, self->HL--, self->A); break;
+        case 0x33: self->SP++; break;
+        case 0x37: self->FLAG_N = false; self->FLAG_H = false; self->FLAG_C = true; break;
+        case 0x38: if(self->FLAG_C) self->PC += arg.as_i8; break;
+        case 0x3A: self->A = ram_get(self->ram, self->HL--); break;
+        case 0x3B: self->SP--; break;
+        case 0x3F: self->FLAG_C = !self->FLAG_C; self->FLAG_N = false; self->FLAG_H = false; break;
+
+        case 0x04: case 0x0C: // INC r
+        case 0x14: case 0x1C:
+        case 0x24: case 0x2C:
+        case 0x34: case 0x3C:
+            val = cpu_get_reg(self, (op-0x04)/8);
+            self->FLAG_H = (val & 0x0F) == 0x0F;
+            val++;
+            self->FLAG_Z = val == 0;
+            self->FLAG_N = false;
+            cpu_set_reg(self, (op-0x04)/8, val);
+            break;
+
+        case 0x05: case 0x0D: // DEC r
+        case 0x15: case 0x1D:
+        case 0x25: case 0x2D:
+        case 0x35: case 0x3D:
+            val = cpu_get_reg(self, (op-0x05)/8);
+            val--;
+            self->FLAG_H = (val & 0x0F) == 0x0F;
+            self->FLAG_Z = val == 0;
+            self->FLAG_N = true;
+            cpu_set_reg(self, (op-0x05)/8, val);
+            break;
+
+        case 0x06: case 0x0E: // LD r,n
+        case 0x16: case 0x1E:
+        case 0x26: case 0x2E:
+        case 0x36: case 0x3E:
+            cpu_set_reg(self, (op-0x06)/8, arg.as_u8);
+            break;
+
+        case 0x07: // RCLA
+        case 0x17: // RLA
+        case 0x0F: // RRCA
+        case 0x1F: // RRA
+            carry = self->FLAG_C ? 1 : 0;
+            if(op == 0x07) { // RCLA
+                self->FLAG_C = (self->A & (1 << 7)) != 0;
+                self->A = (self->A << 1) | (self->A >> 7);
+            }
+            if(op == 0x17) { // RLA
+                self->FLAG_C = (self->A & (1 << 7)) != 0;
+                self->A = (self->A << 1) | carry;
+            }
+            if(op == 0x0F) { // RRCA
+                self->FLAG_C = (self->A & (1 << 0)) != 0;
+                self->A = (self->A >> 1) | (self->A << 7);
+            }
+            if(op == 0x1F) { // RRA
+                self->FLAG_C = (self->A & (1 << 0)) != 0;
+                self->A = (self->A >> 1) | (carry << 7);
+            }
+            self->FLAG_N = false;
+            self->FLAG_H = false;
+            self->FLAG_Z = false;
+            break;
+
+        case 0x09: // ADD HL,rr
+        case 0x19:
+        case 0x29:
+        case 0x39:
+            if(op == 0x09) val16 = self->BC;
+            if(op == 0x19) val16 = self->DE;
+            if(op == 0x29) val16 = self->HL;
+            if(op == 0x39) val16 = self->SP;
+            self->FLAG_H = ((self->HL & 0x0FFF) + (val16 & 0x0FFF) > 0x0FFF);
+            self->FLAG_C = (self->HL + val16 > 0xFFFF);
+            self->HL += val16;
+            self->FLAG_N = false;
+            break;
+
+        case 0x40 ... 0x7F: // LD r,r
+            if(op == 0x76) {
+                // FIXME: weird timing side effects
+                self->halt = true;
+                break;
+            }
+            cpu_set_reg(self, (op - 0x40)>>3, cpu_get_reg(self, op - 0x40));
+            break;
+
+        case 0x80 ... 0x87: cpu_add(self, cpu_get_reg(self, op)); break;
+        case 0x88 ... 0x8F: cpu_adc(self, cpu_get_reg(self, op)); break;
+        case 0x90 ... 0x97: cpu_sub(self, cpu_get_reg(self, op)); break;
+        case 0x98 ... 0x9F: cpu_sbc(self, cpu_get_reg(self, op)); break;
+        case 0xA0 ... 0xA7: cpu_and(self, cpu_get_reg(self, op)); break;
+        case 0xA8 ... 0xAF: cpu_xor(self, cpu_get_reg(self, op)); break;
+        case 0xB0 ... 0xB7: cpu_or(self, cpu_get_reg(self, op)); break;
+        case 0xB8 ... 0xBF: cpu_cp(self, cpu_get_reg(self, op)); break;
+
+        case 0xC0: if(!self->FLAG_Z) self->PC = cpu_pop(self); break;
+        case 0xC1: self->BC = cpu_pop(self); break;
+        case 0xC2: if(!self->FLAG_Z) self->PC = arg.as_u16; break;
+        case 0xC3: self->PC = arg.as_u16; break;
+        case 0xC4: if(!self->FLAG_Z) {cpu_push(self, self->PC); self->PC = arg.as_u16;} break;
+        case 0xC5: cpu_push(self, self->BC); break;
+        case 0xC6: cpu_add(self, arg.as_u8); break;
+        case 0xC7: cpu_push(self, self->PC); self->PC = 0x00; break;
+        case 0xC8: if(self->FLAG_Z) self->PC = cpu_pop(self); break;
+        case 0xC9: self->PC = cpu_pop(self); break;
+        case 0xCA: if(self->FLAG_Z) self->PC = arg.as_u16; break;
+            // case 0xCB: break;
+        case 0xCC: if(self->FLAG_Z) {cpu_push(self, self->PC); self->PC = arg.as_u16;} break;
+        case 0xCD: cpu_push(self, self->PC); self->PC = arg.as_u16; break;
+        case 0xCE: cpu_adc(self, arg.as_u8); break;
+        case 0xCF: cpu_push(self, self->PC); self->PC = 0x08; break;
+
+        case 0xD0: if(!self->FLAG_C) self->PC = cpu_pop(self); break;
+        case 0xD1: self->DE = cpu_pop(self); break;
+        case 0xD2: if(!self->FLAG_C) self->PC = arg.as_u16; break;
+            // case 0xD3: break;
+        case 0xD4: if(!self->FLAG_C) {cpu_push(self, self->PC); self->PC = arg.as_u16;} break;
+        case 0xD5: cpu_push(self, self->DE); break;
+        case 0xD6: cpu_sub(self, arg.as_u8); break;
+        case 0xD7: cpu_push(self, self->PC); self->PC = 0x10; break;
+        case 0xD8: if(self->FLAG_C) self->PC = cpu_pop(self); break;
+        case 0xD9: self->PC = cpu_pop(self); self->interrupts = true; break;
+        case 0xDA: if(self->FLAG_C) self->PC = arg.as_u16; break;
+            // case 0xDB: break;
+        case 0xDC: if(self->FLAG_C) {cpu_push(self, self->PC); self->PC = arg.as_u16;} break;
+            // case 0xDD: break;
+        case 0xDE: cpu_sbc(self, arg.as_u8); break;
+        case 0xDF: cpu_push(self, self->PC); self->PC = 0x18; break;
+
+        case 0xE0: ram_set(self->ram, 0xFF00 + arg.as_u8, self->A); if(arg.as_u8 == 0x01) {putchar(self->A);}; break;
+        case 0xE1: self->HL = cpu_pop(self); break;
+        case 0xE2: ram_set(self->ram, 0xFF00 + self->C, self->A); if(self->C == 0x01) {putchar(self->A);}; break;
+            // case 0xE3: break;
+            // case 0xE4: break;
+        case 0xE5: cpu_push(self, self->HL); break;
+        case 0xE6: cpu_and(self, arg.as_u8); break;
+        case 0xE7: cpu_push(self, self->PC); self->PC = 0x20; break;
+        case 0xE8:
+            val16 = self->SP + arg.as_i8;
+            //self->FLAG_H = ((self->SP & 0x0FFF) + (arg.as_i8 & 0x0FFF) > 0x0FFF);
+            //self->FLAG_C = (self->SP + arg.as_i8 > 0xFFFF);
+            self->FLAG_H = ((self->SP ^ arg.as_i8 ^ val16) & 0x10 ? true : false);
+            self->FLAG_C = ((self->SP ^ arg.as_i8 ^ val16) & 0x100 ? true : false);
+            self->SP += arg.as_i8;
+            self->FLAG_Z = false;
+            self->FLAG_N = false;
+            break;
+        case 0xE9: self->PC = self->HL; break;
+        case 0xEA: ram_set(self->ram, arg.as_u16, self->A); break;
+            // case 0xEB: break;
+            // case 0xEC: break;
+            // case 0xED: break;
+        case 0xEE: cpu_xor(self, arg.as_u8); break;
+        case 0xEF: cpu_push(self, self->PC); self->PC = 0x28; break;
+
+        case 0xF0: self->A = ram_get(self->ram, 0xFF00 + arg.as_u8); break;
+        case 0xF1: self->AF = (cpu_pop(self) & 0xFFF0); break;
+        case 0xF2: self->A = ram_get(self->ram, 0xFF00 + self->C); break;
+        case 0xF3: self->interrupts = false; break;
+            // case 0xF4: break;
+        case 0xF5: cpu_push(self, self->AF); break;
+        case 0xF6: cpu_or(self, arg.as_u8); break;
+        case 0xF7: cpu_push(self, self->PC); self->PC = 0x30; break;
+        case 0xF8:
+            if(arg.as_i8 >= 0) {
+                self->FLAG_C = ((self->SP & 0xFF) + (arg.as_i8 & 0xFF)) > 0xFF;
+                self->FLAG_H = ((self->SP & 0x0F) + (arg.as_i8 & 0x0F)) > 0x0F;
+            } else {
+                self->FLAG_C = ((self->SP + arg.as_i8) & 0xFF) <= (self->SP & 0xFF);
+                self->FLAG_H = ((self->SP + arg.as_i8) & 0x0F) <= (self->SP & 0x0F);
+            }
+            // self->FLAG_H = ((((self->SP & 0x0f) + (arg.as_u8 & 0x0f)) & 0x10) != 0);
+            // self->FLAG_C = ((((self->SP & 0xff) + (arg.as_u8 & 0xff)) & 0x100) != 0);
+            self->HL = self->SP + arg.as_i8;
+            self->FLAG_Z = false;
+            self->FLAG_N = false;
+            break;
+        case 0xF9: self->SP = self->HL; break;
+        case 0xFA: self->A = ram_get(self->ram, arg.as_u16); break;
+        case 0xFB: self->interrupts = true; break;
+        case 0xFC: throw new UnitTestPassed(); // unofficial
+        case 0xFD: throw new UnitTestFailed(); // unofficial
+        case 0xFE: cpu_cp(self, arg.as_u8); break;
+        case 0xFF: cpu_push(self, self->PC); self->PC = 0x38; break;
+
+            // missing ops
+        default: invalid_opcode_err(op);
+            // clang-format on
+    }
+}
+
+/**
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
  */
@@ -578,261 +831,8 @@ void CPU::tick_instructions() {
             arg.as_u16 = high << 8 | low;
         }
         this->PC += 1 + arg_len;
-        this->tick_main(op, arg);
+        cpu_tick_main(this, op, arg);
         owed_cycles = OP_CYCLES[op];
     }
     if(owed_cycles > 0) owed_cycles -= 1; // HALT has cycles=0
-}
-
-/**
- * Execute a normal instruction (everything except for those
- * prefixed with 0xCB)
- */
-void CPU::tick_main(u8 op, oparg arg) {
-    // Load args
-
-    // Execute
-    u8 val = 0, carry = 0;
-    u16 val16 = 0;
-    switch(op) {
-        // clang-format off
-        case 0x00: /* NOP */; break;
-        case 0x01: this->BC = arg.as_u16; break;
-        case 0x02: ram_set(this->ram, this->BC, this->A); break;
-        case 0x03: this->BC++; break;
-        case 0x08:
-            ram_set(this->ram, arg.as_u16+1, ((this->SP >> 8) & 0xFF));
-            ram_set(this->ram, arg.as_u16, (this->SP & 0xFF));
-            break;  // how does this fit?
-        case 0x0A: this->A = ram_get(this->ram, this->BC); break;
-        case 0x0B: this->BC--; break;
-
-        case 0x10: this->stop = true; break;
-        case 0x11: this->DE = arg.as_u16; break;
-        case 0x12: ram_set(this->ram, this->DE, this->A); break;
-        case 0x13: this->DE++; break;
-        case 0x18: this->PC += arg.as_i8; break;
-        case 0x1A: this->A = ram_get(this->ram, this->DE); break;
-        case 0x1B: this->DE--; break;
-
-        case 0x20: if(!this->FLAG_Z) this->PC += arg.as_i8; break;
-        case 0x21: this->HL = arg.as_u16; break;
-        case 0x22: ram_set(this->ram, this->HL++, this->A); break;
-        case 0x23: this->HL++; break;
-        case 0x27:
-            val16 = this->A;
-            if(this->FLAG_N == 0) {
-                if (this->FLAG_H || (val16 & 0x0F) > 9) val16 += 6;
-                if (this->FLAG_C || val16 > 0x9F) val16 += 0x60;
-            }
-            else {
-                if(this->FLAG_H) {
-                    val16 -= 6;
-                    if (this->FLAG_C == 0) val16 &= 0xFF;
-                }
-                if(this->FLAG_C) val16 -= 0x60;
-            }
-            this->FLAG_H = false;
-            if(val16 & 0x100) this->FLAG_C = true;
-            this->A = val16 & 0xFF;
-            this->FLAG_Z = this->A == 0;
-            break;
-        case 0x28: if(this->FLAG_Z) this->PC += arg.as_i8; break;
-        case 0x2A: this->A = ram_get(this->ram, this->HL++); break;
-        case 0x2B: this->HL--; break;
-        case 0x2F: this->A ^= 0xFF; this->FLAG_N = true; this->FLAG_H = true; break;
-
-        case 0x30: if(!this->FLAG_C) this->PC += arg.as_i8; break;
-        case 0x31: this->SP = arg.as_u16; break;
-        case 0x32: ram_set(this->ram, this->HL--, this->A); break;
-        case 0x33: this->SP++; break;
-        case 0x37: this->FLAG_N = false; this->FLAG_H = false; this->FLAG_C = true; break;
-        case 0x38: if(this->FLAG_C) this->PC += arg.as_i8; break;
-        case 0x3A: this->A = ram_get(this->ram, this->HL--); break;
-        case 0x3B: this->SP--; break;
-        case 0x3F: this->FLAG_C = !this->FLAG_C; this->FLAG_N = false; this->FLAG_H = false; break;
-
-        case 0x04: case 0x0C: // INC r
-        case 0x14: case 0x1C:
-        case 0x24: case 0x2C:
-        case 0x34: case 0x3C:
-            val = cpu_get_reg(this, (op-0x04)/8);
-            this->FLAG_H = (val & 0x0F) == 0x0F;
-            val++;
-            this->FLAG_Z = val == 0;
-            this->FLAG_N = false;
-            cpu_set_reg(this, (op-0x04)/8, val);
-            break;
-
-        case 0x05: case 0x0D: // DEC r
-        case 0x15: case 0x1D:
-        case 0x25: case 0x2D:
-        case 0x35: case 0x3D:
-            val = cpu_get_reg(this, (op-0x05)/8);
-            val--;
-            this->FLAG_H = (val & 0x0F) == 0x0F;
-            this->FLAG_Z = val == 0;
-            this->FLAG_N = true;
-            cpu_set_reg(this, (op-0x05)/8, val);
-            break;
-
-        case 0x06: case 0x0E: // LD r,n
-        case 0x16: case 0x1E:
-        case 0x26: case 0x2E:
-        case 0x36: case 0x3E:
-            cpu_set_reg(this, (op-0x06)/8, arg.as_u8);
-            break;
-
-        case 0x07: // RCLA
-        case 0x17: // RLA
-        case 0x0F: // RRCA
-        case 0x1F: // RRA
-            carry = this->FLAG_C ? 1 : 0;
-            if(op == 0x07) { // RCLA
-                this->FLAG_C = (this->A & (1 << 7)) != 0;
-                this->A = (this->A << 1) | (this->A >> 7);
-            }
-            if(op == 0x17) { // RLA
-                this->FLAG_C = (this->A & (1 << 7)) != 0;
-                this->A = (this->A << 1) | carry;
-            }
-            if(op == 0x0F) { // RRCA
-                this->FLAG_C = (this->A & (1 << 0)) != 0;
-                this->A = (this->A >> 1) | (this->A << 7);
-            }
-            if(op == 0x1F) { // RRA
-                this->FLAG_C = (this->A & (1 << 0)) != 0;
-                this->A = (this->A >> 1) | (carry << 7);
-            }
-            this->FLAG_N = false;
-            this->FLAG_H = false;
-            this->FLAG_Z = false;
-            break;
-
-        case 0x09: // ADD HL,rr
-        case 0x19:
-        case 0x29:
-        case 0x39:
-            if(op == 0x09) val16 = this->BC;
-            if(op == 0x19) val16 = this->DE;
-            if(op == 0x29) val16 = this->HL;
-            if(op == 0x39) val16 = this->SP;
-            this->FLAG_H = ((this->HL & 0x0FFF) + (val16 & 0x0FFF) > 0x0FFF);
-            this->FLAG_C = (this->HL + val16 > 0xFFFF);
-            this->HL += val16;
-            this->FLAG_N = false;
-            break;
-
-        case 0x40 ... 0x7F: // LD r,r
-            if(op == 0x76) {
-                // FIXME: weird timing side effects
-                this->halt = true;
-                break;
-            }
-            cpu_set_reg(this, (op - 0x40)>>3, cpu_get_reg(this, op - 0x40));
-            break;
-
-        case 0x80 ... 0x87: cpu_add(this, cpu_get_reg(this, op)); break;
-        case 0x88 ... 0x8F: cpu_adc(this, cpu_get_reg(this, op)); break;
-        case 0x90 ... 0x97: cpu_sub(this, cpu_get_reg(this, op)); break;
-        case 0x98 ... 0x9F: cpu_sbc(this, cpu_get_reg(this, op)); break;
-        case 0xA0 ... 0xA7: cpu_and(this, cpu_get_reg(this, op)); break;
-        case 0xA8 ... 0xAF: cpu_xor(this, cpu_get_reg(this, op)); break;
-        case 0xB0 ... 0xB7: cpu_or(this, cpu_get_reg(this, op)); break;
-        case 0xB8 ... 0xBF: cpu_cp(this, cpu_get_reg(this, op)); break;
-        
-        case 0xC0: if(!this->FLAG_Z) this->PC = cpu_pop(this); break;
-        case 0xC1: this->BC = cpu_pop(this); break;
-        case 0xC2: if(!this->FLAG_Z) this->PC = arg.as_u16; break;
-        case 0xC3: this->PC = arg.as_u16; break;
-        case 0xC4: if(!this->FLAG_Z) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
-        case 0xC5: cpu_push(this, this->BC); break;
-        case 0xC6: cpu_add(this, arg.as_u8); break;
-        case 0xC7: cpu_push(this, this->PC); this->PC = 0x00; break;
-        case 0xC8: if(this->FLAG_Z) this->PC = cpu_pop(this); break;
-        case 0xC9: this->PC = cpu_pop(this); break;
-        case 0xCA: if(this->FLAG_Z) this->PC = arg.as_u16; break;
-        // case 0xCB: break;
-        case 0xCC: if(this->FLAG_Z) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
-        case 0xCD: cpu_push(this, this->PC); this->PC = arg.as_u16; break;
-        case 0xCE: cpu_adc(this, arg.as_u8); break;
-        case 0xCF: cpu_push(this, this->PC); this->PC = 0x08; break;
-
-        case 0xD0: if(!this->FLAG_C) this->PC = cpu_pop(this); break;
-        case 0xD1: this->DE = cpu_pop(this); break;
-        case 0xD2: if(!this->FLAG_C) this->PC = arg.as_u16; break;
-        // case 0xD3: break;
-        case 0xD4: if(!this->FLAG_C) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
-        case 0xD5: cpu_push(this, this->DE); break;
-        case 0xD6: cpu_sub(this, arg.as_u8); break;
-        case 0xD7: cpu_push(this, this->PC); this->PC = 0x10; break;
-        case 0xD8: if(this->FLAG_C) this->PC = cpu_pop(this); break;
-        case 0xD9: this->PC = cpu_pop(this); this->interrupts = true; break;
-        case 0xDA: if(this->FLAG_C) this->PC = arg.as_u16; break;
-        // case 0xDB: break;
-        case 0xDC: if(this->FLAG_C) {cpu_push(this, this->PC); this->PC = arg.as_u16;} break;
-        // case 0xDD: break;
-        case 0xDE: cpu_sbc(this, arg.as_u8); break;
-        case 0xDF: cpu_push(this, this->PC); this->PC = 0x18; break;
-
-        case 0xE0: ram_set(this->ram, 0xFF00 + arg.as_u8, this->A); if(arg.as_u8 == 0x01) {putchar(this->A);}; break;
-        case 0xE1: this->HL = cpu_pop(this); break;
-        case 0xE2: ram_set(this->ram, 0xFF00 + this->C, this->A); if(this->C == 0x01) {putchar(this->A);}; break;
-        // case 0xE3: break;
-        // case 0xE4: break;
-        case 0xE5: cpu_push(this, this->HL); break;
-        case 0xE6: cpu_and(this, arg.as_u8); break;
-        case 0xE7: cpu_push(this, this->PC); this->PC = 0x20; break;
-        case 0xE8:
-            val16 = this->SP + arg.as_i8;
-            //this->FLAG_H = ((this->SP & 0x0FFF) + (arg.as_i8 & 0x0FFF) > 0x0FFF);
-            //this->FLAG_C = (this->SP + arg.as_i8 > 0xFFFF);
-            this->FLAG_H = ((this->SP ^ arg.as_i8 ^ val16) & 0x10 ? true : false);
-            this->FLAG_C = ((this->SP ^ arg.as_i8 ^ val16) & 0x100 ? true : false);
-            this->SP += arg.as_i8;
-            this->FLAG_Z = false;
-            this->FLAG_N = false;
-            break;
-        case 0xE9: this->PC = this->HL; break;
-        case 0xEA: ram_set(this->ram, arg.as_u16, this->A); break;
-        // case 0xEB: break;
-        // case 0xEC: break;
-        // case 0xED: break;
-        case 0xEE: cpu_xor(this, arg.as_u8); break;
-        case 0xEF: cpu_push(this, this->PC); this->PC = 0x28; break;
-
-        case 0xF0: this->A = ram_get(this->ram, 0xFF00 + arg.as_u8); break;
-        case 0xF1: this->AF = (cpu_pop(this) & 0xFFF0); break;
-        case 0xF2: this->A = ram_get(this->ram, 0xFF00 + this->C); break;
-        case 0xF3: this->interrupts = false; break;
-        // case 0xF4: break;
-        case 0xF5: cpu_push(this, this->AF); break;
-        case 0xF6: cpu_or(this, arg.as_u8); break;
-        case 0xF7: cpu_push(this, this->PC); this->PC = 0x30; break;
-        case 0xF8:
-            if(arg.as_i8 >= 0) {
-                this->FLAG_C = ((this->SP & 0xFF) + (arg.as_i8 & 0xFF)) > 0xFF;
-                this->FLAG_H = ((this->SP & 0x0F) + (arg.as_i8 & 0x0F)) > 0x0F;
-            } else {
-                this->FLAG_C = ((this->SP + arg.as_i8) & 0xFF) <= (this->SP & 0xFF);
-                this->FLAG_H = ((this->SP + arg.as_i8) & 0x0F) <= (this->SP & 0x0F);
-            }
-            // this->FLAG_H = ((((this->SP & 0x0f) + (arg.as_u8 & 0x0f)) & 0x10) != 0);
-            // this->FLAG_C = ((((this->SP & 0xff) + (arg.as_u8 & 0xff)) & 0x100) != 0);
-            this->HL = this->SP + arg.as_i8;
-            this->FLAG_Z = false;
-            this->FLAG_N = false;
-            break;
-        case 0xF9: this->SP = this->HL; break;
-        case 0xFA: this->A = ram_get(this->ram, arg.as_u16); break;
-        case 0xFB: this->interrupts = true; break;
-        case 0xFC: throw new UnitTestPassed(); // unofficial
-        case 0xFD: throw new UnitTestFailed(); // unofficial
-        case 0xFE: cpu_cp(this, arg.as_u8); break;
-        case 0xFF: cpu_push(this, this->PC); this->PC = 0x38; break;
-
-        // missing ops
-        default: throw new InvalidOpcode(op);
-            // clang-format on
-    }
 }
