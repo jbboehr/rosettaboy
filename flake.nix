@@ -3,11 +3,17 @@
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
     flake-utils.url = github:numtide/flake-utils;
+    gitignore = {
+      url = "github:hercules-ci/gitignore.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }: flake-utils.lib.eachDefaultSystem (system: let
+  outputs = { self, nixpkgs, flake-utils, gitignore }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
+    inherit (lib) hiPrio filterAttrs;
+    inherit (gitignore.lib) gitignoreSource;
 
 
     # Get each directory with a `shell.nix`:
@@ -31,10 +37,23 @@
         utilsShell
       ];
     });
-  in {
+
+    mkCpp = {ltoSupport ? false, debugSupport ? false}:
+      pkgs.callPackage ./cpp/derivation.nix {
+        inherit gitignoreSource ltoSupport debugSupport;
+      };
+  in rec {
+    packages = rec {
+      cpp-release = mkCpp {};
+      cpp-debug = mkCpp { debugSupport = true; };
+      cpp-lto = mkCpp { ltoSupport = true; };
+      cpp = hiPrio cpp-release;
+    };
+
     devShells = langDevShells // {
       default = pkgs.mkShell { inputsFrom = builtins.attrValues langDevShells; };
       utils = utilsShell;
+      cpp = pkgs.mkShell { inputsFrom = [ packages.cpp ]; buildInputs = packages.cpp.devTools; };
     };
   });
 }
