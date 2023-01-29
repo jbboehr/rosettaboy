@@ -11,7 +11,7 @@
 
 class GameBoy {
 private:
-    Cart *cart = nullptr;
+    struct Cart cart;
     RAM *ram = nullptr;
     CPU *cpu = nullptr;
     GPU *gpu = nullptr;

@@ -1,12 +1,16 @@
 #ifndef ROSETTABOY_ERRORS_H
 #define ROSETTABOY_ERRORS_H
 
-#include "consts.h"
-#include <exception>
 #include <stdarg.h>
 #include <string.h>
-#include <string>
 #include <stdio.h>
+
+#include "consts.h"
+
+#ifdef __cplusplus
+
+#include <exception>
+#include <string>
 
 #define ERR_BUF_LEN 1000
 
@@ -64,8 +68,10 @@ public:
     }
 };
 
-// User error, ie the user gave us an invalid or corrupt input file
 class UserException : public EmuException {};
+#endif
+
+// User error, ie the user gave us an invalid or corrupt input file
 NORETURN static void rom_missing_err(const char *filename, int err) {
     fprintf(stdout, "Error opening %s: %s\n", filename, strerror(err));
     fflush(stdout);

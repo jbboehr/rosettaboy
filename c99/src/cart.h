@@ -1,9 +1,11 @@
 #ifndef ROSETTABOY_CART_H
 #define ROSETTABOY_CART_H
 
-#include <cstdint>
+#include <stdbool.h>
 
 #include "consts.h"
+
+BEGIN_EXTERN_C()
 
 enum CartType {
     ROM_ONLY = 0x00,
@@ -34,17 +36,15 @@ enum CartType {
     HUDSON_HUC1 = 0xFF,
 };
 
-class Cart {
-public:
+struct Cart {
     unsigned char *data;
-    unsigned char *ram = nullptr;
-
+    unsigned char *ram;
     u8 logo[48];
     char name[16];
     bool is_gbc;
     u16 licensee;
     bool is_sgb;
-    CartType cart_type;
+    enum CartType cart_type;
     u32 rom_size;
     u32 ram_size;
     u8 destination;
@@ -52,11 +52,11 @@ public:
     u8 rom_version;
     u8 complement_check;
     u16 checksum;
-
-    Cart(const char *filename);
-
-private:
-    bool debug = true;
+    bool debug;
 };
+
+struct Cart cart_ctor(const char *filename, bool debug);
+
+END_EXTERN_C()
 
 #endif // ROSETTABOY_CART_H

@@ -1,10 +1,10 @@
 #include "gameboy.h"
 
 GameBoy::GameBoy(struct Args *args) {
-    this->cart = new Cart(args->rom);
-    this->ram = new RAM(this->cart, args->debug_ram);
+    this->cart = cart_ctor(args->rom, false);
+    this->ram = new RAM(&this->cart, args->debug_ram);
     this->cpu = new CPU(this->ram, args->debug_cpu);
-    this->gpu = new GPU(this->cpu, cart->name, args->headless, args->debug_gpu);
+    this->gpu = new GPU(this->cpu, this->cart.name, args->headless, args->debug_gpu);
     this->buttons = new Buttons(this->cpu, args->headless);
     if(!args->silent) new APU(this->cpu, args->debug_apu);
     this->clock = new Clock(this->buttons, args->frames, args->profile, args->turbo);
