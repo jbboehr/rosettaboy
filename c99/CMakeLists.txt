@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(rosettaboy-cpp)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_FLAGS_RELEASE "-O3")
 
 option(ENABLE_LTO "enable LTO" OFF)
 include(CheckIPOSupported)
@@ -10,7 +10,26 @@ check_ipo_supported(RESULT supported OUTPUT error)
 
 include_directories(/usr/local/include/)
 
-add_executable(rosettaboy-cpp src/main.c src/args.c src/cpu.c src/cart.c src/gameboy.c src/gpu.c src/consts.h src/cart.h src/cpu.h src/gpu.h src/args.h src/apu.c src/apu.h src/ram.c src/ram.h src/buttons.c src/buttons.h src/clock.c src/clock.h)
+add_executable(rosettaboy-cpp
+        src/main.c
+        src/args.c
+        src/cpu.c
+        src/cart.c
+        src/gameboy.c
+        src/gpu.c
+        src/consts.h
+        src/cart.h
+        src/cpu.h
+        src/gpu.h
+        src/args.h
+        src/apu.c
+        src/apu.h
+        src/ram.c
+        src/ram.h
+        src/buttons.c
+        src/buttons.h
+        src/clock.c
+        src/clock.h)
 
 if( ENABLE_LTO AND supported )
     message(STATUS "IPO / LTO enabled")
