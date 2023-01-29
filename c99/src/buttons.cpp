@@ -1,6 +1,17 @@
 #include "buttons.h"
 #include "errors.h"
 
+static const u8 JOYPAD_MODE_BUTTONS = 1 << 5;
+static const u8 JOYPAD_MODE_DPAD = 1 << 4;
+static const u8 JOYPAD_DOWN = 1 << 3;
+static const u8 JOYPAD_START = 1 << 3;
+static const u8 JOYPAD_UP = 1 << 2;
+static const u8 JOYPAD_SELECT = 1 << 2;
+static const u8 JOYPAD_LEFT = 1 << 1;
+static const u8 JOYPAD_B = 1 << 1;
+static const u8 JOYPAD_RIGHT = 1 << 0;
+static const u8 JOYPAD_A = 1 << 0;
+
 Buttons::Buttons(CPU *cpu, bool headless) {
     if(!headless) SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
     this->cpu = cpu;
@@ -21,17 +32,17 @@ void Buttons::tick() {
 void Buttons::update_buttons() {
     u8 JOYP = ~ram_get(this->cpu->ram, MEM_JOYP);
     JOYP &= 0x30;
-    if(JOYP & Joypad::MODE_DPAD) {
-        if(this->up) JOYP |= Joypad::UP;
-        if(this->down) JOYP |= Joypad::DOWN;
-        if(this->left) JOYP |= Joypad::LEFT;
-        if(this->right) JOYP |= Joypad::RIGHT;
+    if(JOYP & JOYPAD_MODE_DPAD) {
+        if(this->up) JOYP |= JOYPAD_UP;
+        if(this->down) JOYP |= JOYPAD_DOWN;
+        if(this->left) JOYP |= JOYPAD_LEFT;
+        if(this->right) JOYP |= JOYPAD_RIGHT;
     }
-    if(JOYP & Joypad::MODE_BUTTONS) {
-        if(this->b) JOYP |= Joypad::B;
-        if(this->a) JOYP |= Joypad::A;
-        if(this->start) JOYP |= Joypad::START;
-        if(this->select) JOYP |= Joypad::SELECT;
+    if(JOYP & JOYPAD_MODE_BUTTONS) {
+        if(this->b) JOYP |= JOYPAD_B;
+        if(this->a) JOYP |= JOYPAD_A;
+        if(this->start) JOYP |= JOYPAD_START;
+        if(this->select) JOYP |= JOYPAD_SELECT;
     }
     ram_set(this->cpu->ram, MEM_JOYP, ~JOYP & 0x3F);
 }
