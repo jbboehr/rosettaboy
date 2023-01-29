@@ -59,6 +59,12 @@ public:
 class UserException : public EmuException {};
 #endif
 
+NORETURN static void quit_emulator() {
+    fprintf(stdout, "User exited the emulator");
+    fflush(stdout);
+    exit(0);
+}
+
 NORETURN static void invalid_argument_err(const char *msg) {
     fprintf(stdout, "%s", msg);
     fflush(stdout);

@@ -7,7 +7,7 @@
 #include "cpu.h"
 
 class Buttons {
-private:
+public:
     u32 cycle = 0;
     CPU *cpu = nullptr;
     bool up = false;
@@ -18,15 +18,10 @@ private:
     bool b = false;
     bool start = false;
     bool select = false;
-
-public:
-    Buttons(CPU *cpu, bool headless);
-    void tick();
     bool turbo = false;
 
-private:
-    bool handle_inputs();
-    void update_buttons();
+    Buttons(CPU *cpu, bool headless);
+    void tick();
 };
 
 #endif // ROSETTABOY_BUTTONS_H

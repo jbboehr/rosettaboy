@@ -12,80 +12,85 @@ static const u8 JOYPAD_B = 1 << 1;
 static const u8 JOYPAD_RIGHT = 1 << 0;
 static const u8 JOYPAD_A = 1 << 0;
 
+static bool handle_inputs(Buttons *self);
+static void update_buttons(Buttons *self);
+
 Buttons::Buttons(CPU *cpu, bool headless) {
-    if(!headless) SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+    if(!headless) {
+        SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
+    }
     this->cpu = cpu;
     this->cycle = 0;
 }
 
 void Buttons::tick() {
     this->cycle++;
-    this->update_buttons();
+    update_buttons(this);
     if(this->cycle % 17556 == 20) {
-        if(this->handle_inputs()) {
+        if(handle_inputs(this)) {
             this->cpu->stop = false;
             this->cpu->interrupt(Interrupt::JOYPAD);
         }
     }
 }
 
-void Buttons::update_buttons() {
-    u8 JOYP = ~ram_get(this->cpu->ram, MEM_JOYP);
+static void update_buttons(Buttons *self) {
+    u8 JOYP = ~ram_get(self->cpu->ram, MEM_JOYP);
     JOYP &= 0x30;
     if(JOYP & JOYPAD_MODE_DPAD) {
-        if(this->up) JOYP |= JOYPAD_UP;
-        if(this->down) JOYP |= JOYPAD_DOWN;
-        if(this->left) JOYP |= JOYPAD_LEFT;
-        if(this->right) JOYP |= JOYPAD_RIGHT;
+        if(self->up) JOYP |= JOYPAD_UP;
+        if(self->down) JOYP |= JOYPAD_DOWN;
+        if(self->left) JOYP |= JOYPAD_LEFT;
+        if(self->right) JOYP |= JOYPAD_RIGHT;
     }
     if(JOYP & JOYPAD_MODE_BUTTONS) {
-        if(this->b) JOYP |= JOYPAD_B;
-        if(this->a) JOYP |= JOYPAD_A;
-        if(this->start) JOYP |= JOYPAD_START;
-        if(this->select) JOYP |= JOYPAD_SELECT;
+        if(self->b) JOYP |= JOYPAD_B;
+        if(self->a) JOYP |= JOYPAD_A;
+        if(self->start) JOYP |= JOYPAD_START;
+        if(self->select) JOYP |= JOYPAD_SELECT;
     }
-    ram_set(this->cpu->ram, MEM_JOYP, ~JOYP & 0x3F);
+    ram_set(self->cpu->ram, MEM_JOYP, ~JOYP & 0x3F);
 }
 
-bool Buttons::handle_inputs() {
+static bool handle_inputs(Buttons *self) {
     bool need_interrupt = false;
 
     SDL_Event event;
 
     while(SDL_PollEvent(&event)) {
         if(event.type == SDL_QUIT) {
-            throw new Quit();
+            quit_emulator();
         }
         if(event.type == SDL_KEYDOWN) {
             need_interrupt = true;
             switch(event.key.keysym.sym) {
-                case SDLK_ESCAPE: throw new Quit();
+                case SDLK_ESCAPE: quit_emulator();
                 case SDLK_LSHIFT:
-                    this->turbo = true;
+                    self->turbo = true;
                     need_interrupt = false;
                     break;
-                case SDLK_UP: this->up = true; break;
-                case SDLK_DOWN: this->down = true; break;
-                case SDLK_LEFT: this->left = true; break;
-                case SDLK_RIGHT: this->right = true; break;
-                case SDLK_z: this->b = true; break;
-                case SDLK_x: this->a = true; break;
-                case SDLK_RETURN: this->start = true; break;
-                case SDLK_SPACE: this->select = true; break;
+                case SDLK_UP: self->up = true; break;
+                case SDLK_DOWN: self->down = true; break;
+                case SDLK_LEFT: self->left = true; break;
+                case SDLK_RIGHT: self->right = true; break;
+                case SDLK_z: self->b = true; break;
+                case SDLK_x: self->a = true; break;
+                case SDLK_RETURN: self->start = true; break;
+                case SDLK_SPACE: self->select = true; break;
                 default: need_interrupt = false; break;
             }
         }
         if(event.type == SDL_KEYUP) {
             switch(event.key.keysym.sym) {
-                case SDLK_LSHIFT: this->turbo = false; break;
-                case SDLK_UP: this->up = false; break;
-                case SDLK_DOWN: this->down = false; break;
-                case SDLK_LEFT: this->left = false; break;
-                case SDLK_RIGHT: this->right = false; break;
-                case SDLK_z: this->b = false; break;
-                case SDLK_x: this->a = false; break;
-                case SDLK_RETURN: this->start = false; break;
-                case SDLK_SPACE: this->select = false; break;
+                case SDLK_LSHIFT: self->turbo = false; break;
+                case SDLK_UP: self->up = false; break;
+                case SDLK_DOWN: self->down = false; break;
+                case SDLK_LEFT: self->left = false; break;
+                case SDLK_RIGHT: self->right = false; break;
+                case SDLK_z: self->b = false; break;
+                case SDLK_x: self->a = false; break;
+                case SDLK_RETURN: self->start = false; break;
+                case SDLK_SPACE: self->select = false; break;
             }
         }
     }
