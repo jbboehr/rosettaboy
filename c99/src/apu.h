@@ -134,19 +134,33 @@ struct ch_control_t {
 };
 
 struct APU {
-    bool debug = false;
-    int ch1_freq_timer = 0, ch2_freq_timer = 0, ch3_freq_timer = 0, ch4_freq_timer = 0;
-    int ch1_envelope_vol = 0, ch2_envelope_vol = 0, ch4_envelope_vol = 0;
-    int ch1_sweep_timer = 0, ch1_shadow_freq = 0;
-    int ch1_envelope_timer = 0, ch2_envelope_timer = 0, ch4_envelope_timer = 0;
-    int ch1_length_timer = 0, ch2_length_timer = 0, ch3_length_timer = 0, ch4_length_timer = 0;
-    int ch1_length = 0, ch2_length = 0, ch3_length = 0, ch4_length = 0;
-    u8 ch1_sweep = 0;
-    u8 ch1_duty_pos = 0;
-    u8 ch2_duty_pos = 0;
-    u8 ch3_sample = 0;
-    u16 ch4_lfsr = 0xFFFF;
-    CPU *cpu = nullptr;
+    struct CPU *cpu;
+    bool debug;
+    int ch1_freq_timer;
+    int ch2_freq_timer;
+    int ch3_freq_timer;
+    int ch4_freq_timer;
+    int ch1_envelope_vol;
+    int ch2_envelope_vol;
+    int ch4_envelope_vol;
+    int ch1_sweep_timer;
+    int ch1_shadow_freq;
+    int ch1_envelope_timer;
+    int ch2_envelope_timer;
+    int ch4_envelope_timer;
+    int ch1_length_timer;
+    int ch2_length_timer;
+    int ch3_length_timer;
+    int ch4_length_timer;
+    int ch1_length;
+    int ch2_length;
+    int ch3_length;
+    int ch4_length;
+    u8 ch1_sweep;
+    u8 ch1_duty_pos;
+    u8 ch2_duty_pos;
+    u8 ch3_sample;
+    u16 ch4_lfsr;
 };
 
 BEGIN_EXTERN_C()

@@ -268,6 +268,7 @@ static void audio_callback(void *_sound, Uint8 *_stream, int _length) {
 void apu_ctor(struct APU *self, CPU *cpu, bool debug) {
     self->cpu = cpu;
     self->debug = debug;
+    self->ch4_lfsr = 0xFFFF;
 
     SDL_InitSubSystem(SDL_INIT_AUDIO);
 
