@@ -72,8 +72,6 @@ private:
     void tick_clock();
     bool check_interrupt(u8 queue, u8 i, u16 handler);
     void tick_interrupts();
-    void tick_instructions();
-    void tick_main(u8 op, oparg arg);
 };
 
 BEGIN_EXTERN_C()

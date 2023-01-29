@@ -634,6 +634,50 @@ static inline void cpu_tick_main(CPU *self, u8 op, oparg arg) {
 }
 
 /**
+ * Pick an instruction from RAM as pointed to by the
+ * Program Counter register; if the instruction takes
+ * an argument then pick that too; then execute it.
+ */
+static inline void cpu_tick_instructions(CPU *self) {
+    // if the previous instruction was large, let's not run any
+    // more instructions until other subsystems have caught up
+    if(self->owed_cycles) {
+        self->owed_cycles--;
+        return;
+    }
+
+    if(self->debug) {
+        self->dump_regs();
+    }
+
+    u8 op = ram_get(self->ram, self->PC);
+    if(op == 0xCB) {
+        op = ram_get(self->ram, self->PC + 1);
+        self->PC += 2;
+        cpu_tick_cb(self, op);
+        self->owed_cycles = OP_CB_CYCLES[op];
+    } else {
+        oparg arg;
+        arg.as_u16 = 0xCA75;
+        u8 arg_len = OP_ARG_BYTES[OP_ARG_TYPES[op]];
+        if(arg_len == 1) {
+            arg.as_u8 = ram_get(self->ram, self->PC + 1);
+        }
+        if(arg_len == 2) {
+            u16 low = ram_get(self->ram, self->PC + 1);
+            u16 high = ram_get(self->ram, self->PC + 2);
+            arg.as_u16 = high << 8 | low;
+        }
+        self->PC += 1 + arg_len;
+        cpu_tick_main(self, op, arg);
+        self->owed_cycles = OP_CYCLES[op];
+    }
+    if(self->owed_cycles > 0) {
+        self->owed_cycles -= 1; // HALT has cycles=0
+    }
+}
+
+/**
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
  */
@@ -722,7 +766,7 @@ void CPU::tick() {
     this->tick_interrupts();
     if(this->halt) return;
     if(this->stop) return;
-    this->tick_instructions();
+    cpu_tick_instructions(this);
 }
 
 /**
@@ -793,46 +837,4 @@ void CPU::tick_interrupts() {
             this->check_interrupt(queue, INTERRUPT_SERIAL, MEM_SERIAL_HANDLER) ||
             this->check_interrupt(queue, INTERRUPT_JOYPAD, MEM_JOYPAD_HANDLER);
     }
-}
-
-/**
- * Pick an instruction from RAM as pointed to by the
- * Program Counter register; if the instruction takes
- * an argument then pick that too; then execute it.
- */
-void CPU::tick_instructions() {
-    // if the previous instruction was large, let's not run any
-    // more instructions until other subsystems have caught up
-    if(owed_cycles) {
-        owed_cycles--;
-        return;
-    }
-
-    if(this->debug) {
-        this->dump_regs();
-    }
-
-    u8 op = ram_get(this->ram, this->PC);
-    if(op == 0xCB) {
-        op = ram_get(this->ram, this->PC + 1);
-        this->PC += 2;
-        cpu_tick_cb(this, op);
-        owed_cycles = OP_CB_CYCLES[op];
-    } else {
-        oparg arg;
-        arg.as_u16 = 0xCA75;
-        u8 arg_len = OP_ARG_BYTES[OP_ARG_TYPES[op]];
-        if(arg_len == 1) {
-            arg.as_u8 = ram_get(this->ram, this->PC + 1);
-        }
-        if(arg_len == 2) {
-            u16 low = ram_get(this->ram, this->PC + 1);
-            u16 high = ram_get(this->ram, this->PC + 2);
-            arg.as_u16 = high << 8 | low;
-        }
-        this->PC += 1 + arg_len;
-        cpu_tick_main(this, op, arg);
-        owed_cycles = OP_CYCLES[op];
-    }
-    if(owed_cycles > 0) owed_cycles -= 1; // HALT has cycles=0
 }
