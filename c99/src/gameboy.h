@@ -14,12 +14,13 @@ private:
     struct Cart cart;
     struct RAM ram;
     CPU *cpu = nullptr;
-    GPU *gpu = nullptr;
+    struct GPU gpu;
     struct Buttons buttons;
     struct Clock clock;
 
 public:
     GameBoy(struct Args *args);
+    ~GameBoy();
     void run();
     void tick();
 };

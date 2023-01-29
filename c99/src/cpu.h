@@ -241,6 +241,7 @@ BEGIN_EXTERN_C()
 
 void cpu_interrupt(CPU *cpu, enum Interrupt i);
 void cpu_stop(CPU *cpu, bool stop);
+bool cpu_is_stopped(CPU *cpu);
 
 END_EXTERN_C()
 

@@ -80,6 +80,10 @@ void cpu_stop(CPU *cpu, bool stop) {
     cpu->stop = stop;
 }
 
+bool cpu_is_stopped(CPU *cpu) {
+    return cpu->stop;
+}
+
 void cpu_interrupt(CPU *cpu, enum Interrupt i) {
     cpu->interrupt(i);
 }
