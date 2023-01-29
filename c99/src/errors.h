@@ -35,12 +35,6 @@ class Quit : public ControlledExit {
 public:
     Quit() { this->set_msg("User exited the emulator"); }
 };
-class Timeout : public ControlledExit {
-public:
-    Timeout(int frames, double duration) {
-        this->set_msg("Emulated %5d frames in %5.2fs (%.0ffps)", frames, duration, frames / duration);
-    }
-};
 class UnitTestPassed : public ControlledExit {
 public:
     UnitTestPassed() { this->set_msg("Unit test passed"); }
@@ -58,6 +52,12 @@ public:
 };
 class UserException : public EmuException {};
 #endif
+
+NORETURN static void timeout_err(int frames, double duration) {
+    fprintf(stdout, "Emulated %5d frames in %5.2fs (%.0ffps)", frames, duration, frames / duration);
+    fflush(stdout);
+    exit(0);
+}
 
 NORETURN static void quit_emulator() {
     fprintf(stdout, "User exited the emulator");

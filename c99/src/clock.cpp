@@ -8,25 +8,25 @@ Clock::Clock(Buttons *buttons, int frames, int profile, bool turbo) {
     this->turbo = turbo;
 }
 
-void Clock::tick() {
-    this->cycle++;
+void clock_tick(Clock *self) {
+    self->cycle++;
 
     // Do a whole frame's worth of sleeping at the start of each frame
-    if(this->cycle % 17556 == 20) {
+    if(self->cycle % 17556 == 20) {
         // Sleep if we have time left over
-        u32 time_spent = (SDL_GetTicks() - last_frame_start);
+        u32 time_spent = (SDL_GetTicks() - self->last_frame_start);
         i32 sleep_for = (1000 / 60) - time_spent;
-        if(sleep_for > 0 && !this->turbo && !this->buttons->turbo) {
+        if(sleep_for > 0 && !self->turbo && !self->buttons->turbo) {
             SDL_Delay(sleep_for);
         }
-        last_frame_start = SDL_GetTicks();
+        self->last_frame_start = SDL_GetTicks();
 
         // Exit if we've hit the frame or time limit
-        auto duration = (double)(last_frame_start - this->start) / 1000.0;
-        if((this->frames != 0 && this->frame >= this->frames) || (this->profile != 0 && duration >= this->profile)) {
-            throw new Timeout(this->frame, duration);
+        auto duration = (double)(self->last_frame_start - self->start) / 1000.0;
+        if((self->frames != 0 && self->frame >= self->frames) || (self->profile != 0 && duration >= self->profile)) {
+            timeout_err(self->frame, duration);
         }
 
-        this->frame++;
+        self->frame++;
     }
 }

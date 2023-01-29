@@ -25,5 +25,5 @@ void GameBoy::tick() {
     this->cpu->tick();
     this->gpu->tick();
     buttons_tick(&this->buttons);
-    this->clock->tick();
+    clock_tick(this->clock);
 }

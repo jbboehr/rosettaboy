@@ -7,7 +7,7 @@
 #include "consts.h"
 
 class Clock {
-private:
+public:
     Buttons *buttons = nullptr;
     int cycle = 0;
     int frame = 0;
@@ -17,10 +17,13 @@ private:
     int profile = 0;
     bool turbo = false;
 
-public:
     Clock(Buttons *buttons, int frames, int profile, bool turbo);
-    ~Clock();
-    void tick();
 };
+
+BEGIN_EXTERN_C()
+
+void clock_tick(Clock *self);
+
+END_EXTERN_C()
 
 #endif // ROSETTABOY_CLOCK_H
