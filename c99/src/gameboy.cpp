@@ -1,23 +1,23 @@
 #include "gameboy.h"
 
-GameBoy::GameBoy(struct Args *args) {
-    this->cart = cart_ctor(args->rom, false);
-    this->ram = ram_ctor(&this->cart, args->debug_ram);
-    this->cpu = cpu_ctor(&this->ram, args->debug_cpu);
-    this->gpu = gpu_ctor(&this->cpu, &this->ram, this->cart.name, args->headless, args->debug_gpu);
-    this->buttons = buttons_ctor(&this->cpu, &this->ram, args->headless);
+void gameboy_ctor(struct GameBoy *self, struct Args *args) {
+    self->cart = cart_ctor(args->rom, false);
+    self->ram = ram_ctor(&self->cart, args->debug_ram);
+    self->cpu = cpu_ctor(&self->ram, args->debug_cpu);
+    self->gpu = gpu_ctor(&self->cpu, &self->ram, self->cart.name, args->headless, args->debug_gpu);
+    self->buttons = buttons_ctor(&self->cpu, &self->ram, args->headless);
     if(!args->silent) {
-        apu_ctor(&this->apu, &this->cpu, &this->ram, args->debug_apu);
+        apu_ctor(&self->apu, &self->cpu, &self->ram, args->debug_apu);
     }
-    this->clock = clock_ctor(&this->buttons, args->frames, args->profile, args->turbo);
+    self->clock = clock_ctor(&self->buttons, args->frames, args->profile, args->turbo);
 }
 
-void gameboy_dtor(GameBoy *self) {
+void gameboy_dtor(struct GameBoy *self) {
     gpu_dtor(&self->gpu);
     apu_dtor(&self->apu);
 }
 
-static inline void gameboy_tick(GameBoy *self) {
+static inline void gameboy_tick(struct GameBoy *self) {
     cpu_tick(&self->cpu);
     gpu_tick(&self->gpu);
     buttons_tick(&self->buttons);
@@ -29,7 +29,7 @@ static inline void gameboy_tick(GameBoy *self) {
  * cycles. So to avoid overhead, we run the main loop at 1MHz, and each
  * "cycle" that each subsystem counts represents 4 hardware cycles.
  */
-void gameboy_run(GameBoy *self) {
+void gameboy_run(struct GameBoy *self) {
     while(true) {
         gameboy_tick(self);
     }

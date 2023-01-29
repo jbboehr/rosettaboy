@@ -11,8 +11,7 @@
 #include "gpu.h"
 #include "ram.h"
 
-class GameBoy {
-public:
+struct GameBoy {
     struct Cart cart;
     struct RAM ram;
     struct CPU cpu;
@@ -20,14 +19,13 @@ public:
     struct GPU gpu;
     struct Buttons buttons;
     struct Clock clock;
-
-    GameBoy(struct Args *args);
 };
 
 BEGIN_EXTERN_C()
 
-void gameboy_run(GameBoy *self);
-void gameboy_dtor(GameBoy *self);
+void gameboy_ctor(struct GameBoy *self, struct Args *args);
+void gameboy_run(struct GameBoy *self);
+void gameboy_dtor(struct GameBoy *self);
 
 END_EXTERN_C()
 

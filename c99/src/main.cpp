@@ -10,9 +10,10 @@ int main(int argc, char *argv[]) {
         return args.exit_code;
     }
 
-    GameBoy *gameboy = new GameBoy(&args);
-    gameboy_run(gameboy);
-    gameboy_dtor(gameboy);
+    struct GameBoy gameboy = {0};
+    gameboy_ctor(&gameboy, &args);
+    gameboy_run(&gameboy);
+    gameboy_dtor(&gameboy);
 
     printf("\n");
     return 0;
