@@ -9,4 +9,11 @@
 #define END_EXTERN_C()
 #endif
 
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define HAVE_NORETURN
+#define NORETURN __attribute__((noreturn))
+#else
+#define NORETURN
+#endif
+
 #endif

@@ -56,7 +56,7 @@ public:
     Cart(const char *filename);
 
 private:
-    bool debug = false;
+    bool debug = true;
 };
 
 #endif // ROSETTABOY_CART_H

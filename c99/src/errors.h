@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <string>
+#include <stdio.h>
 
 #define ERR_BUF_LEN 1000
 
@@ -65,19 +66,20 @@ public:
 
 // User error, ie the user gave us an invalid or corrupt input file
 class UserException : public EmuException {};
-class RomMissing : public UserException {
-public:
-    RomMissing(const char *filename, int err) {
-        this->set_msg("Error opening %s: %s", filename, strerror(err));
-    }
-};
-class LogoChecksumFailed : public UserException {
-public:
-    LogoChecksumFailed(int logo_checksum) { this->set_msg("Invalid logo checksum: %d", logo_checksum); }
-};
-class HeaderChecksumFailed : public UserException {
-public:
-    HeaderChecksumFailed(int header_checksum) { this->set_msg("Invalid header checksum: %d", header_checksum); }
-};
+NORETURN static void rom_missing_err(const char *filename, int err) {
+    fprintf(stdout, "Error opening %s: %s\n", filename, strerror(err));
+    fflush(stdout);
+    abort();
+}
+NORETURN static void logo_checksum_failed_err(int logo_checksum) {
+    fprintf(stdout, "Invalid logo checksum: %d", logo_checksum);
+    fflush(stdout);
+    abort();
+}
+NORETURN static void header_checksum_failed_err(int header_checksum) {
+    fprintf(stdout, "Invalid header checksum: %d", header_checksum);
+    fflush(stdout);
+    abort();
+}
 
 #endif // ROSETTABOY_ERRORS_H

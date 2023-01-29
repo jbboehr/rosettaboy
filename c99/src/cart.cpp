@@ -29,7 +29,7 @@ Cart::Cart(const char *filename) {
     struct stat statbuf;
     int statok = stat(filename, &statbuf);
     if(statok < 0) {
-        throw new RomMissing(filename, errno);
+        rom_missing_err(filename, errno);
     }
 
     if(debug) {
@@ -38,7 +38,7 @@ Cart::Cart(const char *filename) {
 
     int fd = open(filename, O_RDONLY);
     if(fd < 0) {
-        throw new RomMissing(filename, errno);
+        rom_missing_err(filename, errno);
     }
     this->data = (unsigned char *)mmap(nullptr, (size_t)statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
@@ -61,7 +61,7 @@ Cart::Cart(const char *filename) {
         logo_checksum += i;
     }
     if(logo_checksum != 5446) {
-        throw new LogoChecksumFailed(logo_checksum);
+        logo_checksum_failed_err(logo_checksum);
     }
 
     u16 header_checksum = 25;
@@ -69,7 +69,7 @@ Cart::Cart(const char *filename) {
         header_checksum += this->data[i];
     }
     if((header_checksum & 0xFF) != 0) {
-        throw new HeaderChecksumFailed(header_checksum);
+        header_checksum_failed_err(header_checksum);
     }
 
     if(this->ram_size) {
@@ -77,10 +77,10 @@ Cart::Cart(const char *filename) {
 //        fn2.replace(fn2.end() - 2, fn2.end(), "sav");
 //        int ram_fd = open(fn2.c_str(), O_RDWR | O_CREAT, 0600);
 //        if(ram_fd < 0) {
-//            throw new RomMissing(fn2, errno);
+//            throw new rom_missing_err(fn2, errno);
 //        }
 //        if(ftruncate(ram_fd, this->ram_size) != 0) {
-//            throw new RomMissing(fn2, errno);
+//            throw new rom_missing_err(fn2, errno);
 //        }
 //        this->ram =
 //            (unsigned char *)mmap(nullptr, (size_t)this->ram_size, PROT_READ | PROT_WRITE, MAP_SHARED, ram_fd, 0);
