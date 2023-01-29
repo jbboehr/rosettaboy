@@ -1,6 +1,7 @@
 #ifndef ROSETTABOY_GAMEBOY_H
 #define ROSETTABOY_GAMEBOY_H
 
+#include "common.h"
 #include "apu.h"
 #include "args.h"
 #include "buttons.h"
@@ -11,7 +12,7 @@
 #include "ram.h"
 
 class GameBoy {
-private:
+public:
     struct Cart cart;
     struct RAM ram;
     struct CPU cpu;
@@ -20,11 +21,14 @@ private:
     struct Buttons buttons;
     struct Clock clock;
 
-public:
     GameBoy(struct Args *args);
     ~GameBoy();
-    void run();
-    void tick();
 };
+
+BEGIN_EXTERN_C()
+
+void gameboy_run(GameBoy *self);
+
+END_EXTERN_C()
 
 #endif // ROSETTABOY_GAMEBOY_H

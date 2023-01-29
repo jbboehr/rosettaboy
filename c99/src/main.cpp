@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     }
 
     GameBoy *gameboy = new GameBoy(&args);
-    gameboy->run();
+    gameboy_run(gameboy);
 
     printf("\n");
     return 0;

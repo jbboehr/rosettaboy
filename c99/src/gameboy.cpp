@@ -17,20 +17,20 @@ GameBoy::~GameBoy() {
     apu_dtor(&this->apu);
 }
 
+static inline void gameboy_tick(GameBoy *self) {
+    cpu_tick(&self->cpu);
+    gpu_tick(&self->gpu);
+    buttons_tick(&self->buttons);
+    clock_tick(&self->clock);
+}
+
 /**
  * GB CPU runs at 4MHz, but each action takes a multiple of 4 hardware
  * cycles. So to avoid overhead, we run the main loop at 1MHz, and each
  * "cycle" that each subsystem counts represents 4 hardware cycles.
  */
-void GameBoy::run() {
+void gameboy_run(GameBoy *self) {
     while(true) {
-        this->tick();
+        gameboy_tick(self);
     }
-}
-
-void GameBoy::tick() {
-    cpu_tick(&this->cpu);
-    gpu_tick(&this->gpu);
-    buttons_tick(&this->buttons);
-    clock_tick(&this->clock);
 }
