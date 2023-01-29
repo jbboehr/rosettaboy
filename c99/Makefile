@@ -129,29 +129,29 @@ rosettaboy-cpp/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/build
 .PHONY : rosettaboy-cpp/fast
 
-src/apu.o: src/apu.cpp.o
+src/apu.o: src/apu.c.o
 .PHONY : src/apu.o
 
 # target to build an object file
-src/apu.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/apu.cpp.o
-.PHONY : src/apu.cpp.o
+src/apu.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/apu.c.o
+.PHONY : src/apu.c.o
 
-src/apu.i: src/apu.cpp.i
+src/apu.i: src/apu.c.i
 .PHONY : src/apu.i
 
 # target to preprocess a source file
-src/apu.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/apu.cpp.i
-.PHONY : src/apu.cpp.i
+src/apu.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/apu.c.i
+.PHONY : src/apu.c.i
 
-src/apu.s: src/apu.cpp.s
+src/apu.s: src/apu.c.s
 .PHONY : src/apu.s
 
 # target to generate assembly for a file
-src/apu.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/apu.cpp.s
-.PHONY : src/apu.cpp.s
+src/apu.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rosettaboy-cpp.dir/build.make CMakeFiles/rosettaboy-cpp.dir/src/apu.c.s
+.PHONY : src/apu.c.s
 
 src/args.o: src/args.c.o
 .PHONY : src/args.o

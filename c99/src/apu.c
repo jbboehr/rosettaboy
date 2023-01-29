@@ -1,6 +1,9 @@
 #include <SDL2/SDL.h>
 
 #include "apu.h"
+#include "ram.h"
+
+static int WAVE_LEN = 32;
 
 static u32 HZ = 48000; // 44100;
 static u8 duty[4][8] = {
@@ -43,7 +46,7 @@ static inline int hz_to_samples(int hz) {
     }                                                                                                                  \
     ch = ch * self->ch##_envelope_vol / 0x0F;
 
-static inline u8 apu_get_ch1_sample(APU *self, ch_control_t *ch_control, ch1_dat_t *ch1_dat) {
+static inline u8 apu_get_ch1_sample(struct APU *self, struct ch_control_t *ch_control, struct ch1_dat_t *ch1_dat) {
     //=================================================================
     // Square 1: Sweep -> Timer -> Duty -> Length Counter -> Envelope -> Mixer
 
@@ -91,7 +94,7 @@ static inline u8 apu_get_ch1_sample(APU *self, ch_control_t *ch_control, ch1_dat
     return ch1;
 }
 
-static inline u8 apu_get_ch2_sample(APU *self, ch_control_t *ch_control, ch2_dat_t *ch2_dat) {
+static inline u8 apu_get_ch2_sample(struct APU *self, struct ch_control_t *ch_control, struct ch2_dat_t *ch2_dat) {
     //=================================================================
     // Square 2:          Timer -> Duty -> Length Counter -> Envelope -> Mixer
 
@@ -124,7 +127,7 @@ static inline u8 apu_get_ch2_sample(APU *self, ch_control_t *ch_control, ch2_dat
     return ch2;
 }
 
-static inline u8 apu_get_ch3_sample(APU *self, ch_control_t *ch_control, ch3_dat_t *ch3_dat) {
+static inline u8 apu_get_ch3_sample(struct APU *self, struct ch_control_t *ch_control, struct ch3_dat_t *ch3_dat) {
     //=================================================================
     // Wave:              Timer -> Wave -> Length Counter -> Volume -> Mixer
 
@@ -140,7 +143,7 @@ static inline u8 apu_get_ch3_sample(APU *self, ch_control_t *ch_control, ch3_dat
     // Wave
     u8 ch3 = 127;
     if(ch3_dat->enabled) {
-        u8 *ch3_samples = &self->cpu->ram->data[0xFF30]; // until 0xFF3F
+        u8 *ch3_samples = &self->ram->data[0xFF30]; // until 0xFF3F
         if(self->ch3_sample % 2 == 0) {
             ch3 = ch3_samples[self->ch3_sample / 2] & 0xF0;
         } else {
@@ -171,7 +174,7 @@ static inline u8 apu_get_ch3_sample(APU *self, ch_control_t *ch_control, ch3_dat
     return ch3;
 }
 
-static inline u8 apu_get_ch4_sample(APU *self, ch_control_t *ch_control, ch4_dat_t *ch4_dat) {
+static inline u8 apu_get_ch4_sample(struct APU *self, struct ch_control_t *ch_control, struct ch4_dat_t *ch4_dat) {
     //=================================================================
     // Noise:             Timer -> LFSR -> Length Counter -> Envelope -> Mixer
 
@@ -218,22 +221,22 @@ static inline u8 apu_get_ch4_sample(APU *self, ch_control_t *ch_control, ch4_dat
     return ch4;
 }
 
-static inline u16 apu_get_next_sample(APU *self) {
+static inline u16 apu_get_next_sample(struct APU *self) {
     //=================================================================
     // Control
 
-    ch_control_t *ch_control = (ch_control_t *)&self->cpu->ram->data[MEM_NR50];
+    struct ch_control_t *ch_control = (struct ch_control_t *)&self->ram->data[MEM_NR50];
 
     if(!ch_control->snd_enable) {
         // TODO: wipe all registers
         return 0;
     }
 
-    u8 *ram = self->cpu->ram->data;
-    u8 ch1 = apu_get_ch1_sample(self, ch_control, (ch1_dat_t *)&ram[MEM_NR10]);
-    u8 ch2 = apu_get_ch2_sample(self, ch_control, (ch2_dat_t *)&ram[MEM_NR20]);
-    u8 ch3 = apu_get_ch3_sample(self, ch_control, (ch3_dat_t *)&ram[MEM_NR30]);
-    u8 ch4 = apu_get_ch4_sample(self, ch_control, (ch4_dat_t *)&ram[MEM_NR40]);
+    u8 *ram = self->ram->data;
+    u8 ch1 = apu_get_ch1_sample(self, ch_control, (struct ch1_dat_t *)&ram[MEM_NR10]);
+    u8 ch2 = apu_get_ch2_sample(self, ch_control, (struct ch2_dat_t *)&ram[MEM_NR20]);
+    u8 ch3 = apu_get_ch3_sample(self, ch_control, (struct ch3_dat_t *)&ram[MEM_NR30]);
+    u8 ch4 = apu_get_ch4_sample(self, ch_control, (struct ch4_dat_t *)&ram[MEM_NR40]);
 
     //=================================================================
     // Mixer
@@ -257,7 +260,7 @@ static inline u16 apu_get_next_sample(APU *self) {
 
 static void audio_callback(void *_sound, Uint8 *_stream, int _length) {
     u16 *stream = (u16 *)_stream;
-    APU *sound = (APU *)_sound;
+    struct APU *sound = (struct APU *)_sound;
     int length = _length / sizeof(stream[0]);
 
     for(int i = 0; i < length; i++) {
@@ -265,8 +268,9 @@ static void audio_callback(void *_sound, Uint8 *_stream, int _length) {
     }
 }
 
-void apu_ctor(struct APU *self, CPU *cpu, bool debug) {
+void apu_ctor(struct APU *self, struct CPU *cpu, struct RAM *ram, bool debug) {
     self->cpu = cpu;
+    self->ram = ram;
     self->debug = debug;
     self->ch4_lfsr = 0xFFFF;
 
@@ -283,6 +287,6 @@ void apu_ctor(struct APU *self, CPU *cpu, bool debug) {
     SDL_PauseAudio(false);
 }
 
-void apu_dtor(APU *apu) {
+void apu_dtor(struct APU *apu) {
     SDL_CloseAudio();
 }

@@ -1,12 +1,11 @@
 #ifndef ROSETTABOY_APU_H
 #define ROSETTABOY_APU_H
 
+#include <stdbool.h>
 #include <SDL2/SDL.h>
 
 #include "common.h"
-#include "cpu.h"
-
-static int WAVE_LEN = 32;
+#include "consts.h"
 
 struct ch1_dat_t {
     // NR10
@@ -135,6 +134,7 @@ struct ch_control_t {
 
 struct APU {
     struct CPU *cpu;
+    struct RAM *ram;
     bool debug;
     int ch1_freq_timer;
     int ch2_freq_timer;
@@ -165,8 +165,8 @@ struct APU {
 
 BEGIN_EXTERN_C()
 
-void apu_ctor(struct APU *self, CPU *cpu, bool debug);
-void apu_dtor(APU *apu);
+void apu_ctor(struct APU *self, struct CPU *cpu, struct RAM *ram, bool debug);
+void apu_dtor(struct APU *apu);
 
 END_EXTERN_C()
 
