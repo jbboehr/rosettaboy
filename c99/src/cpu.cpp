@@ -771,7 +771,7 @@ static inline void cpu_tick_clock(CPU *self) {
         if(self->cycle % speed == 0) {
             if(ram_get(self->ram, MEM_TIMA) == 0xFF) {
                 ram_set(self->ram, MEM_TIMA, ram_get(self->ram, MEM_TMA)); // if timer overflows, load base
-                self->interrupt(INTERRUPT_TIMER);
+                cpu_interrupt(self, INTERRUPT_TIMER);
             }
             ram_set(self->ram, MEM_TIMA, ram_get(self->ram, MEM_TIMA) + 1);
         }
@@ -810,16 +810,6 @@ CPU::CPU(struct RAM *ram, bool debug) {
     this->PC = 0x0000;
 }
 
-/**
- * Set a given interrupt bit - on the next tick, if the interrupt
- * handler for this interrupt is enabled (and interrupts in general
- * are enabled), then the interrupt handler will be called.
- */
-void CPU::interrupt(Interrupt i) {
-    ram_set(this->ram, MEM_IF, ram_get(this->ram, MEM_IF) | i);
-    this->halt = false; // interrupts interrupt HALT state
-}
-
 void cpu_stop(CPU *cpu, bool stop) {
     cpu->stop = stop;
 }
@@ -828,8 +818,14 @@ bool cpu_is_stopped(CPU *cpu) {
     return cpu->stop;
 }
 
-void cpu_interrupt(CPU *cpu, enum Interrupt i) {
-    cpu->interrupt(i);
+/**
+ * Set a given interrupt bit - on the next tick, if the interrupt
+ * handler for this interrupt is enabled (and interrupts in general
+ * are enabled), then the interrupt handler will be called.
+ */
+void cpu_interrupt(CPU *self, enum Interrupt i) {
+    ram_set(self->ram, MEM_IF, ram_get(self->ram, MEM_IF) | i);
+    self->halt = false; // interrupts interrupt HALT state
 }
 
 void cpu_tick(CPU *self) {

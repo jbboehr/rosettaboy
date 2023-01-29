@@ -63,7 +63,6 @@ public:
     u16 PC;
 
     CPU(struct RAM *ram, bool debug);
-    void interrupt(Interrupt i);
 };
 
 BEGIN_EXTERN_C()
