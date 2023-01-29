@@ -38,6 +38,12 @@ u32 bmask = 0x00ff0000;
 u32 amask = 0xff000000;
 #endif
 
+SDL_Color gen_hue(u8 n);
+
+static inline bool sprite_is_live(struct Sprite *self){
+    return self->x > 0 && self->x < 168 && self->y > 0 && self->y < 160;
+}
+
 GPU::GPU(CPU *cpu, char *title, bool headless, bool debug) {
     this->cpu = cpu;
     this->debug = debug;
@@ -301,7 +307,7 @@ void GPU::draw_line(i32 ly) {
             sprite.tile_id = ram_get(this->cpu->ram, MEM_OAM_BASE + 4 * n + 2);
             sprite.flags = ram_get(this->cpu->ram, MEM_OAM_BASE + 4 * n + 3);
 
-            if(sprite.is_live()) {
+            if(sprite_is_live(&sprite)) {
                 auto palette = sprite.palette ? this->obp1 : this->obp0;
                 // printf("Drawing sprite %d (from %04X) at %d,%d\n", tile_id, OAM_BASE + (sprite_id * 4) + 0, x, y);
                 SDL_Point xy = {
@@ -374,5 +380,3 @@ SDL_Color gen_hue(u8 n) {
         default: return {.r = 255, .g = 0, .b = q, .a = 0xFF};
     }
 }
-
-bool Sprite::is_live() { return x > 0 && x < 168 && y > 0 && y < 160; }

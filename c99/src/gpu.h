@@ -19,8 +19,6 @@ struct Sprite {
             unsigned char behind : 1;
         };
     };
-
-    bool is_live();
 };
 
 class GPU {
@@ -48,7 +46,5 @@ private:
     void paint_tile(i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool flip_x, bool flip_y);
     void paint_tile_line(i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool flip_x, bool flip_y, i32 y);
 };
-
-SDL_Color gen_hue(u8 n);
 
 #endif // ROSETTABOY_GPU_H
