@@ -15,11 +15,12 @@ static const u8 JOYPAD_A = 1 << 0;
 static bool handle_inputs(Buttons *self);
 static void update_buttons(Buttons *self);
 
-Buttons::Buttons(CPU *cpu, bool headless) {
+Buttons::Buttons(CPU *cpu, struct RAM *ram, bool headless) {
     if(!headless) {
         SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
     }
     this->cpu = cpu;
+    this->ram = ram;
     this->cycle = 0;
 }
 
@@ -28,14 +29,14 @@ void buttons_tick(Buttons *self) {
     update_buttons(self);
     if(self->cycle % 17556 == 20) {
         if(handle_inputs(self)) {
-            self->cpu->stop = false;
-            self->cpu->interrupt(Interrupt::JOYPAD);
+            cpu_stop(self->cpu, false);
+            cpu_interrupt(self->cpu, INTERRUPT_JOYPAD);
         }
     }
 }
 
 static void update_buttons(Buttons *self) {
-    u8 JOYP = ~ram_get(self->cpu->ram, MEM_JOYP);
+    u8 JOYP = ~ram_get(self->ram, MEM_JOYP);
     JOYP &= 0x30;
     if(JOYP & JOYPAD_MODE_DPAD) {
         if(self->up) JOYP |= JOYPAD_UP;
@@ -49,7 +50,7 @@ static void update_buttons(Buttons *self) {
         if(self->start) JOYP |= JOYPAD_START;
         if(self->select) JOYP |= JOYPAD_SELECT;
     }
-    ram_set(self->cpu->ram, MEM_JOYP, ~JOYP & 0x3F);
+    ram_set(self->ram, MEM_JOYP, ~JOYP & 0x3F);
 }
 
 static bool handle_inputs(Buttons *self) {

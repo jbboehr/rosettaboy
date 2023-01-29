@@ -237,4 +237,11 @@ private:
     void set_reg(u8 n, u8 val);
 };
 
+BEGIN_EXTERN_C()
+
+void cpu_interrupt(CPU *cpu, enum Interrupt i);
+void cpu_stop(CPU *cpu, bool stop);
+
+END_EXTERN_C()
+
 #endif // ROSETTABOY_CPU_H

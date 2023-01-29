@@ -83,11 +83,11 @@ static const u16 MEM_BOOT = 0xFF50;
 static const u16 MEM_IE = 0xFFFF;
 
 enum Interrupt {
-    VBLANK = 1 << 0,
-    STAT = 1 << 1,
-    TIMER = 1 << 2,
-    SERIAL = 1 << 3,
-    JOYPAD = 1 << 4,
+    INTERRUPT_VBLANK = 1 << 0,
+    INTERRUPT_STAT = 1 << 1,
+    INTERRUPT_TIMER = 1 << 2,
+    INTERRUPT_SERIAL = 1 << 3,
+    INTERRUPT_JOYPAD = 1 << 4,
 };
 
 END_EXTERN_C()

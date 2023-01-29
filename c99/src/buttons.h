@@ -10,6 +10,7 @@ class Buttons {
 public:
     u32 cycle = 0;
     CPU *cpu = nullptr;
+    struct RAM *ram = nullptr;
     bool up = false;
     bool down = false;
     bool left = false;
@@ -20,7 +21,7 @@ public:
     bool select = false;
     bool turbo = false;
 
-    Buttons(CPU *cpu, bool headless);
+    Buttons(CPU *cpu, struct RAM *ram, bool headless);
 };
 
 BEGIN_EXTERN_C()

@@ -76,6 +76,14 @@ void CPU::interrupt(Interrupt i) {
     this->halt = false; // interrupts interrupt HALT state
 }
 
+void cpu_stop(CPU *cpu, bool stop) {
+    cpu->stop = stop;
+}
+
+void cpu_interrupt(CPU *cpu, enum Interrupt i) {
+    cpu->interrupt(i);
+}
+
 void CPU::tick() {
     this->tick_dma();
     this->tick_clock();
@@ -117,7 +125,7 @@ void CPU::tick_clock() {
         if(cycle % speed == 0) {
             if(ram_get(this->ram, MEM_TIMA) == 0xFF) {
                 ram_set(this->ram, MEM_TIMA, ram_get(this->ram, MEM_TMA)); // if timer overflows, load base
-                this->interrupt(Interrupt::TIMER);
+                this->interrupt(INTERRUPT_TIMER);
             }
             ram_set(this->ram, MEM_TIMA, ram_get(this->ram, MEM_TIMA) + 1);
         }
@@ -147,11 +155,11 @@ void CPU::tick_interrupts() {
     if(this->interrupts && queue) {
         if(debug) printf("Handling interrupts: %02X & %02X\n", ram_get(this->ram, MEM_IE), ram_get(this->ram, MEM_IF));
         this->interrupts = false; // no nested interrupts, RETI will re-enable
-        this->check_interrupt(queue, Interrupt::VBLANK, MEM_VBLANK_HANDLER) ||
-            this->check_interrupt(queue, Interrupt::STAT, MEM_LCD_HANDLER) ||
-            this->check_interrupt(queue, Interrupt::TIMER, MEM_TIMER_HANDLER) ||
-            this->check_interrupt(queue, Interrupt::SERIAL, MEM_SERIAL_HANDLER) ||
-            this->check_interrupt(queue, Interrupt::JOYPAD, MEM_JOYPAD_HANDLER);
+        this->check_interrupt(queue, INTERRUPT_VBLANK, MEM_VBLANK_HANDLER) ||
+            this->check_interrupt(queue, INTERRUPT_STAT, MEM_LCD_HANDLER) ||
+            this->check_interrupt(queue, INTERRUPT_TIMER, MEM_TIMER_HANDLER) ||
+            this->check_interrupt(queue, INTERRUPT_SERIAL, MEM_SERIAL_HANDLER) ||
+            this->check_interrupt(queue, INTERRUPT_JOYPAD, MEM_JOYPAD_HANDLER);
     }
 }
 

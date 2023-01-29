@@ -97,7 +97,7 @@ void GPU::tick() {
     if(ly == ram_get(this->cpu->ram, MEM_LYC)) {
         stat |= Stat::LYC_EQUAL;
         if(stat & Stat::LYC_INTERRUPT) {
-            this->cpu->interrupt(Interrupt::STAT);
+            this->cpu->interrupt(INTERRUPT_STAT);
         }
     }
 
@@ -105,7 +105,7 @@ void GPU::tick() {
     if(lx == 0 && ly < 144) {
         stat |= Stat::OAM;
         if(stat & Stat::OAM_INTERRUPT) {
-            this->cpu->interrupt(Interrupt::STAT);
+            this->cpu->interrupt(INTERRUPT_STAT);
         }
     } else if(lx == 20 && ly < 144) {
         stat |= Stat::DRAWING;
@@ -131,14 +131,14 @@ void GPU::tick() {
     } else if(lx == 63 && ly < 144) {
         stat |= Stat::HBLANK;
         if(stat & Stat::HBLANK_INTERRUPT) {
-            this->cpu->interrupt(Interrupt::STAT);
+            this->cpu->interrupt(INTERRUPT_STAT);
         }
     } else if(lx == 0 && ly == 144) {
         stat |= Stat::VBLANK;
         if(stat & Stat::VBLANK_INTERRUPT) {
-            this->cpu->interrupt(Interrupt::STAT);
+            this->cpu->interrupt(INTERRUPT_STAT);
         }
-        this->cpu->interrupt(Interrupt::VBLANK);
+        this->cpu->interrupt(INTERRUPT_VBLANK);
     }
     ram_set(this->cpu->ram, MEM_STAT, stat);
 }
