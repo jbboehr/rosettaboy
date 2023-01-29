@@ -3,6 +3,27 @@
 #include "consts.h"
 #include "gpu.h"
 
+static const u8 LCDC_ENABLED = 1 << 7;
+static const u8 LCDC_WINDOW_MAP = 1 << 6;
+static const u8 LCDC_WINDOW_ENABLED = 1 << 5;
+static const u8 LCDC_DATA_SRC = 1 << 4;
+static const u8 LCDC_BG_MAP = 1 << 3;
+static const u8 LCDC_OBJ_SIZE = 1 << 2;
+static const u8 LCDC_OBJ_ENABLED = 1 << 1;
+static const u8 LCDC_BG_WIN_ENABLED = 1 << 0;
+
+static const u8 STAT_LYC_INTERRUPT = 1 << 6;
+static const u8 STAT_OAM_INTERRUPT = 1 << 5;
+static const u8 STAT_VBLANK_INTERRUPT = 1 << 4;
+static const u8 STAT_HBLANK_INTERRUPT = 1 << 3;
+static const u8 STAT_LYC_EQUAL = 1 << 2;
+static const u8 STAT_MODE_BITS = 1 << 1 | 1 << 0;
+
+static const u8 STAT_HBLANK = 0x00;
+static const u8 STAT_VBLANK = 0x01;
+static const u8 STAT_OAM = 0x02;
+static const u8 STAT_DRAWING = 0x03;
+
 u16 SCALE = 2;
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
@@ -76,7 +97,7 @@ void GPU::tick() {
 
     // Check if LCD enabled at all
     u8 lcdc = ram_get(this->cpu->ram, MEM_LCDC);
-    if(!(lcdc & LCDC::ENABLED)) {
+    if(!(lcdc & LCDC_ENABLED)) {
         // When LCD is re-enabled, LY is 0
         // Does it become 0 as soon as disabled??
         ram_set(this->cpu->ram, MEM_LY, 0);
@@ -90,25 +111,25 @@ void GPU::tick() {
     ram_set(this->cpu->ram, MEM_LY, ly);
 
     u8 stat = ram_get(this->cpu->ram, MEM_STAT);
-    stat &= ~Stat::MODE_BITS;
-    stat &= ~Stat::LYC_EQUAL;
+    stat &= ~STAT_MODE_BITS;
+    stat &= ~STAT_LYC_EQUAL;
 
     // LYC compare & interrupt
     if(ly == ram_get(this->cpu->ram, MEM_LYC)) {
-        stat |= Stat::LYC_EQUAL;
-        if(stat & Stat::LYC_INTERRUPT) {
+        stat |= STAT_LYC_EQUAL;
+        if(stat & STAT_LYC_INTERRUPT) {
             this->cpu->interrupt(INTERRUPT_STAT);
         }
     }
 
     // Set mode
     if(lx == 0 && ly < 144) {
-        stat |= Stat::OAM;
-        if(stat & Stat::OAM_INTERRUPT) {
+        stat |= STAT_OAM;
+        if(stat & STAT_OAM_INTERRUPT) {
             this->cpu->interrupt(INTERRUPT_STAT);
         }
     } else if(lx == 20 && ly < 144) {
-        stat |= Stat::DRAWING;
+        stat |= STAT_DRAWING;
         if(ly == 0) {
             // TODO: how often should we update palettes?
             // Should every pixel reference them directly?
@@ -129,13 +150,13 @@ void GPU::tick() {
             }
         }
     } else if(lx == 63 && ly < 144) {
-        stat |= Stat::HBLANK;
-        if(stat & Stat::HBLANK_INTERRUPT) {
+        stat |= STAT_HBLANK;
+        if(stat & STAT_HBLANK_INTERRUPT) {
             this->cpu->interrupt(INTERRUPT_STAT);
         }
     } else if(lx == 0 && ly == 144) {
-        stat |= Stat::VBLANK;
-        if(stat & Stat::VBLANK_INTERRUPT) {
+        stat |= STAT_VBLANK;
+        if(stat & STAT_VBLANK_INTERRUPT) {
             this->cpu->interrupt(INTERRUPT_STAT);
         }
         this->cpu->interrupt(INTERRUPT_VBLANK);
@@ -177,14 +198,14 @@ void GPU::draw_debug() {
     }
 
     // Background scroll border
-    if(lcdc & LCDC::BG_WIN_ENABLED) {
+    if(lcdc & LCDC_BG_WIN_ENABLED) {
         SDL_Rect rect = {.x = 0, .y = 0, .w = 160, .h = 144};
         SDL_SetRenderDrawColor(this->renderer, 255, 0, 0, 0xFF);
         SDL_RenderDrawRect(this->renderer, &rect);
     }
 
     // Window tiles
-    if(lcdc & LCDC::WINDOW_ENABLED) {
+    if(lcdc & LCDC_WINDOW_ENABLED) {
         u8 wnd_y = ram_get(this->cpu->ram, MEM_WY);
         u8 wnd_x = ram_get(this->cpu->ram, MEM_WX);
         SDL_Rect rect = {.x = wnd_x - 7, .y = wnd_y, .w = 160, .h = 144};
@@ -197,11 +218,11 @@ void GPU::draw_line(i32 ly) {
     auto lcdc = ram_get(this->cpu->ram, MEM_LCDC);
 
     // Background tiles
-    if(lcdc & LCDC::BG_WIN_ENABLED) {
+    if(lcdc & LCDC_BG_WIN_ENABLED) {
         auto scroll_y = ram_get(this->cpu->ram, MEM_SCY);
         auto scroll_x = ram_get(this->cpu->ram, MEM_SCX);
-        auto tile_offset = !(lcdc & LCDC::DATA_SRC);
-        auto tile_map = (lcdc & LCDC::BG_MAP) ? MEM_MAP_1 : MEM_MAP_0;
+        auto tile_offset = !(lcdc & LCDC_DATA_SRC);
+        auto tile_map = (lcdc & LCDC_BG_MAP) ? MEM_MAP_1 : MEM_MAP_0;
 
         if(this->debug) {
             SDL_Point xy = {.x = 256 - scroll_x, .y = ly};
@@ -231,11 +252,11 @@ void GPU::draw_line(i32 ly) {
     }
 
     // Window tiles
-    if(lcdc & LCDC::WINDOW_ENABLED) {
+    if(lcdc & LCDC_WINDOW_ENABLED) {
         auto wnd_y = ram_get(this->cpu->ram, MEM_WY);
         auto wnd_x = ram_get(this->cpu->ram, MEM_WX);
-        auto tile_offset = !(lcdc & LCDC::DATA_SRC);
-        auto tile_map = (lcdc & LCDC::WINDOW_MAP) ? MEM_MAP_1 : MEM_MAP_0;
+        auto tile_offset = !(lcdc & LCDC_DATA_SRC);
+        auto tile_map = (lcdc & LCDC_WINDOW_MAP) ? MEM_MAP_1 : MEM_MAP_0;
 
         // blank out the background
         SDL_Rect rect = {
@@ -266,8 +287,8 @@ void GPU::draw_line(i32 ly) {
     }
 
     // Sprites
-    if(lcdc & LCDC::OBJ_ENABLED) {
-        auto dbl = lcdc & LCDC::OBJ_SIZE;
+    if(lcdc & LCDC_OBJ_ENABLED) {
+        auto dbl = lcdc & LCDC_OBJ_SIZE;
 
         // TODO: sorted by x
         // auto sprites: [Sprite; 40] = [];
