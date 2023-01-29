@@ -12,9 +12,9 @@ GameBoy::GameBoy(struct Args *args) {
     this->clock = clock_ctor(&this->buttons, args->frames, args->profile, args->turbo);
 }
 
-GameBoy::~GameBoy() {
-    gpu_dtor(&this->gpu);
-    apu_dtor(&this->apu);
+void gameboy_dtor(GameBoy *self) {
+    gpu_dtor(&self->gpu);
+    apu_dtor(&self->apu);
 }
 
 static inline void gameboy_tick(GameBoy *self) {

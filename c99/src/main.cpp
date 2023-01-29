@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
 
     GameBoy *gameboy = new GameBoy(&args);
     gameboy_run(gameboy);
+    gameboy_dtor(gameboy);
 
     printf("\n");
     return 0;

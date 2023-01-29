@@ -22,12 +22,12 @@ public:
     struct Clock clock;
 
     GameBoy(struct Args *args);
-    ~GameBoy();
 };
 
 BEGIN_EXTERN_C()
 
 void gameboy_run(GameBoy *self);
+void gameboy_dtor(GameBoy *self);
 
 END_EXTERN_C()
 
