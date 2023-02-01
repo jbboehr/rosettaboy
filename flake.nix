@@ -3,11 +3,20 @@
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
     flake-utils.url = github:numtide/flake-utils;
+    gitignore = {
+      url = "github:hercules-ci/gitignore.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    php-sdl = {
+      url = "github:Ponup/php-sdl";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }: flake-utils.lib.eachDefaultSystem (system: let
+  outputs = { self, nixpkgs, flake-utils, gitignore, php-sdl }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
+    inherit (gitignore.lib) gitignoreSource;
 
 
     # Get each directory with a `shell.nix`:
@@ -31,10 +40,20 @@
         utilsShell
       ];
     });
-  in {
+
+    mkPhp = {opcacheSupport ? false}: pkgs.callPackage ./php/derivation.nix {
+      inherit gitignoreSource php-sdl opcacheSupport;
+    };
+  in rec {
+    packages = {
+      php = mkPhp { opcacheSupport = false; };
+      php-opcache = mkPhp { opcacheSupport = true; };
+    };
+
     devShells = langDevShells // {
       default = pkgs.mkShell { inputsFrom = builtins.attrValues langDevShells; };
       utils = utilsShell;
+      php = pkgs.mkShell { inputsFrom = [ packages.php ]; };
     };
   });
 }

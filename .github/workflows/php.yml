@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - 'php/**'
     paths:
     - 'php/**'
     - '.github/workflows/php.yml'
@@ -21,3 +22,4 @@ jobs:
       workdir: php
       format-pkgs: php-cli
       build-pkgs: php-cli
+      nix-flake: true

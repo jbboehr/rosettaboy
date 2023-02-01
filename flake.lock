@@ -15,13 +15,33 @@
         "type": "github"
       }
     },
+    "gitignore": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1660459072,
+        "narHash": "sha256-8DFJjXG8zqoONA1vXtgeKXy68KdJL5UaXR8NtVMUbx8=",
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "rev": "a20de23b925fd8264fd7fad6454652e142fd7f73",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1674868155,
-        "narHash": "sha256-eFNm2h6fNbgD7ZpO4MHikCB5pSnCJ7DTmwPisjetmwc=",
+        "lastModified": 1675512093,
+        "narHash": "sha256-u1CY4feK14B57E6T+0Bhkuoj8dpBxCPrWO+SP87UVP8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "ce20e9ebe1903ea2ba1ab006ec63093020c761cb",
+        "rev": "8e8240194eda25b61449f29bb5131e02b28a5486",
         "type": "github"
       },
       "original": {
@@ -31,10 +51,28 @@
         "type": "github"
       }
     },
+    "php-sdl": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1672500911,
+        "narHash": "sha256-8BTE9pjoJuomSuNxvoBLjbBE8eA3BkO9+8CjG4kO3M0=",
+        "owner": "Ponup",
+        "repo": "php-sdl",
+        "rev": "655e403b8a9681c418702a74833c68c1a4ae1bd5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Ponup",
+        "repo": "php-sdl",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs"
+        "gitignore": "gitignore",
+        "nixpkgs": "nixpkgs",
+        "php-sdl": "php-sdl"
       }
     }
   },
