@@ -15,6 +15,10 @@
       url = "github:iffy/nim-argparse";
       flake = false;
     };
+    php-sdl = {
+      url = "github:Ponup/php-sdl";
+      flake = false;
+    };
   };
 
   outputs = {
@@ -23,7 +27,8 @@
     flake-utils,
     gitignore,
     gomod2nix-src,
-    nim-argparse
+    nim-argparse,
+    php-sdl
   }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
@@ -73,7 +78,12 @@
         inherit gitignoreSource nim-argparse debugSupport speedSupport;
         inherit (pkgs.llvmPackages_14) bintools;
       };
-      
+
+    mkPhp = {opcacheSupport ? false}:
+      pkgs.callPackage ./php/derivation.nix {
+        inherit gitignoreSource php-sdl opcacheSupport;
+      };
+
   in rec {
     packages = rec {
       cpp-release = mkCpp {};
@@ -88,9 +98,13 @@
       nim-speed = mkNim { speedSupport = true; };
       nim = hiPrio nim-release;
 
+      php-release = mkPhp {};
+      php-opcache = mkPhp { opcacheSupport = true; };
+      php = hiPrio php-release;
+
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
-        paths = [ cpp go nim ];
+        paths = [ cpp go nim php ];
       };
     };
 
@@ -100,6 +114,7 @@
       cpp = pkgs.mkShell { inputsFrom = [ packages.cpp ]; buildInputs = packages.cpp.devTools; };
       go = pkgs.mkShell { buildInputs = with pkgs; [ go SDL2 pkg-config gomod2nix' ]; };
       nim = pkgs.mkShell { inputsFrom = [ packages.nim ]; buildInputs = packages.nim.devTools; };
+      php = pkgs.mkShell { inputsFrom = [ packages.php ]; buildInputs = packages.php.devTools; };
     };
   });
 }

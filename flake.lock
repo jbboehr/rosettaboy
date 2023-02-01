@@ -83,13 +83,30 @@
         "type": "github"
       }
     },
+    "php-sdl": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1672500911,
+        "narHash": "sha256-8BTE9pjoJuomSuNxvoBLjbBE8eA3BkO9+8CjG4kO3M0=",
+        "owner": "Ponup",
+        "repo": "php-sdl",
+        "rev": "655e403b8a9681c418702a74833c68c1a4ae1bd5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Ponup",
+        "repo": "php-sdl",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-utils": "flake-utils",
         "gitignore": "gitignore",
         "gomod2nix-src": "gomod2nix-src",
         "nim-argparse": "nim-argparse",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "php-sdl": "php-sdl"
       }
     }
   },
