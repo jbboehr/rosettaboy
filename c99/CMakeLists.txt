@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(rosettaboy-cpp)
+project(rosettaboy-c)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS_RELEASE "-O3")
@@ -10,7 +10,7 @@ check_ipo_supported(RESULT supported OUTPUT error)
 
 include_directories(/usr/local/include/)
 
-add_executable(rosettaboy-cpp
+add_executable(rosettaboy-c
         src/main.c
         src/args.c
         src/cpu.c
@@ -33,11 +33,11 @@ add_executable(rosettaboy-cpp
 
 if( ENABLE_LTO AND supported )
     message(STATUS "IPO / LTO enabled")
-    target_compile_options(rosettaboy-cpp PRIVATE -flto)
-    target_link_options(rosettaboy-cpp PRIVATE -flto)
-    set_property(TARGET rosettaboy-cpp PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    target_compile_options(rosettaboy-c PRIVATE -flto)
+    target_link_options(rosettaboy-c PRIVATE -flto)
+    set_property(TARGET rosettaboy-c PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
-target_link_libraries(rosettaboy-cpp ${SDL2_LIBRARIES})
+target_link_libraries(rosettaboy-c ${SDL2_LIBRARIES})
