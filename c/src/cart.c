@@ -36,7 +36,7 @@ u32 parse_ram_size(u8 val) {
 }
 
 void cart_ctor(struct Cart *self, const char *filename, bool debug) {
-    *self = (struct Cart) {.debug = debug};
+    *self = (struct Cart){.debug = debug};
 
     struct stat statbuf = {0};
     int statok = stat(filename, &statbuf);
@@ -97,7 +97,8 @@ void cart_ctor(struct Cart *self, const char *filename, bool debug) {
         if (ftruncate(ram_fd, self->ram_size) != 0) {
             rom_missing_err(filename2, errno);
         }
-        self->ram = (unsigned char *) mmap(NULL, (size_t) self->ram_size, PROT_READ | PROT_WRITE, MAP_SHARED, ram_fd, 0);
+        self->ram =
+            (unsigned char *) mmap(NULL, (size_t) self->ram_size, PROT_READ | PROT_WRITE, MAP_SHARED, ram_fd, 0);
         free(filename2);
     }
 
