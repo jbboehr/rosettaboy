@@ -19,6 +19,10 @@
       url = "github:Ponup/php-sdl";
       flake = false;
     };
+    naersk = {
+      url = "github:nix-community/naersk";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -28,7 +32,8 @@
     gitignore,
     gomod2nix-src,
     nim-argparse,
-    php-sdl
+    php-sdl,
+    naersk
   }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
@@ -38,6 +43,7 @@
       gomod2nix = pkgs.callPackage "${gomod2nix-src}" { inherit (lib) buildGoApplication mkGoEnv; };
       lib = pkgs.callPackage "${gomod2nix-src}/builder" { inherit gomod2nix; };
     };
+    naersk' = pkgs.callPackage naersk {};
 
     # Get each directory with a `shell.nix`:
     languages = with builtins; lib.pipe ./. [
@@ -90,6 +96,12 @@
         pythonPackages = pkgs.python310Packages;
       };
 
+    mkRs = {ltoSupport ? false, debugSupport ? false}:
+      pkgs.callPackage ./rs/derivation.nix {
+        naersk = naersk';
+        inherit gitignoreSource ltoSupport debugSupport;
+      };
+
   in rec {
     packages = rec {
       cpp-release = mkCpp {};
@@ -112,10 +124,15 @@
       # match statement support is only in myypc master
       # https://github.com/python/mypy/commit/d5e96e381f72ad3fafaae8707b688b3da320587d
       # mypyc = mkPy { mypycSupport = true; };
-
+      
+      rs-debug = mkRs { debugSupport = true; };
+      rs-release = mkRs { };
+      rs-lto = mkRs { ltoSupport = true; };
+      rs = hiPrio rs-release;
+      
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
-        paths = [ cpp go nim php py ];
+        paths = [ cpp go nim php py rs ];
       };
     };
 
@@ -126,6 +143,7 @@
       go = pkgs.mkShell { buildInputs = with pkgs; [ go SDL2 pkg-config gomod2nix' ]; };
       nim = pkgs.mkShell { inputsFrom = [ packages.nim ]; buildInputs = packages.nim.devTools; };
       php = pkgs.mkShell { inputsFrom = [ packages.php ]; buildInputs = packages.php.devTools; };
+      rs = pkgs.mkShell { inputsFrom = [ packages.rs ]; buildInputs = packages.rs.devTools; };
       # not yet implemented
       pxd = pkgs.callPackage ./pxd/shell.nix {};
       # something wrong with using it in `inputsFrom`
