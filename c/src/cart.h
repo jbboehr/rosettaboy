@@ -51,6 +51,6 @@ struct Cart {
     bool debug;
 };
 
-struct Cart cart_ctor(const char *filename, bool debug);
+void cart_ctor(struct Cart *self, const char *filename, bool debug);
 
 #endif // ROSETTABOY_CART_H

@@ -17,6 +17,6 @@ struct Args {
     const char *rom;
 };
 
-struct Args parse_args(int argc, char *argv[]);
+void parse_args(struct Args *args, int argc, char *argv[]);
 
 #endif // ROSETTABOY_ARGS_H

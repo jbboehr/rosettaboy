@@ -289,17 +289,17 @@ static inline void gpu_update_palettes(struct GPU *self) {
     self->obp1[3] = self->colors[(raw_obp1 >> 6) & 0x3];
 }
 
-struct GPU gpu_ctor(struct CPU *cpu, struct RAM *ram, char *title, bool headless, bool debug) {
-    struct GPU self = {
+void gpu_ctor(struct GPU *self, struct CPU *cpu, struct RAM *ram, char *title, bool headless, bool debug) {
+    *self = (struct GPU) {
         .cpu = cpu,
         .ram = ram,
         .debug = debug,
         .colors = {
-                   {.r = 0x9B, .g = 0xBC, .b = 0x0F, .a = 0xFF},
-                   {.r = 0x8B, .g = 0xAC, .b = 0x0F, .a = 0xFF},
-                   {.r = 0x30, .g = 0x62, .b = 0x30, .a = 0xFF},
-                   {.r = 0x0F, .g = 0x38, .b = 0x0F, .a = 0xFF},
-                   }
+            {.r = 0x9B, .g = 0xBC, .b = 0x0F, .a = 0xFF},
+            {.r = 0x8B, .g = 0xAC, .b = 0x0F, .a = 0xFF},
+            {.r = 0x30, .g = 0x62, .b = 0x30, .a = 0xFF},
+            {.r = 0x0F, .g = 0x38, .b = 0x0F, .a = 0xFF},
+        }
     };
 
     // Window
@@ -312,7 +312,7 @@ struct GPU gpu_ctor(struct CPU *cpu, struct RAM *ram, char *title, bool headless
         SDL_InitSubSystem(SDL_INIT_VIDEO);
         char title_buf[64];
         snprintf(title_buf, 64, "RosettaBoy - %s", title);
-        self.hw_window = SDL_CreateWindow(
+        self->hw_window = SDL_CreateWindow(
             title_buf,                                      // window title
             SDL_WINDOWPOS_UNDEFINED,                        // initial x position
             SDL_WINDOWPOS_UNDEFINED,                        // initial y position
@@ -320,22 +320,20 @@ struct GPU gpu_ctor(struct CPU *cpu, struct RAM *ram, char *title, bool headless
             h * SCALE,                                      // height, in pixels
             SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE // flags - see below
         );
-        self.hw_renderer = SDL_CreateRenderer(self.hw_window, -1, 0);
+        self->hw_renderer = SDL_CreateRenderer(self->hw_window, -1, 0);
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest"); // vs "linear"
-        SDL_RenderSetLogicalSize(self.hw_renderer, w, h);
-        self.hw_buffer =
-            SDL_CreateTexture(self.hw_renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, w, h);
+        SDL_RenderSetLogicalSize(self->hw_renderer, w, h);
+        self->hw_buffer =
+            SDL_CreateTexture(self->hw_renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, w, h);
     } else {
-        self.hw_window = NULL;
-        self.hw_renderer = NULL;
-        self.hw_buffer = NULL;
+        self->hw_window = NULL;
+        self->hw_renderer = NULL;
+        self->hw_buffer = NULL;
     }
-    self.buffer = SDL_CreateRGBSurface(0, w, h, 32, rmask, gmask, bmask, amask);
-    self.renderer = SDL_CreateSoftwareRenderer(self.buffer);
+    self->buffer = SDL_CreateRGBSurface(0, w, h, 32, rmask, gmask, bmask, amask);
+    self->renderer = SDL_CreateSoftwareRenderer(self->buffer);
 
     // printf("SDL_Init failed: %s\n", SDL_GetError());
-
-    return self;
 };
 
 void gpu_dtor(struct GPU *self) {

@@ -21,7 +21,7 @@ struct RAM {
     u8 data[0xFFFF + 1];
 };
 
-struct RAM ram_ctor(struct Cart *cart, bool debug);
+void ram_ctor(struct RAM *self, struct Cart *cart, bool debug);
 void ram_dump(struct RAM *self);
 
 static inline u8 ram_get(struct RAM *self, u16 addr) {

@@ -33,8 +33,8 @@ u8 BOOT[0x100] = {
     // clang-format off
 };
 
-struct RAM ram_ctor(struct Cart *cart, bool debug) {
-    struct RAM self = {
+void ram_ctor(struct RAM *self, struct Cart *cart, bool debug) {
+    *self = (struct RAM) {
         .debug = debug,
         .ram_enable = false,
         .ram_bank_mode = false,
@@ -63,8 +63,6 @@ struct RAM ram_ctor(struct Cart *cart, bool debug) {
         BOOT[0xFA] = 0x00;
         BOOT[0xFB] = 0x00;
     }
-
-    return self;
 }
 
 void ram_dump(struct RAM *self) {

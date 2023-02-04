@@ -17,12 +17,12 @@ static const u8 JOYPAD_A = 1 << 0;
 static bool handle_inputs(struct Buttons *self);
 static void update_buttons(struct Buttons *self);
 
-struct Buttons buttons_ctor(struct CPU *cpu, struct RAM *ram, bool headless) {
+void buttons_ctor(struct Buttons *self, struct CPU *cpu, struct RAM *ram, bool headless) {
     if (!headless) {
         SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
     }
 
-    struct Buttons self = {
+    *self = (struct Buttons){
         .cpu = cpu,
         .ram = ram,
         .cycle = 0,

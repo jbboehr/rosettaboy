@@ -843,8 +843,8 @@ static inline void cpu_tick_dma(struct CPU *self) {
  * Initialise registers and RAM, map the first banks of Cart
  * code into the RAM address space.
  */
-struct CPU cpu_ctor(struct RAM *ram, bool debug) {
-    struct CPU self = {
+void cpu_ctor(struct CPU *self, struct RAM *ram, bool debug) {
+    *self = (struct CPU) {
         .ram = ram,
         .debug = debug,
         .interrupts = false,
@@ -855,8 +855,6 @@ struct CPU cpu_ctor(struct RAM *ram, bool debug) {
         .SP = 0x0000,
         .PC = 0x0000,
     };
-
-    return self;
 }
 
 void cpu_stop(struct CPU *cpu, bool stop) {

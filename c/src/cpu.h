@@ -61,7 +61,7 @@ struct CPU {
     u16 PC;
 };
 
-struct CPU cpu_ctor(struct RAM *ram, bool debug);
+void cpu_ctor(struct CPU *self, struct RAM *ram, bool debug);
 void cpu_interrupt(struct CPU *cpu, enum Interrupt i);
 void cpu_stop(struct CPU *cpu, bool stop);
 bool cpu_is_stopped(struct CPU *cpu);

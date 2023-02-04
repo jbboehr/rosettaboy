@@ -22,7 +22,7 @@ struct Buttons {
     bool turbo;
 };
 
-struct Buttons buttons_ctor(struct CPU *cpu, struct RAM *ram, bool headless);
+void buttons_ctor(struct Buttons *self, struct CPU *cpu, struct RAM *ram, bool headless);
 void buttons_tick(struct Buttons *self);
 
 #endif // ROSETTABOY_BUTTONS_H

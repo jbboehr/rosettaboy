@@ -3,7 +3,9 @@
 #include "gameboy.h"
 
 int main(int argc, char *argv[]) {
-    struct Args args = parse_args(argc, argv);
+    struct Args args;
+
+    parse_args(&args, argc, argv);
 
     if (args.exit_code > 0) {
         return args.exit_code;

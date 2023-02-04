@@ -41,8 +41,8 @@ static struct option long_options[] = {
     {0,           0,                 0, 0  }
 };
 
-struct Args parse_args(int argc, char *argv[]) {
-    struct Args rv = {0};
+void parse_args(struct Args *args, int argc, char *argv[]) {
+    *args = (struct Args){0};
 
     while (1) {
         int option_index = 0;
@@ -56,47 +56,45 @@ struct Args parse_args(int argc, char *argv[]) {
                 print_usage();
 
             case 'H':
-                rv.headless = true;
+                args->headless = true;
                 break;
 
             case 'S':
-                rv.silent = true;
+                args->silent = true;
                 break;
 
             case 'c':
-                rv.debug_cpu = true;
+                args->debug_cpu = true;
                 break;
 
             case 'g':
-                rv.debug_gpu = true;
+                args->debug_gpu = true;
                 break;
 
             case 'a':
-                rv.debug_apu = true;
+                args->debug_apu = true;
                 break;
 
             case 'r':
-                rv.debug_ram = true;
+                args->debug_ram = true;
 
             case 'f':
-                sscanf(optarg, "%d", &rv.frames);
+                sscanf(optarg, "%d", &args->frames);
                 break;
 
             case 'p':
-                sscanf(optarg, "%d", &rv.profile);
+                sscanf(optarg, "%d", &args->profile);
                 break;
 
             case 't':
-                rv.turbo = true;
+                args->turbo = true;
                 break;
         }
     }
 
     if (optind < argc) {
-        rv.rom = argv[optind++];
+        args->rom = argv[optind++];
     } else {
         print_usage();
     }
-
-    return rv;
 }
