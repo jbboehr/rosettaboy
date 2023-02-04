@@ -290,16 +290,16 @@ static inline void gpu_update_palettes(struct GPU *self) {
 }
 
 void gpu_ctor(struct GPU *self, struct CPU *cpu, struct RAM *ram, char *title, bool headless, bool debug) {
-    *self = (struct GPU) {
+    *self = (struct GPU){
         .cpu = cpu,
         .ram = ram,
         .debug = debug,
         .colors = {
-            {.r = 0x9B, .g = 0xBC, .b = 0x0F, .a = 0xFF},
-            {.r = 0x8B, .g = 0xAC, .b = 0x0F, .a = 0xFF},
-            {.r = 0x30, .g = 0x62, .b = 0x30, .a = 0xFF},
-            {.r = 0x0F, .g = 0x38, .b = 0x0F, .a = 0xFF},
-        }
+                   {.r = 0x9B, .g = 0xBC, .b = 0x0F, .a = 0xFF},
+                   {.r = 0x8B, .g = 0xAC, .b = 0x0F, .a = 0xFF},
+                   {.r = 0x30, .g = 0x62, .b = 0x30, .a = 0xFF},
+                   {.r = 0x0F, .g = 0x38, .b = 0x0F, .a = 0xFF},
+                   }
     };
 
     // Window

@@ -36,8 +36,6 @@ void buttons_ctor(struct Buttons *self, struct CPU *cpu, struct RAM *ram, bool h
         .select = false,
         .turbo = false,
     };
-
-    return self;
 }
 
 void buttons_tick(struct Buttons *self) {
