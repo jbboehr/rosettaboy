@@ -130,4 +130,4 @@ jobs:
     - name: Run
       shell: bash
       working-directory: ${{ inputs.workdir }}
-      run: nix develop .#${{ inputs.workdir }} --command bash -c './build.sh && ./rosettaboy-release --help'
+      run: nix develop ..#${{ inputs.workdir }} --command bash -c './build.sh && ./rosettaboy-release --help'
