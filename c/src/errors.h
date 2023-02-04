@@ -7,71 +7,73 @@
 #include <stdlib.h>
 #include "consts.h"
 
-NORETURN static void unit_test_failed() {
-    fprintf(stdout, "Unit test failed");
-    fflush(stdout);
-    exit(2);
+ROSETTABOY_NORETURN 
+ROSETTABOY_ATTR_PRINTF(2,3)
+static void rosettaboy_err(int exit_code, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vfprintf(stdout, format, args);
+    va_end(args);
+    exit(exit_code);
 }
 
-NORETURN static void unit_test_passed() {
-    fprintf(stdout, "Unit test passed");
-    fflush(stdout);
-    exit(0);
+// Controlled exit, ie we are deliberately stopping emulation
+ROSETTABOY_NORETURN
+static void quit_emulator() {
+    rosettaboy_err(0, "User exited the emulator");
 }
 
-NORETURN static void invalid_opcode_err(u8 opcode) {
-    fprintf(stdout, "Invalid opcode: 0x%02X", opcode);
-    fflush(stdout);
-    exit(3);
+ROSETTABOY_NORETURN
+static void timeout_err(int frames, double duration) {
+    rosettaboy_err(0, "Emulated %5d frames in %5.2fs (%.0ffps)", frames, duration, frames / duration);
 }
 
-NORETURN static void timeout_err(int frames, double duration) {
-    fprintf(stdout, "Emulated %5d frames in %5.2fs (%.0ffps)", frames, duration, frames / duration);
-    fflush(stdout);
-    exit(0);
+ROSETTABOY_NORETURN
+static void unit_test_passed() {
+    rosettaboy_err(0, "Unit test passed");
 }
 
-NORETURN static void quit_emulator() {
-    fprintf(stdout, "User exited the emulator");
-    fflush(stdout);
-    exit(0);
+// Controlled exit, ie we are deliberately stopping emulation - but error
+ROSETTABOY_NORETURN
+static void unit_test_failed() {
+    rosettaboy_err(2, "Unit test failed");
 }
 
-NORETURN static void invalid_argument_err(const char *msg) {
-    fprintf(stdout, "%s", msg);
-    fflush(stdout);
-    abort();
+// Game error, ie the game developer has a bug
+ROSETTABOY_NORETURN
+static void invalid_opcode_err(u8 opcode) {
+    rosettaboy_err(3, "Invalid opcode: 0x%02X", opcode);
 }
 
-NORETURN static void invalid_ram_read_err(u8 ram_bank, int offset, u32 ram_size) {
-    fprintf(stdout, "Read from RAM bank 0x%02X offset 0x%04X >= ram size 0x%04X", ram_bank, offset, ram_size);
-    fflush(stdout);
-    abort();
+ROSETTABOY_NORETURN
+static void invalid_argument_err(const char *msg) {
+    rosettaboy_err(3, "%s", msg);
 }
 
-NORETURN static void invalid_ram_write_err(u8 ram_bank, int offset, u32 ram_size) {
-    fprintf(stdout, "Write to RAM bank 0x%02X offset 0x%04X >= ram size 0x%04X", ram_bank, offset, ram_size);
-    fflush(stdout);
-    abort();
+ROSETTABOY_NORETURN
+static void invalid_ram_read_err(u8 ram_bank, int offset, u32 ram_size) {
+    rosettaboy_err(3, "Read from RAM bank 0x%02X offset 0x%04X >= ram size 0x%04X", ram_bank, offset, ram_size);
 }
 
-
+ROSETTABOY_NORETURN
+static void invalid_ram_write_err(u8 ram_bank, int offset, u32 ram_size) {
+    rosettaboy_err(3, "Write to RAM bank 0x%02X offset 0x%04X >= ram size 0x%04X", ram_bank, offset, ram_size);
+}
 
 // User error, ie the user gave us an invalid or corrupt input file
-NORETURN static void rom_missing_err(const char *filename, int err) {
-    fprintf(stdout, "Error opening %s: %s\n", filename, strerror(err));
-    fflush(stdout);
-    abort();
+ROSETTABOY_NORETURN
+static void rom_missing_err(const char *filename, int err) {
+    rosettaboy_err(4, "Error opening %s: %s\n", filename, strerror(err));
 }
-NORETURN static void logo_checksum_failed_err(int logo_checksum) {
-    fprintf(stdout, "Invalid logo checksum: %d", logo_checksum);
-    fflush(stdout);
-    abort();
+
+ROSETTABOY_NORETURN
+static void logo_checksum_failed_err(int logo_checksum) {
+    rosettaboy_err(4, "Invalid logo checksum: %d", logo_checksum);
 }
-NORETURN static void header_checksum_failed_err(int header_checksum) {
-    fprintf(stdout, "Invalid header checksum: %d", header_checksum);
-    fflush(stdout);
-    abort();
+
+ROSETTABOY_NORETURN
+static void header_checksum_failed_err(int header_checksum) {
+    rosettaboy_err(4, "Invalid header checksum: %d", header_checksum);
 }
 
 #endif // ROSETTABOY_ERRORS_H

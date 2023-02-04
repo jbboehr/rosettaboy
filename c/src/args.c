@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-NORETURN static void print_usage(void) {
+ROSETTABOY_NORETURN
+static void print_usage(void) {
     fprintf(stdout,
         "Usage: rosettaboy-c [OPTION]... [ROM]\n"
         "Example: rosettaboy-c --turbo opus5.gb\n"
