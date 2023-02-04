@@ -1,9 +1,9 @@
 import sdl2
 import ctypes
 import typing as t
-from src.consts import Interrupt, Mem
-from src.cpu import CPU
-from src.errors import Quit
+from .consts import Interrupt, Mem
+from .cpu import CPU
+from .errors import Quit
 
 
 class Joypad:
