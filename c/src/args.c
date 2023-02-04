@@ -1,13 +1,14 @@
 
 #include "args.h"
 
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
 
 ROSETTABOY_NORETURN
 static void print_usage(void) {
-    fprintf(stdout,
+    fprintf(
+        stdout,
         "Usage: rosettaboy-c [OPTION]... [ROM]\n"
         "Example: rosettaboy-c --turbo opus5.gb\n"
         "\n"
@@ -27,21 +28,20 @@ static void print_usage(void) {
 }
 
 static struct option long_options[] = {
-    {"help",        no_argument,        0,  'h' },
-    {"headless",    no_argument,        0,  'H' },
-    {"silent",      no_argument,        0,  'S' },
-    {"debug-cpu",   no_argument,        0,  'c' },
-    {"debug-gpu",   no_argument,        0,  'g' },
-    {"debug-apu",   no_argument,        0,  'a' },
-    {"debug-ram",   no_argument,        0,  'r' },
-    {"frames",      required_argument,  0,  'f' },
-    {"profile",     required_argument,  0,  'p' },
-    {"turbo",       no_argument,        0,  't' },
-    {0,             0,                  0,  0   }
+    {"help",      no_argument,       0, 'h'},
+    {"headless",  no_argument,       0, 'H'},
+    {"silent",    no_argument,       0, 'S'},
+    {"debug-cpu", no_argument,       0, 'c'},
+    {"debug-gpu", no_argument,       0, 'g'},
+    {"debug-apu", no_argument,       0, 'a'},
+    {"debug-ram", no_argument,       0, 'r'},
+    {"frames",    required_argument, 0, 'f'},
+    {"profile",   required_argument, 0, 'p'},
+    {"turbo",     no_argument,       0, 't'},
+    {0,           0,                 0, 0  }
 };
 
-struct Args parse_args(int argc, char *argv[])
-{
+struct Args parse_args(int argc, char *argv[]) {
     struct Args rv = {0};
 
     while (1) {

@@ -6,6 +6,7 @@
  * logo scrolling or DRM.
  */
 u8 BOOT[0x100] = {
+    // clang-format off
     // prod memory
     0x31, 0xFE, 0xFF, // LD SP,$FFFE
 
@@ -29,19 +30,20 @@ u8 BOOT[0x100] = {
 
     // skip to the end of the bootloader
     0xC3, 0xFD, 0x00, // JP 0x00FD
+    // clang-format off
 };
 
 struct RAM ram_ctor(struct Cart *cart, bool debug) {
     struct RAM self = {
-            .debug = debug,
-            .ram_enable = false,
-            .ram_bank_mode = false,
-            .rom_bank_low = 1,
-            .rom_bank_high = 0,
-            .rom_bank = 1,
-            .ram_bank = 0,
-            .cart = cart,
-            .boot = BOOT,
+        .debug = debug,
+        .ram_enable = false,
+        .ram_bank_mode = false,
+        .rom_bank_low = 1,
+        .rom_bank_high = 0,
+        .rom_bank = 1,
+        .ram_bank = 0,
+        .cart = cart,
+        .boot = BOOT,
     };
 
     // this instruction must be at the end of ROM --

@@ -1,8 +1,8 @@
 #ifndef ROSETTABOY_APU_H
 #define ROSETTABOY_APU_H
 
-#include <stdbool.h>
 #include <SDL2/SDL.h>
+#include <stdbool.h>
 
 #include "consts.h"
 

@@ -64,35 +64,49 @@ static inline SDL_Color gen_hue(u8 n) {
     u8 t = remainder;
     SDL_Color rv;
 
-    switch(region) {
-        case 0: rv.r = 255, rv.g = t, rv.b = 0, rv.a = 0xFF; break;
-        case 1: rv.r = q, rv.g = 255, rv.b = 0, rv.a = 0xFF; break;
-        case 2: rv.r = 0, rv.g = 255, rv.b = t, rv.a = 0xFF; break;
-        case 3: rv.r = 0, rv.g = q, rv.b = 255, rv.a = 0xFF; break;
-        case 4: rv.r = t, rv.g = 0, rv.b = 255, rv.a = 0xFF; break;
-        default: rv.r = 255, rv.g = 0, rv.b = q, rv.a = 0xFF; break;
+    switch (region) {
+        case 0:
+            rv.r = 255, rv.g = t, rv.b = 0, rv.a = 0xFF;
+            break;
+        case 1:
+            rv.r = q, rv.g = 255, rv.b = 0, rv.a = 0xFF;
+            break;
+        case 2:
+            rv.r = 0, rv.g = 255, rv.b = t, rv.a = 0xFF;
+            break;
+        case 3:
+            rv.r = 0, rv.g = q, rv.b = 255, rv.a = 0xFF;
+            break;
+        case 4:
+            rv.r = t, rv.g = 0, rv.b = 255, rv.a = 0xFF;
+            break;
+        default:
+            rv.r = 255, rv.g = 0, rv.b = q, rv.a = 0xFF;
+            break;
     }
 
     return rv;
 }
 
-static inline bool sprite_is_live(struct Sprite *self){
+static inline bool sprite_is_live(struct Sprite *self) {
     return self->x > 0 && self->x < 168 && self->y > 0 && self->y < 160;
 }
 
-static inline void gpu_paint_tile_line(struct GPU *self, i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool flip_x, bool flip_y, i32 y) {
+static inline void gpu_paint_tile_line(
+    struct GPU *self, i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool flip_x, bool flip_y, i32 y
+) {
     u16 addr = (MEM_TILE_DATA + tile_id * 16 + y * 2);
     u8 low_byte = ram_get(self->ram, addr);
     u8 high_byte = ram_get(self->ram, addr + 1);
-    for(int x = 0; x < 8; x++) {
+    for (int x = 0; x < 8; x++) {
         u8 low_bit = (low_byte >> (7 - x)) & 0x01;
         u8 high_bit = (high_byte >> (7 - x)) & 0x01;
         u8 px = (high_bit << 1) | low_bit;
         // pallette #0 = transparent, so don't draw anything
-        if(px > 0) {
+        if (px > 0) {
             SDL_Point xy = {
-                    .x = offset->x + (flip_x ? 7 - x : x),
-                    .y = offset->y + (flip_y ? 7 - y : y),
+                .x = offset->x + (flip_x ? 7 - x : x),
+                .y = offset->y + (flip_y ? 7 - y : y),
             };
             SDL_Color c = palette[px];
             SDL_SetRenderDrawColor(self->renderer, c.r, c.g, c.b, c.a);
@@ -101,17 +115,18 @@ static inline void gpu_paint_tile_line(struct GPU *self, i16 tile_id, SDL_Point 
     }
 }
 
-static inline void gpu_paint_tile(struct GPU *self, i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool flip_x, bool flip_y) {
-    for(int y = 0; y < 8; y++) {
+static inline void
+gpu_paint_tile(struct GPU *self, i16 tile_id, SDL_Point *offset, SDL_Color *palette, bool flip_x, bool flip_y) {
+    for (int y = 0; y < 8; y++) {
         gpu_paint_tile_line(self, tile_id, offset, palette, flip_x, flip_y, y);
     }
 
-    if(self->debug) {
+    if (self->debug) {
         SDL_Rect rect = {
-                .x = offset->x,
-                .y = offset->y,
-                .w = 8,
-                .h = 8,
+            .x = offset->x,
+            .y = offset->y,
+            .w = 8,
+            .h = 8,
         };
         SDL_Color c = gen_hue(tile_id);
         SDL_SetRenderDrawColor(self->renderer, c.r, c.g, c.b, c.a);
@@ -123,13 +138,13 @@ static inline void gpu_draw_line(struct GPU *self, i32 ly) {
     u8 lcdc = ram_get(self->ram, MEM_LCDC);
 
     // Background tiles
-    if(lcdc & LCDC_BG_WIN_ENABLED) {
+    if (lcdc & LCDC_BG_WIN_ENABLED) {
         u8 scroll_y = ram_get(self->ram, MEM_SCY);
         u8 scroll_x = ram_get(self->ram, MEM_SCX);
         bool tile_offset = !(lcdc & LCDC_DATA_SRC); // @TODO correct?
         u16 tile_map = (lcdc & LCDC_BG_MAP) ? MEM_MAP_1 : MEM_MAP_0;
 
-        if(self->debug) {
+        if (self->debug) {
             SDL_Point xy = {.x = 256 - scroll_x, .y = ly};
             SDL_SetRenderDrawColor(self->renderer, 255, 0, 0, 0xFF);
             SDL_RenderDrawPoint(self->renderer, xy.x, xy.y);
@@ -139,25 +154,25 @@ static inline void gpu_draw_line(struct GPU *self, i32 ly) {
         u8 tile_y = y_in_bgmap / 8;
         u8 tile_sub_y = y_in_bgmap % 8;
 
-        for(int lx = 0; lx <= 160; lx += 8) {
+        for (int lx = 0; lx <= 160; lx += 8) {
             u8 x_in_bgmap = (lx + scroll_x) % 256;
             u8 tile_x = x_in_bgmap / 8;
             u8 tile_sub_x = x_in_bgmap % 8;
 
             i16 tile_id = ram_get(self->ram, tile_map + tile_y * 32 + tile_x);
-            if(tile_offset && tile_id < 0x80) {
+            if (tile_offset && tile_id < 0x80) {
                 tile_id += 0x100;
             }
             SDL_Point xy = {
-                    .x = lx - tile_sub_x,
-                    .y = ly - tile_sub_y,
+                .x = lx - tile_sub_x,
+                .y = ly - tile_sub_y,
             };
             gpu_paint_tile_line(self, tile_id, &xy, self->bgp, false, false, tile_sub_y);
         }
     }
 
     // Window tiles
-    if(lcdc & LCDC_WINDOW_ENABLED) {
+    if (lcdc & LCDC_WINDOW_ENABLED) {
         u8 wnd_y = ram_get(self->ram, MEM_WY);
         u8 wnd_x = ram_get(self->ram, MEM_WX);
         bool tile_offset = !(lcdc & LCDC_DATA_SRC); // @todo check
@@ -165,10 +180,10 @@ static inline void gpu_draw_line(struct GPU *self, i32 ly) {
 
         // blank out the background
         SDL_Rect rect = {
-                .x = wnd_x - 7,
-                .y = wnd_y,
-                .w = 160,
-                .h = 144,
+            .x = wnd_x - 7,
+            .y = wnd_y,
+            .w = 160,
+            .h = 144,
         };
         SDL_Color c = self->bgp[0];
         SDL_SetRenderDrawColor(self->renderer, c.r, c.g, c.b, c.a);
@@ -178,45 +193,44 @@ static inline void gpu_draw_line(struct GPU *self, i32 ly) {
         u8 tile_y = y_in_bgmap / 8;
         u8 tile_sub_y = y_in_bgmap % 8;
 
-        for(int tile_x = 0; tile_x < 20; tile_x++) {
+        for (int tile_x = 0; tile_x < 20; tile_x++) {
             u8 tile_id = ram_get(self->ram, tile_map + tile_y * 32 + tile_x);
-            if(tile_offset && tile_id < 0x80) {
+            if (tile_offset && tile_id < 0x80) {
                 tile_id += 0x100;
             }
             SDL_Point xy = {
-                    .x = tile_x * 8 + wnd_x - 7,
-                    .y = tile_y * 8 + wnd_y,
+                .x = tile_x * 8 + wnd_x - 7,
+                .y = tile_y * 8 + wnd_y,
             };
             gpu_paint_tile_line(self, tile_id, &xy, self->bgp, false, false, tile_sub_y);
         }
     }
 
     // Sprites
-    if(lcdc & LCDC_OBJ_ENABLED) {
+    if (lcdc & LCDC_OBJ_ENABLED) {
         u8 dbl = lcdc & LCDC_OBJ_SIZE;
 
         // TODO: sorted by x
         // auto sprites: [Sprite; 40] = [];
         // memcpy(sprites, &ram.data[OAM_BASE], 40 * sizeof(Sprite));
         // for sprite in sprites.iter() {
-        for(int n = 0; n < 40; n++) {
+        for (int n = 0; n < 40; n++) {
             struct Sprite sprite = {
                 .y = ram_get(self->ram, MEM_OAM_BASE + 4 * n + 0),
                 .x = ram_get(self->ram, MEM_OAM_BASE + 4 * n + 1),
                 .tile_id = ram_get(self->ram, MEM_OAM_BASE + 4 * n + 2),
-                .flags = ram_get(self->ram, MEM_OAM_BASE + 4 * n + 3)
-            };
+                .flags = ram_get(self->ram, MEM_OAM_BASE + 4 * n + 3)};
 
-            if(sprite_is_live(&sprite)) {
+            if (sprite_is_live(&sprite)) {
                 SDL_Color *palette = sprite.palette ? self->obp1 : self->obp0;
                 // printf("Drawing sprite %d (from %04X) at %d,%d\n", tile_id, OAM_BASE + (sprite_id * 4) + 0, x, y);
                 SDL_Point xy = {
-                        .x = sprite.x - 8,
-                        .y = sprite.y - 16,
+                    .x = sprite.x - 8,
+                    .y = sprite.y - 16,
                 };
                 gpu_paint_tile(self, sprite.tile_id, &xy, palette, sprite.x_flip, sprite.y_flip);
 
-                if(dbl) {
+                if (dbl) {
                     xy.y = sprite.y - 8;
                     gpu_paint_tile(self, sprite.tile_id + 1, &xy, palette, sprite.x_flip, sprite.y_flip);
                 }
@@ -230,23 +244,23 @@ static inline void gpu_draw_debug(struct GPU *self) {
 
     // Tile data
     u8 tile_display_width = 32;
-    for(int tile_id = 0; tile_id < 384; tile_id++) {
+    for (int tile_id = 0; tile_id < 384; tile_id++) {
         SDL_Point xy = {
-                .x = 160 + (tile_id % tile_display_width) * 8,
-                .y = (tile_id / tile_display_width) * 8,
+            .x = 160 + (tile_id % tile_display_width) * 8,
+            .y = (tile_id / tile_display_width) * 8,
         };
         gpu_paint_tile(self, tile_id, &xy, self->bgp, false, false);
     }
 
     // Background scroll border
-    if(lcdc & LCDC_BG_WIN_ENABLED) {
+    if (lcdc & LCDC_BG_WIN_ENABLED) {
         SDL_Rect rect = {.x = 0, .y = 0, .w = 160, .h = 144};
         SDL_SetRenderDrawColor(self->renderer, 255, 0, 0, 0xFF);
         SDL_RenderDrawRect(self->renderer, &rect);
     }
 
     // Window tiles
-    if(lcdc & LCDC_WINDOW_ENABLED) {
+    if (lcdc & LCDC_WINDOW_ENABLED) {
         u8 wnd_y = ram_get(self->ram, MEM_WY);
         u8 wnd_x = ram_get(self->ram, MEM_WX);
         SDL_Rect rect = {.x = wnd_x - 7, .y = wnd_y, .w = 160, .h = 144};
@@ -281,20 +295,20 @@ struct GPU gpu_ctor(struct CPU *cpu, struct RAM *ram, char *title, bool headless
         .ram = ram,
         .debug = debug,
         .colors = {
-            {.r = 0x9B, .g = 0xBC, .b = 0x0F, .a = 0xFF},
-            {.r = 0x8B, .g = 0xAC, .b = 0x0F, .a = 0xFF},
-            {.r = 0x30, .g = 0x62, .b = 0x30, .a = 0xFF},
-            {.r = 0x0F, .g = 0x38, .b = 0x0F, .a = 0xFF},
-        }
+                   {.r = 0x9B, .g = 0xBC, .b = 0x0F, .a = 0xFF},
+                   {.r = 0x8B, .g = 0xAC, .b = 0x0F, .a = 0xFF},
+                   {.r = 0x30, .g = 0x62, .b = 0x30, .a = 0xFF},
+                   {.r = 0x0F, .g = 0x38, .b = 0x0F, .a = 0xFF},
+                   }
     };
 
     // Window
     int w = 160, h = 144;
-    if(debug) {
+    if (debug) {
         w = 160 + 256;
         h = 144;
     }
-    if(!headless) {
+    if (!headless) {
         SDL_InitSubSystem(SDL_INIT_VIDEO);
         char title_buf[64];
         snprintf(title_buf, 64, "RosettaBoy - %s", title);
@@ -326,7 +340,7 @@ struct GPU gpu_ctor(struct CPU *cpu, struct RAM *ram, char *title, bool headless
 
 void gpu_dtor(struct GPU *self) {
     SDL_FreeSurface(self->buffer);
-    if(self->hw_window) {
+    if (self->hw_window) {
         SDL_DestroyWindow(self->hw_window);
     }
     SDL_Quit();
@@ -336,17 +350,17 @@ void gpu_tick(struct GPU *self) {
     self->cycle++;
 
     // CPU STOP stops all LCD activity until a button is pressed
-    if(cpu_is_stopped(self->cpu)) {
+    if (cpu_is_stopped(self->cpu)) {
         return;
     }
 
     // Check if LCD enabled at all
     u8 lcdc = ram_get(self->ram, MEM_LCDC);
-    if(!(lcdc & LCDC_ENABLED)) {
+    if (!(lcdc & LCDC_ENABLED)) {
         // When LCD is re-enabled, LY is 0
         // Does it become 0 as soon as disabled??
         ram_set(self->ram, MEM_LY, 0);
-        if(!self->debug) {
+        if (!self->debug) {
             return;
         }
     }
@@ -360,22 +374,22 @@ void gpu_tick(struct GPU *self) {
     stat &= ~STAT_LYC_EQUAL;
 
     // LYC compare & interrupt
-    if(ly == ram_get(self->ram, MEM_LYC)) {
+    if (ly == ram_get(self->ram, MEM_LYC)) {
         stat |= STAT_LYC_EQUAL;
-        if(stat & STAT_LYC_INTERRUPT) {
+        if (stat & STAT_LYC_INTERRUPT) {
             cpu_interrupt(self->cpu, INTERRUPT_STAT);
         }
     }
 
     // Set mode
-    if(lx == 0 && ly < 144) {
+    if (lx == 0 && ly < 144) {
         stat |= STAT_OAM;
-        if(stat & STAT_OAM_INTERRUPT) {
+        if (stat & STAT_OAM_INTERRUPT) {
             cpu_interrupt(self->cpu, INTERRUPT_STAT);
         }
-    } else if(lx == 20 && ly < 144) {
+    } else if (lx == 20 && ly < 144) {
         stat |= STAT_DRAWING;
-        if(ly == 0) {
+        if (ly == 0) {
             // TODO: how often should we update palettes?
             // Should every pixel reference them directly?
             gpu_update_palettes(self);
@@ -384,28 +398,27 @@ void gpu_tick(struct GPU *self) {
             SDL_RenderClear(self->renderer);
         }
         gpu_draw_line(self, ly);
-        if(ly == 143) {
-            if(self->debug) {
+        if (ly == 143) {
+            if (self->debug) {
                 gpu_draw_debug(self);
             }
-            if(self->hw_renderer) {
+            if (self->hw_renderer) {
                 SDL_UpdateTexture(self->hw_buffer, NULL, self->buffer->pixels, self->buffer->pitch);
                 SDL_RenderCopy(self->hw_renderer, self->hw_buffer, NULL, NULL);
                 SDL_RenderPresent(self->hw_renderer);
             }
         }
-    } else if(lx == 63 && ly < 144) {
+    } else if (lx == 63 && ly < 144) {
         stat |= STAT_HBLANK;
-        if(stat & STAT_HBLANK_INTERRUPT) {
+        if (stat & STAT_HBLANK_INTERRUPT) {
             cpu_interrupt(self->cpu, INTERRUPT_STAT);
         }
-    } else if(lx == 0 && ly == 144) {
+    } else if (lx == 0 && ly == 144) {
         stat |= STAT_VBLANK;
-        if(stat & STAT_VBLANK_INTERRUPT) {
+        if (stat & STAT_VBLANK_INTERRUPT) {
             cpu_interrupt(self->cpu, INTERRUPT_STAT);
         }
         cpu_interrupt(self->cpu, INTERRUPT_VBLANK);
     }
     ram_set(self->ram, MEM_STAT, stat);
 }
-

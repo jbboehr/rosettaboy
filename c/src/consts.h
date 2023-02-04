@@ -7,7 +7,7 @@
 #if defined(__GNUC__) && __GNUC__ >= 3
 #define HAVE_NORETURN
 #define ROSETTABOY_NORETURN __attribute__((noreturn))
-#define ROSETTABOY_ATTR_PRINTF(a1, a2) __attribute__ ((format (__printf__, a1, a2)))
+#define ROSETTABOY_ATTR_PRINTF(a1, a2) __attribute__((format(__printf__, a1, a2)))
 #else
 #define ROSETTABOY_NORETURN
 #define ROSETTABOY_ATTR_PRINTF(a1, a2)
