@@ -1,12 +1,12 @@
 #include "gameboy.h"
 
 void gameboy_ctor(struct GameBoy *self, struct Args *args) {
-    self->cart = cart_ctor(args->rom, false);
-    self->ram = ram_ctor(&self->cart, args->debug_ram);
-    self->cpu = cpu_ctor(&self->ram, args->debug_cpu);
-    self->gpu = gpu_ctor(&self->cpu, &self->ram, self->cart.name, args->headless, args->debug_gpu);
-    self->buttons = buttons_ctor(&self->cpu, &self->ram, args->headless);
-    if(!args->silent) {
+    cart_ctor(&self->cart, args->rom, false);
+    ram_ctor(&self->ram, &self->cart, args->debug_ram);
+    cpu_ctor(&self->cpu, &self->ram, args->debug_cpu);
+    gpu_ctor(&self->gpu, &self->cpu, &self->ram, self->cart.name, args->headless, args->debug_gpu);
+    buttons_ctor(&self->buttons, &self->cpu, &self->ram, args->headless);
+    if (!args->silent) {
         apu_ctor(&self->apu, &self->cpu, &self->ram, args->debug_apu);
     }
     self->clock = clock_ctor(&self->buttons, args->frames, args->profile, args->turbo);
@@ -30,7 +30,7 @@ static inline void gameboy_tick(struct GameBoy *self) {
  * "cycle" that each subsystem counts represents 4 hardware cycles.
  */
 void gameboy_run(struct GameBoy *self) {
-    while(true) {
+    while (true) {
         gameboy_tick(self);
     }
 }

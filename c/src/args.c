@@ -1,13 +1,14 @@
 
 #include "args.h"
 
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
 
 ROSETTABOY_NORETURN
 static void print_usage(void) {
-    fprintf(stdout,
+    fprintf(
+        stdout,
         "Usage: rosettaboy-c [OPTION]... [ROM]\n"
         "Example: rosettaboy-c --turbo opus5.gb\n"
         "\n"
@@ -27,22 +28,21 @@ static void print_usage(void) {
 }
 
 static struct option long_options[] = {
-    {"help",        no_argument,        0,  'h' },
-    {"headless",    no_argument,        0,  'H' },
-    {"silent",      no_argument,        0,  'S' },
-    {"debug-cpu",   no_argument,        0,  'c' },
-    {"debug-gpu",   no_argument,        0,  'g' },
-    {"debug-apu",   no_argument,        0,  'a' },
-    {"debug-ram",   no_argument,        0,  'r' },
-    {"frames",      required_argument,  0,  'f' },
-    {"profile",     required_argument,  0,  'p' },
-    {"turbo",       no_argument,        0,  't' },
-    {0,             0,                  0,  0   }
+    {"help",      no_argument,       0, 'h'},
+    {"headless",  no_argument,       0, 'H'},
+    {"silent",    no_argument,       0, 'S'},
+    {"debug-cpu", no_argument,       0, 'c'},
+    {"debug-gpu", no_argument,       0, 'g'},
+    {"debug-apu", no_argument,       0, 'a'},
+    {"debug-ram", no_argument,       0, 'r'},
+    {"frames",    required_argument, 0, 'f'},
+    {"profile",   required_argument, 0, 'p'},
+    {"turbo",     no_argument,       0, 't'},
+    {0,           0,                 0, 0  }
 };
 
-struct Args parse_args(int argc, char *argv[])
-{
-    struct Args rv = {0};
+void parse_args(struct Args *args, int argc, char *argv[]) {
+    *args = (struct Args){0};
 
     while (1) {
         int option_index = 0;
@@ -56,47 +56,45 @@ struct Args parse_args(int argc, char *argv[])
                 print_usage();
 
             case 'H':
-                rv.headless = true;
+                args->headless = true;
                 break;
 
             case 'S':
-                rv.silent = true;
+                args->silent = true;
                 break;
 
             case 'c':
-                rv.debug_cpu = true;
+                args->debug_cpu = true;
                 break;
 
             case 'g':
-                rv.debug_gpu = true;
+                args->debug_gpu = true;
                 break;
 
             case 'a':
-                rv.debug_apu = true;
+                args->debug_apu = true;
                 break;
 
             case 'r':
-                rv.debug_ram = true;
+                args->debug_ram = true;
 
             case 'f':
-                sscanf(optarg, "%d", &rv.frames);
+                sscanf(optarg, "%d", &args->frames);
                 break;
 
             case 'p':
-                sscanf(optarg, "%d", &rv.profile);
+                sscanf(optarg, "%d", &args->profile);
                 break;
 
             case 't':
-                rv.turbo = true;
+                args->turbo = true;
                 break;
         }
     }
 
     if (optind < argc) {
-        rv.rom = argv[optind++];
+        args->rom = argv[optind++];
     } else {
         print_usage();
     }
-
-    return rv;
 }

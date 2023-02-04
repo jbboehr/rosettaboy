@@ -1,8 +1,8 @@
 #ifndef ROSETTABOY_RAM_H
 #define ROSETTABOY_RAM_H
 
-#include "consts.h"
 #include "cart.h"
+#include "consts.h"
 #include "errors.h"
 
 static const u16 ROM_BANK_SIZE = 0x4000;
@@ -21,16 +21,15 @@ struct RAM {
     u8 data[0xFFFF + 1];
 };
 
-struct RAM ram_ctor(struct Cart *cart, bool debug);
-
+void ram_ctor(struct RAM *self, struct Cart *cart, bool debug);
 void ram_dump(struct RAM *self);
 
 static inline u8 ram_get(struct RAM *self, u16 addr) {
     u8 val = self->data[addr];
-    switch(addr) {
+    switch (addr) {
         case 0x0000 ... 0x3FFF: {
             // ROM bank 0
-            if(self->data[MEM_BOOT] == 0 && addr < 0x0100) {
+            if (self->data[MEM_BOOT] == 0 && addr < 0x0100) {
                 val = self->boot[addr];
             } else {
                 val = self->cart->data[addr];
@@ -50,13 +49,13 @@ static inline u8 ram_get(struct RAM *self, u16 addr) {
             break;
         case 0xA000 ... 0xBFFF: {
             // 8KB Switchable RAM bank
-            if(!self->ram_enable) {
+            if (!self->ram_enable) {
                 printf("ERR: Reading from external ram while disabled: %04X\n", addr);
                 return 0;
             }
             int bank = self->ram_bank * RAM_BANK_SIZE;
             int offset = addr - 0xA000;
-            if(bank + offset >= self->cart->ram_size) {
+            if (bank + offset >= self->cart->ram_size) {
                 invalid_ram_read_err(self->ram_bank, offset, self->cart->ram_size);
             }
             val = self->cart->ram[bank + offset];
@@ -91,17 +90,17 @@ static inline u8 ram_get(struct RAM *self, u16 addr) {
             break;
     }
 
-    if(self->debug) {
+    if (self->debug) {
         printf("ram[%04X] -> %02X\n", addr, val);
     }
     return val;
 }
 
 static inline void ram_set(struct RAM *self, u16 addr, u8 val) {
-    if(self->debug) {
+    if (self->debug) {
         printf("ram[%04X] <- %02X\n", addr, val);
     }
-    switch(addr) {
+    switch (addr) {
         case 0x0000 ... 0x1FFF: {
             bool newval = (val != 0);
             // if(self->ram_enable != newval) printf("ram_enable set to %d\n", newval);
@@ -111,24 +110,27 @@ static inline void ram_set(struct RAM *self, u16 addr, u8 val) {
         case 0x2000 ... 0x3FFF: {
             self->rom_bank_low = val;
             self->rom_bank = (self->rom_bank_high << 5) | self->rom_bank_low;
-            if(self->debug) printf("rom_bank set to %u/%u\n", self->rom_bank, self->cart->rom_size / ROM_BANK_SIZE);
-            if(self->rom_bank * ROM_BANK_SIZE > self->cart->rom_size) {
+            if (self->debug)
+                printf("rom_bank set to %u/%u\n", self->rom_bank, self->cart->rom_size / ROM_BANK_SIZE);
+            if (self->rom_bank * ROM_BANK_SIZE > self->cart->rom_size) {
                 invalid_argument_err("Set rom_bank beyond the size of ROM");
             }
             break;
         }
         case 0x4000 ... 0x5FFF: {
-            if(self->ram_bank_mode) {
+            if (self->ram_bank_mode) {
                 self->ram_bank = val;
-                if(self->debug) printf("ram_bank set to %u/%u\n", self->ram_bank, self->cart->ram_size / RAM_BANK_SIZE);
-                if(self->ram_bank * RAM_BANK_SIZE > self->cart->ram_size) {
+                if (self->debug)
+                    printf("ram_bank set to %u/%u\n", self->ram_bank, self->cart->ram_size / RAM_BANK_SIZE);
+                if (self->ram_bank * RAM_BANK_SIZE > self->cart->ram_size) {
                     invalid_argument_err("Set ram_bank beyond the size of RAM");
                 }
             } else {
                 self->rom_bank_high = val;
                 self->rom_bank = (self->rom_bank_high << 5) | self->rom_bank_low;
-                if(self->debug) printf("rom_bank set to %u/%u\n", self->rom_bank, self->cart->rom_size / ROM_BANK_SIZE);
-                if(self->rom_bank * ROM_BANK_SIZE > self->cart->rom_size) {
+                if (self->debug)
+                    printf("rom_bank set to %u/%u\n", self->rom_bank, self->cart->rom_size / ROM_BANK_SIZE);
+                if (self->rom_bank * ROM_BANK_SIZE > self->cart->rom_size) {
                     invalid_argument_err("Set rom_bank beyond the size of ROM");
                 }
             }
@@ -145,15 +147,15 @@ static inline void ram_set(struct RAM *self, u16 addr, u8 val) {
             break;
         case 0xA000 ... 0xBFFF: {
             // external RAM, bankable
-            if(!self->ram_enable) {
+            if (!self->ram_enable) {
                 // printf("ERR: Writing to external ram while disabled: %04X=%02X\n", addr, val);
                 return;
             }
             int bank = self->ram_bank * RAM_BANK_SIZE;
             int offset = addr - 0xA000;
-            if(self->debug)
+            if (self->debug)
                 printf("Writing external RAM: %04X=%02X (%02X:%04X)\n", bank + offset, val, self->ram_bank, offset);
-            if(bank + offset >= self->cart->ram_size) {
+            if (bank + offset >= self->cart->ram_size) {
                 invalid_ram_write_err(self->ram_bank, offset, self->cart->ram_size);
             }
             self->cart->ram[bank + offset] = val;

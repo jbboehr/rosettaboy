@@ -1,14 +1,14 @@
 #ifndef ROSETTABOY_ERRORS_H
 #define ROSETTABOY_ERRORS_H
 
+#include "consts.h"
 #include <stdarg.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "consts.h"
+#include <string.h>
 
-ROSETTABOY_NORETURN 
-ROSETTABOY_ATTR_PRINTF(2,3)
+ROSETTABOY_NORETURN
+ROSETTABOY_ATTR_PRINTF(2, 3)
 static void rosettaboy_err(int exit_code, const char *format, ...) {
     va_list args;
     va_start(args, format);
