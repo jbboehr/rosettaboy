@@ -4,9 +4,9 @@ import sdl2
 import sys
 from typing import List
 
-from src.args import parse_args
-from src.gameboy import GameBoy
-from src.errors import (
+from .args import parse_args
+from .gameboy import GameBoy
+from .errors import (
     GameException,
     UserException,
     ControlledExit,
@@ -39,5 +39,9 @@ def main(argv: List[str]) -> int:
     return 0
 
 
-if __name__ == "__main__":
+def cli_main():
     sys.exit(main(sys.argv))
+
+
+if __name__ == "__main__":
+    cli_main()
