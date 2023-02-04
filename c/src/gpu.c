@@ -1,6 +1,7 @@
 #include <SDL2/SDL.h>
 
 #include "consts.h"
+#include "cpu.h"
 #include "gpu.h"
 #include "ram.h"
 
@@ -19,11 +20,6 @@ struct Sprite {
         };
     };
 };
-
-// @TODO FIXME
-extern void cpu_interrupt(struct CPU *cpu, enum Interrupt i);
-extern void cpu_stop(struct CPU *cpu, bool stop);
-extern bool cpu_is_stopped(struct CPU *cpu);
 
 static const u8 LCDC_ENABLED = 1 << 7;
 static const u8 LCDC_WINDOW_MAP = 1 << 6;
