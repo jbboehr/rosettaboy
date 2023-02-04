@@ -1,10 +1,7 @@
 #ifndef ROSETTABOY_ARGS_H
 #define ROSETTABOY_ARGS_H
 
-#include <stdbool.h>
-#include "common.h"
-
-BEGIN_EXTERN_C()
+#include "consts.h"
 
 struct Args {
     int exit_code;
@@ -21,7 +18,5 @@ struct Args {
 };
 
 struct Args parse_args(int argc, char *argv[]);
-
-END_EXTERN_C()
 
 #endif // ROSETTABOY_ARGS_H

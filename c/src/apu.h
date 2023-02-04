@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <SDL2/SDL.h>
 
-#include "common.h"
 #include "consts.h"
 
 struct ch1_dat_t {
@@ -163,11 +162,7 @@ struct APU {
     u16 ch4_lfsr;
 };
 
-BEGIN_EXTERN_C()
-
 void apu_ctor(struct APU *self, struct CPU *cpu, struct RAM *ram, bool debug);
 void apu_dtor(struct APU *apu);
-
-END_EXTERN_C()
 
 #endif // ROSETTABOY_APU_H

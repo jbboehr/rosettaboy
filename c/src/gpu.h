@@ -2,9 +2,8 @@
 #define ROSETTABOY_GPU_H
 
 #include <SDL2/SDL.h>
-
 #include <stdbool.h>
-#include "common.h"
+#include "consts.h"
 
 struct GPU {
     struct CPU *cpu;
@@ -22,12 +21,8 @@ struct GPU {
     int cycle;
 };
 
-BEGIN_EXTERN_C()
-
 struct GPU gpu_ctor(struct CPU *cpu, struct RAM *ram, char *title, bool headless, bool debug);
 void gpu_dtor(struct GPU *self);
 void gpu_tick(struct GPU *self);
-
-END_EXTERN_C()
 
 #endif // ROSETTABOY_GPU_H

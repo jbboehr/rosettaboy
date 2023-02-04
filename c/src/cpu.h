@@ -1,7 +1,7 @@
 #ifndef ROSETTABOY_CPU_H
 #define ROSETTABOY_CPU_H
 
-BEGIN_EXTERN_C()
+#include "consts.h"
 
 struct RAM;
 
@@ -66,7 +66,5 @@ void cpu_interrupt(struct CPU *cpu, enum Interrupt i);
 void cpu_stop(struct CPU *cpu, bool stop);
 bool cpu_is_stopped(struct CPU *cpu);
 void cpu_tick(struct CPU *self);
-
-END_EXTERN_C()
 
 #endif // ROSETTABOY_CPU_H
