@@ -3,11 +3,16 @@
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
     flake-utils.url = github:numtide/flake-utils;
+    gitignore = {
+      url = "github:hercules-ci/gitignore.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }: flake-utils.lib.eachDefaultSystem (system: let
+  outputs = { self, nixpkgs, flake-utils, gitignore }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
+    inherit (gitignore.lib) gitignoreSource;
 
 
     # Get each directory with a `shell.nix`:
@@ -31,10 +36,23 @@
         utilsShell
       ];
     });
-  in {
+
+    myPy = {mypycSupport ? false}: pkgs.callPackage ./py/derivation.nix {
+      inherit mypycSupport gitignoreSource;
+      pythonPackages = pkgs.python310Packages;
+    };
+  in rec {
+    packages = {
+      py = myPy {};
+      # match statement support is only in myypc master
+      # https://github.com/python/mypy/commit/d5e96e381f72ad3fafaae8707b688b3da320587d
+      # mypyc = myPy { mypycSupport = true; };
+    };
+
     devShells = langDevShells // {
       default = pkgs.mkShell { inputsFrom = builtins.attrValues langDevShells; };
       utils = utilsShell;
+      py = pkgs.mkShell { buildInputs = packages.py.devTools; };
     };
   });
 }

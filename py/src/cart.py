@@ -2,8 +2,8 @@ import typing as t
 import struct
 from enum import Enum
 
-from src.consts import u8, u16
-from src.errors import LogoChecksumFailed, HeaderChecksumFailed
+from .consts import u8, u16
+from .errors import LogoChecksumFailed, HeaderChecksumFailed
 
 
 class CartType(Enum):
