@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - 'rs/**'
     paths:
     - 'rs/**'
     - '.github/workflows/rs.yml'
@@ -25,3 +26,4 @@ jobs:
         ~/.cargo
         rs/target
       cache-file: '**/Cargo.lock'
+      nix-flake: true

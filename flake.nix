@@ -3,11 +3,18 @@
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
     flake-utils.url = github:numtide/flake-utils;
+    gitignore = {
+      url = "github:hercules-ci/gitignore.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    naersk.url = "github:nix-community/naersk";
   };
 
-  outputs = { self, nixpkgs, flake-utils }: flake-utils.lib.eachDefaultSystem (system: let
+  outputs = { self, nixpkgs, flake-utils, gitignore, naersk }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
+    inherit (gitignore.lib) gitignoreSource;
+    naersk' = pkgs.callPackage naersk {};
 
 
     # Get each directory with a `shell.nix`:
@@ -31,10 +38,26 @@
         utilsShell
       ];
     });
-  in {
+
+    mkRs = {ltoSupport ? false, debugSupport ? false}:
+      pkgs.callPackage ./rs/derivation.nix { naersk = naersk'; inherit gitignoreSource ltoSupport debugSupport; };
+  in rec {
+    packages = rec {
+      rs = rs-release;
+      rs-debug = mkRs { debugSupport = true; };
+      rs-release = mkRs { };
+      rs-lto = mkRs { ltoSupport = true; };
+    };
+
+    checks = packages;
+    
     devShells = langDevShells // {
       default = pkgs.mkShell { inputsFrom = builtins.attrValues langDevShells; };
       utils = utilsShell;
+      rs = pkgs.mkShell {
+        inputsFrom = [ packages.rs ];
+        buildInputs = packages.rs.devTools;
+      };
     };
   });
 }
