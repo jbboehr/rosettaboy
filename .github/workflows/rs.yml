@@ -25,3 +25,4 @@ jobs:
         ~/.cargo
         rs/target
       cache-file: '**/Cargo.lock'
+      nix-flake: true

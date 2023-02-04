@@ -3,11 +3,13 @@
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
     flake-utils.url = github:numtide/flake-utils;
+    naersk.url = "github:nix-community/naersk";
   };
 
-  outputs = { self, nixpkgs, flake-utils }: flake-utils.lib.eachDefaultSystem (system: let
+  outputs = { self, nixpkgs, flake-utils, naersk }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
+    naersk' = pkgs.callPackage naersk {};
 
 
     # Get each directory with a `shell.nix`:
@@ -31,10 +33,26 @@
         utilsShell
       ];
     });
-  in {
+
+    mkRs = {ltoSupport ? false, debugSupport ? false}:
+      pkgs.callPackage ./rs/derivation.nix { naersk = naersk'; inherit ltoSupport debugSupport; };
+  in rec {
+    packages = rec {
+      rs = rs-release;
+      rs-debug = mkRs { debugSupport = true; };
+      rs-release = mkRs { };
+      rs-lto = mkRs { ltoSupport = true; };
+    };
+
+    checks = packages;
+    
     devShells = langDevShells // {
       default = pkgs.mkShell { inputsFrom = builtins.attrValues langDevShells; };
       utils = utilsShell;
+      rs = pkgs.mkShell {
+        inputsFrom = [ packages.rs ];
+        buildInputs = packages.rust.devTools;
+      };
     };
   });
 }

@@ -6,6 +6,9 @@ on:
       workdir:
         required: true
         type: string
+      nix-flake:
+        required: false
+        type: boolean
       build-pkgs:
         required: false
         type: string
@@ -118,6 +121,12 @@ jobs:
         restore-keys: ${{ inputs.workdir }}-nix-
     - name: Install Deps
       uses: cachix/install-nix-action@v15
+    - name: Build Flake
+      if: inputs.nix-flake
+      run: nix build .#${{ inputs.workdir }}
+    - name: Run Flake
+      if: inputs.nix-flake
+      run: nix run .#${{ inputs.workdir }} -- --help
     - name: Run
       shell: bash
       working-directory: ${{ inputs.workdir }}
