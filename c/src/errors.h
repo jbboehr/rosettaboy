@@ -5,41 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "consts.h"
-
-#ifdef __cplusplus
-
-#include <exception>
-#include <string>
-
-#define ERR_BUF_LEN 1000
-
-class EmuException : public std::exception {
-protected:
-    char buffer[ERR_BUF_LEN] = "EmuException";
-    void set_msg(const char *format, ...) {
-        va_list args;
-        va_start(args, format);
-        vsnprintf(this->buffer, ERR_BUF_LEN, format, args);
-        va_end(args);
-    }
-
-public:
-    virtual const char *what() const throw() { return this->buffer; }
-};
-
-// Controlled exit, ie we are deliberately stopping emulation
-class ControlledExit : public EmuException {};
-class Quit : public ControlledExit {
-public:
-    Quit() { this->set_msg("User exited the emulator"); }
-};
-
-// Game error, ie the game developer has a bug
-class GameException : public EmuException {};
-class UserException : public EmuException {};
-#endif
 
 NORETURN static void unit_test_failed() {
     fprintf(stdout, "Unit test failed");

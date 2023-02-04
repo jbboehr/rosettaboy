@@ -1,11 +1,7 @@
 #ifndef ROSETTABOY_CART_H
 #define ROSETTABOY_CART_H
 
-#include <stdbool.h>
-
 #include "consts.h"
-
-BEGIN_EXTERN_C()
 
 enum CartType {
     ROM_ONLY = 0x00,
@@ -56,7 +52,5 @@ struct Cart {
 };
 
 struct Cart cart_ctor(const char *filename, bool debug);
-
-END_EXTERN_C()
 
 #endif // ROSETTABOY_CART_H

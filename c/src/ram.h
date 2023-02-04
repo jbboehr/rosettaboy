@@ -1,12 +1,9 @@
 #ifndef ROSETTABOY_RAM_H
 #define ROSETTABOY_RAM_H
 
-#include "common.h"
-#include "cart.h"
 #include "consts.h"
+#include "cart.h"
 #include "errors.h"
-
-BEGIN_EXTERN_C()
 
 static const u16 ROM_BANK_SIZE = 0x4000;
 static const u16 RAM_BANK_SIZE = 0x2000;
@@ -194,7 +191,5 @@ static inline void ram_set(struct RAM *self, u16 addr, u8 val) {
 
     self->data[addr] = val;
 }
-
-END_EXTERN_C()
 
 #endif // ROSETTABOY_RAM_H

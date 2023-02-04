@@ -1,10 +1,15 @@
 #ifndef ROSETTABOY_CONSTS_H
 #define ROSETTABOY_CONSTS_H
 
+#include <stdbool.h>
 #include <stdint.h>
-#include "common.h"
 
-BEGIN_EXTERN_C()
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define HAVE_NORETURN
+#define NORETURN __attribute__((noreturn))
+#else
+#define NORETURN
+#endif
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -89,7 +94,5 @@ enum Interrupt {
     INTERRUPT_SERIAL = 1 << 3,
     INTERRUPT_JOYPAD = 1 << 4,
 };
-
-END_EXTERN_C()
 
 #endif // ROSETTABOY_CONSTS_H

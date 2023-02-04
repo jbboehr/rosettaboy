@@ -1,9 +1,7 @@
 #ifndef ROSETTABOY_CLOCK_H
 #define ROSETTABOY_CLOCK_H
 
-#include <stdbool.h>
-
-BEGIN_EXTERN_C()
+#include "consts.h"
 
 struct Buttons;
 
@@ -20,7 +18,5 @@ struct Clock {
 
 struct Clock clock_ctor(struct Buttons *buttons, int frames, int profile, bool turbo);
 void clock_tick(struct Clock *self);
-
-END_EXTERN_C()
 
 #endif // ROSETTABOY_CLOCK_H
