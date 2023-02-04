@@ -16,8 +16,7 @@ struct Clock {
     bool turbo;
 };
 
-struct Clock clock_ctor(struct Buttons *buttons, int frames, int profile,
-                        bool turbo);
+struct Clock clock_ctor(struct Buttons *buttons, int frames, int profile, bool turbo);
 void clock_tick(struct Clock *self);
 
 #endif // ROSETTABOY_CLOCK_H

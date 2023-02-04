@@ -1,8 +1,8 @@
 #ifndef ROSETTABOY_BUTTONS_H
 #define ROSETTABOY_BUTTONS_H
 
-#include "consts.h"
 #include <SDL2/SDL.h>
+#include "consts.h"
 
 struct CPU;
 struct RAM;

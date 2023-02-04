@@ -1,8 +1,8 @@
 #ifndef ROSETTABOY_APU_H
 #define ROSETTABOY_APU_H
 
-#include <SDL2/SDL.h>
 #include <stdbool.h>
+#include <SDL2/SDL.h>
 
 #include "consts.h"
 
@@ -13,8 +13,7 @@ struct ch1_dat_t {
     // X(t) = X(t-1) +/- X(t-1)/2^n
     unsigned int sweep_shift : 3;  // 0 = stop envelope
     unsigned int sweep_negate : 1; // ? -1 : 1
-    unsigned int sweep_period : 3; // inc or dec each n/128Hz = (n*44100)/128smp
-                                   // = n*344smp
+    unsigned int sweep_period : 3; // inc or dec each n/128Hz = (n*44100)/128smp = n*344smp
     unsigned int empty1 : 1;
 
     // NR11

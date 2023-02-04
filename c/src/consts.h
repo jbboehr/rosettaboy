@@ -74,8 +74,7 @@ static const u16 MEM_LCDC = 0xFF40;
 static const u16 MEM_STAT = 0xFF41;
 static const u16 MEM_SCY = 0xFF42; // SCROLL_Y
 static const u16 MEM_SCX = 0xFF43; // SCROLL_X
-static const u16 MEM_LY =
-    0xFF44; // LY aka currently drawn line, 0-153, >144 = vblank
+static const u16 MEM_LY = 0xFF44;  // LY aka currently drawn line, 0-153, >144 = vblank
 static const u16 MEM_LYC = 0xFF45;
 static const u16 MEM_DMA = 0xFF46;
 static const u16 MEM_BGP = 0xFF47;
