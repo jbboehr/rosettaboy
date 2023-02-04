@@ -77,6 +77,12 @@
         inherit gitignoreSource php-sdl opcacheSupport;
       };
 
+    mkPy = {mypycSupport ? false}:
+      pkgs.callPackage ./py/derivation.nix {
+        inherit mypycSupport gitignoreSource;
+        pythonPackages = pkgs.python310Packages;
+      };
+
   in rec {
     packages = rec {
       cpp = cpp-release;
@@ -93,9 +99,14 @@
       php = mkPhp {};
       php-opcache = mkPhp { opcacheSupport = true; };
 
+      py = mkPy {};
+      # match statement support is only in myypc master
+      # https://github.com/python/mypy/commit/d5e96e381f72ad3fafaae8707b688b3da320587d
+      # mypyc = mkPy { mypycSupport = true; };
+
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
-        paths = [ cpp go nim php ];
+        paths = [ cpp go nim php py ];
       };
     };
 
@@ -106,6 +117,10 @@
       go = pkgs.mkShell { buildInputs = with pkgs; [ go SDL2 pkg-config gomod2nix' ]; };
       nim = pkgs.mkShell { inputsFrom = [ packages.nim ]; buildInputs = packages.nim.devTools; };
       php = pkgs.mkShell { inputsFrom = [ packages.php ]; buildInputs = packages.php.devTools; };
+      # not yet implemented
+      pxd = pkgs.callPackage ./pxd/shell.nix {};
+      # something wrong with using it in `inputsFrom`
+      py = pkgs.mkShell { buildInputs = packages.py.devTools; };
     };
   });
 }

@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - 'py/**'
     paths:
     - 'py/**'
     - '.github/workflows/py.yml'
@@ -25,3 +26,4 @@ jobs:
         py/venv
         ~/.cache/pip
       cache-key: venv
+      nix-flake: true

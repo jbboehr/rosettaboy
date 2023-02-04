@@ -1,9 +1,9 @@
 import typing as t
 import sys
 
-from src.errors import UnitTestPassed, UnitTestFailed, InvalidOpcode
-from src.ram import RAM
-from src.consts import *
+from .errors import UnitTestPassed, UnitTestFailed, InvalidOpcode
+from .ram import RAM
+from .consts import *
 
 
 # fmt: off

@@ -1,6 +1,6 @@
 import typing as t
-from src.cart import Cart
-from src.consts import Mem, u16, u8
+from .cart import Cart
+from .consts import Mem, u16, u8
 
 ROM_BANK_SIZE: t.Final[u16] = 0x4000
 RAM_BANK_SIZE: t.Final[u16] = 0x2000
