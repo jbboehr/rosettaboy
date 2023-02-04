@@ -1,12 +1,12 @@
 #ifndef ROSETTABOY_GAMEBOY_H
 #define ROSETTABOY_GAMEBOY_H
 
-#include "consts.h"
 #include "apu.h"
 #include "args.h"
 #include "buttons.h"
 #include "cart.h"
 #include "clock.h"
+#include "consts.h"
 #include "cpu.h"
 #include "gpu.h"
 #include "ram.h"

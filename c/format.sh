@@ -7,4 +7,4 @@ if command -v clang-format-14 &> /dev/null ; then
 else
     CMD=clang-format
 fi
-$CMD -i $(find src -type f | grep -v _args.h) --ferror-limit 10 -Werror
+$CMD -i $(find src -type f) --ferror-limit 10 -Werror

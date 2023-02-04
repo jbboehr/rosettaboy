@@ -33,15 +33,15 @@ u8 BOOT[0x100] = {
 
 struct RAM ram_ctor(struct Cart *cart, bool debug) {
     struct RAM self = {
-            .debug = debug,
-            .ram_enable = false,
-            .ram_bank_mode = false,
-            .rom_bank_low = 1,
-            .rom_bank_high = 0,
-            .rom_bank = 1,
-            .ram_bank = 0,
-            .cart = cart,
-            .boot = BOOT,
+        .debug = debug,
+        .ram_enable = false,
+        .ram_bank_mode = false,
+        .rom_bank_low = 1,
+        .rom_bank_high = 0,
+        .rom_bank = 1,
+        .ram_bank = 0,
+        .cart = cart,
+        .boot = BOOT,
     };
 
     // this instruction must be at the end of ROM --
@@ -51,7 +51,7 @@ struct RAM ram_ctor(struct Cart *cart, bool debug) {
 
     // Load a real bootloader if available
     FILE *fp = fopen("boot.gb", "rb");
-    if(fp) {
+    if (fp) {
         fread(&BOOT, 1, 0x100, fp);
         fclose(fp);
 
