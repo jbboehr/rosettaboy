@@ -1,5 +1,6 @@
 #include "buttons.h"
 #include "errors.h"
+#include "cpu.h"
 #include "ram.h"
 
 static const u8 JOYPAD_MODE_BUTTONS = 1 << 5;
