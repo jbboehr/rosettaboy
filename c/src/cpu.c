@@ -249,7 +249,7 @@ static inline void cpu_sub(struct CPU *self, u8 val) {
 
 static inline void cpu_sbc(struct CPU *self, u8 val) {
     u8 carry = self->FLAG_C ? 1 : 0;
-    u8 res = self->A - val - carry;
+    i16 res = self->A - val - carry;
     self->FLAG_H = ((self->A ^ val ^ (res & 0xff)) & (1 << 4)) != 0;
     self->FLAG_C = res < 0;
     self->A -= val + carry;
