@@ -48,6 +48,7 @@
   }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
+    inherit (lib) hiPrio filterAttrs;
     inherit (gitignore.lib) gitignoreSource;
     gomod2nix' = gomod2nix.packages.${system}.default;
     naersk' = pkgs.callPackage naersk {};
@@ -110,21 +111,23 @@
       # c-clang-debug = mkC { debugSupport = true; clangSupport = true; };
       # c-clang-lto = mkC { ltoSupport = true; clangSupport = true; };
       # c-clang-release = mkC { clangSupport = true; };
-      c = c-release;
+      c = hiPrio c-release;
 
-      cpp = cpp-release;
       cpp-release = mkCpp {};
       cpp-debug = mkCpp { debugSupport = true; };
       cpp-lto = mkCpp { ltoSupport = true; };
+      cpp = hiPrio cpp-release;
       
       go = mkGo {};
 
-      nim = mkNim {};
+      nim-release = mkNim {};
       nim-debug = mkNim { debugSupport = true; };
       nim-speed = mkNim { speedSupport = true; };
+      nim = hiPrio nim-release;
 
-      php = mkPhp {};
+      php-release = mkPhp {};
       php-opcache = mkPhp { opcacheSupport = true; };
+      php = hiPrio php-release;
 
       py = mkPy {};
       # match statement support is only in myypc master
@@ -134,16 +137,18 @@
       rs-debug = mkRs { debugSupport = true; };
       rs-release = mkRs { };
       rs-lto = mkRs { ltoSupport = true; };
-      rs = rs-release;
+      rs = hiPrio rs-release;
       
       zig-fast = mkZig { fastSupport = true; };
       zig-safe = mkZig { safeSupport = true; };
-      zig = zig-fast;
+      zig = hiPrio zig-fast;
 
-      # I don't think we can join all of them because they collide
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
         paths = [ c cpp go nim php py rs zig ];
+        # if we use this without adding build tags to the executable,
+        # it'll build all variants but not symlink them
+        # paths = builtins.attrValues (filterAttrs (n: v: n != "default") packages);
       };
     };
 
