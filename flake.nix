@@ -50,6 +50,12 @@
 
     utilsShell = import ./utils/shell.nix { inherit pkgs; };
 
+    mkC = {clangSupport ? false, ltoSupport ? false, debugSupport ? false}: 
+      pkgs.callPackage ./c/derivation.nix {
+        stdenv = if clangSupport then pkgs.clangStdenv else pkgs.stdenv;
+        inherit ltoSupport debugSupport;
+      };
+
     mkCpp = {ltoSupport ? false, debugSupport ? false}:
       pkgs.callPackage ./cpp/derivation.nix {
         inherit gitignoreSource ltoSupport debugSupport;
@@ -93,6 +99,14 @@
 
   in rec {
     packages = rec {
+      c-debug = mkC { debugSupport = true; };
+      c-lto = mkC { ltoSupport = true; };
+      c-release = mkC { };
+      # c-clang-debug = mkC { debugSupport = true; clangSupport = true; };
+      # c-clang-lto = mkC { ltoSupport = true; clangSupport = true; };
+      # c-clang-release = mkC { clangSupport = true; };
+      c = c-release;
+
       cpp = cpp-release;
       cpp-release = mkCpp {};
       cpp-debug = mkCpp { debugSupport = true; };
@@ -124,7 +138,7 @@
       # I don't think we can join all of them because they collide
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
-        paths = [ cpp go nim php py rs zig ];
+        paths = [ c cpp go nim php py rs zig ];
       };
     };
 
