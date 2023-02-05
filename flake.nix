@@ -23,6 +23,18 @@
       url = "github:nix-community/naersk";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    zig-overlay = {
+      url = "github:mitchellh/zig-overlay/17352071583eda4be43fa2a312f6e061326374f7";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    zig-sdl = {
+      url = "github:MasterQ32/SDL.zig/6a9e37687a4b9ae3c14c9ea148ec51d14e01c7db";
+      flake = false;
+    };
+    zig-clap = {
+      url = "github:Hejsil/zig-clap/e5d09c4b2d121025ad7195b2de704451e6306807";
+      flake = false;
+    };
   };
 
   outputs = {
@@ -33,7 +45,10 @@
     gomod2nix-src,
     nim-argparse,
     php-sdl,
-    naersk
+    naersk,
+    zig-overlay,
+    zig-sdl,
+    zig-clap
   }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
@@ -44,6 +59,7 @@
       lib = pkgs.callPackage "${gomod2nix-src}/builder" { inherit gomod2nix; };
     };
     naersk' = pkgs.callPackage naersk {};
+    zig = zig-overlay.packages.${system}.master-2022-11-29;
 
     # Get each directory with a `shell.nix`:
     languages = with builtins; lib.pipe ./. [
@@ -102,6 +118,11 @@
         inherit gitignoreSource ltoSupport debugSupport;
       };
 
+    mkZig = {safeSupport ? false, fastSupport ? false}:
+      pkgs.callPackage ./zig/derivation.nix {
+        inherit zig zig-sdl zig-clap safeSupport fastSupport gitignoreSource;
+      };
+
   in rec {
     packages = rec {
       cpp-release = mkCpp {};
@@ -130,9 +151,16 @@
       rs-lto = mkRs { ltoSupport = true; };
       rs = hiPrio rs-release;
       
+      zig-fast = mkZig { fastSupport = true; };
+      zig-safe = mkZig { safeSupport = true; };
+      zig = hiPrio zig-fast;
+
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
-        paths = [ cpp go nim php py rs ];
+        paths = [ cpp go nim php py rs zig ];
+        # if we use this without adding build tags to the executable,
+        # it'll build all variants but not symlink them
+        # paths = builtins.attrValues (filterAttrs (n: v: n != "default") packages);
       };
     };
 
@@ -144,6 +172,7 @@
       nim = pkgs.mkShell { inputsFrom = [ packages.nim ]; buildInputs = packages.nim.devTools; };
       php = pkgs.mkShell { inputsFrom = [ packages.php ]; buildInputs = packages.php.devTools; };
       rs = pkgs.mkShell { inputsFrom = [ packages.rs ]; buildInputs = packages.rs.devTools; };
+      zig = pkgs.mkShell { inputsFrom = [ packages.zig ]; buildInputs = packages.zig.devTools; };
       # not yet implemented
       pxd = pkgs.callPackage ./pxd/shell.nix {};
       # something wrong with using it in `inputsFrom`
