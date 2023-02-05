@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - 'zig/**'
     paths:
     - 'zig/**'
     - '.github/workflows/zig.yml'
@@ -21,3 +22,4 @@ jobs:
       workdir: zig
       with-zig: true
       build-pkgs: libsdl2-dev
+      nix-flake: true
