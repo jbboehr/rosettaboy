@@ -12,7 +12,7 @@
 }:
 
 let
-  devTools = [ clang-tools nixpkgs-fmt valgrind ];
+  devTools = [ clang-tools ];
 in
 
 stdenv.mkDerivation {
@@ -25,8 +25,9 @@ stdenv.mkDerivation {
   enableParallelBuilding = true;
 
   buildInputs = [ SDL2 ];
-  nativeBuildInputs = [ autoPatchelfHook cmake pkg-config ]
-    ++ lib.optionals debugSupport devTools;
+  nativeBuildInputs = [ cmake pkg-config ]
+    ++ lib.optionals debugSupport devTools
+    ++ lib.optional (!stdenv.isDarwin) autoPatchelfHook;
 
   cmakeFlags = [ ]
     ++ lib.optional debugSupport "-DCMAKE_BUILD_TYPE=Debug"
