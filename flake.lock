@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "cl-gameboy": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1479058009,
+        "narHash": "sha256-qvT5wbRCrngd5tUPaEWqEUj53mGwjz87+eibn3qWd3k=",
+        "owner": "sjl",
+        "repo": "cl-gameboy",
+        "rev": "cce73054d4bfde332e31a2938f4e0630c162cf6b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sjl",
+        "repo": "cl-gameboy",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -43,6 +59,22 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "gb-autotest-roms": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1658898280,
+        "narHash": "sha256-i5TkoWJ9f+OZYwr0oyaFigCkfPQkRBReYqBfXxcyXmM=",
+        "owner": "shish",
+        "repo": "gb-autotest-roms",
+        "rev": "367b7dc51aed4b84eea8097d7426fe2e3cd2f459",
+        "type": "github"
+      },
+      "original": {
+        "owner": "shish",
+        "repo": "gb-autotest-roms",
         "type": "github"
       }
     },
@@ -152,8 +184,10 @@
     },
     "root": {
       "inputs": {
+        "cl-gameboy": "cl-gameboy",
         "flake-compat": "flake-compat",
         "flake-utils": "flake-utils",
+        "gb-autotest-roms": "gb-autotest-roms",
         "gitignore": "gitignore",
         "gomod2nix-src": "gomod2nix-src",
         "naersk": "naersk",

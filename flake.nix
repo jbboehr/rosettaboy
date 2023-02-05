@@ -39,6 +39,14 @@
       url = "github:Hejsil/zig-clap/e5d09c4b2d121025ad7195b2de704451e6306807";
       flake = false;
     };
+    gb-autotest-roms = {
+      url = "github:shish/gb-autotest-roms";
+      flake = false;
+    };
+    cl-gameboy = {
+      url = "github:sjl/cl-gameboy";
+      flake = false;
+    };
   };
 
   outputs = {
@@ -53,7 +61,9 @@
     naersk,
     zig-overlay,
     zig-sdl,
-    zig-clap
+    zig-clap,
+    gb-autotest-roms,
+    cl-gameboy
   }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
@@ -67,6 +77,8 @@
     zig = zig-overlay.packages.${system}.master-2022-11-29;
 
     utilsShell = import ./utils/shell.nix { inherit pkgs; };
+
+    utils = pkgs.callPackage ./utils/derivation.nix { inherit gb-autotest-roms cl-gameboy; };
 
     mkC = {clangSupport ? false, ltoSupport ? false, debugSupport ? false}: 
       pkgs.callPackage ./c/derivation.nix {
@@ -116,6 +128,8 @@
 
   in rec {
     packages = rec {
+      inherit utils;
+      
       c-debug = mkC { debugSupport = true; };
       c-lto = mkC { ltoSupport = true; };
       c-release = mkC { };
@@ -165,9 +179,14 @@
     };
 
     devShells = with builtins; let
+      shellHook = ''
+          export GB_DEFAULT_AUTOTEST_ROM_DIR=${gb-autotest-roms}
+          export GB_DEFAULT_BENCH_ROM=${cl-gameboy}/roms/opus5.gb
+        '';
       langDevShells = mapAttrs (name: package: pkgs.mkShell {
         inputsFrom = [ package ];
         buildInputs = package.devTools or [];
+        inherit shellHook;
       }) packages;
     in langDevShells // {
       default = pkgs.mkShell {
@@ -177,7 +196,10 @@
       # not yet implemented
       pxd = pkgs.callPackage ./pxd/shell.nix {};
       # something wrong with using it in `inputsFrom`
-      py = pkgs.mkShell { buildInputs = packages.py.devTools; };
+      py = pkgs.mkShell {
+        buildInputs = packages.py.devTools;
+        inherit shellHook;
+      };
     };
   });
 }

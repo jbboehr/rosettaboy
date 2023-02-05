@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - develop
     - 'cpp/**'
     paths:
     - 'cpp/**'

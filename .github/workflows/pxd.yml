@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - develop
     paths:
     - 'pxd/**'
     - '.github/workflows/pxd.yml'

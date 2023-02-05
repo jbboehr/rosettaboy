@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - develop
     - 'php/**'
     paths:
     - 'php/**'

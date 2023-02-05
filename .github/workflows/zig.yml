@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - develop
     - 'zig/**'
     paths:
     - 'zig/**'
