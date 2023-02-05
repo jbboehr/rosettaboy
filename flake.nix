@@ -3,11 +3,20 @@
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
     flake-utils.url = github:numtide/flake-utils;
+    gitignore = {
+      url = "github:hercules-ci/gitignore.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nim-argparse = {
+      url = "github:iffy/nim-argparse";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }: flake-utils.lib.eachDefaultSystem (system: let
+  outputs = { self, nixpkgs, flake-utils, gitignore, nim-argparse }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
+    inherit (gitignore.lib) gitignoreSource;
 
 
     # Get each directory with a `shell.nix`:
@@ -31,10 +40,24 @@
         utilsShell
       ];
     });
-  in {
+
+    mkNim = {debugSupport ? false, speedSupport ? false}:
+      pkgs.callPackage ./nim/derivation.nix {
+        inherit (pkgs.nimPackages) buildNimPackage;
+        inherit gitignoreSource nim-argparse debugSupport speedSupport;
+        inherit (pkgs.llvmPackages_14) bintools;
+      };
+  in rec {
+    packages = {
+      nim = mkNim {};
+      nim-debug = mkNim { debugSupport = true; };
+      nim-speed = mkNim { speedSupport = true; };
+    };
+    
     devShells = langDevShells // {
       default = pkgs.mkShell { inputsFrom = builtins.attrValues langDevShells; };
       utils = utilsShell;
+      nim = pkgs.mkShell { inputsFrom = [ packages.nim ]; buildInputs = packages.nim.devTools; };
     };
   });
 }
