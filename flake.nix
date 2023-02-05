@@ -7,13 +7,21 @@
       url = "github:hercules-ci/gitignore.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    gomod2nix-src = {
+      url = "github:nix-community/gomod2nix";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, gitignore }: flake-utils.lib.eachDefaultSystem (system: let
+  outputs = { self, nixpkgs, flake-utils, gitignore, gomod2nix-src }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
     inherit (lib) hiPrio filterAttrs;
     inherit (gitignore.lib) gitignoreSource;
+    gomod2nix' = rec {
+      gomod2nix = pkgs.callPackage "${gomod2nix-src}" { inherit (lib) buildGoApplication mkGoEnv; };
+      lib = pkgs.callPackage "${gomod2nix-src}/builder" { inherit gomod2nix; };
+    };
 
 
     # Get each directory with a `shell.nix`:
@@ -42,18 +50,32 @@
       pkgs.callPackage ./cpp/derivation.nix {
         inherit gitignoreSource ltoSupport debugSupport;
       };
+    mkGo = {...}: pkgs.callPackage ./go/derivation.nix {
+      inherit gitignoreSource;
+      inherit (gomod2nix'.lib) buildGoApplication;
+      gomod2nix = gomod2nix'.gomod2nix;
+    };
+
   in rec {
     packages = rec {
       cpp-release = mkCpp {};
       cpp-debug = mkCpp { debugSupport = true; };
       cpp-lto = mkCpp { ltoSupport = true; };
       cpp = hiPrio cpp-release;
+      
+      go = mkGo {};
+
+      default = pkgs.symlinkJoin {
+        name = "rosettaboy";
+        paths = [ cpp go ];
+      };
     };
 
     devShells = langDevShells // {
       default = pkgs.mkShell { inputsFrom = builtins.attrValues langDevShells; };
       utils = utilsShell;
       cpp = pkgs.mkShell { inputsFrom = [ packages.cpp ]; buildInputs = packages.cpp.devTools; };
+      go = pkgs.mkShell { buildInputs = with pkgs; [ go SDL2 pkg-config gomod2nix' ]; };
     };
   });
 }

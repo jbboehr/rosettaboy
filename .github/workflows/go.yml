@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - 'go/**'
     paths:
     - 'go/**'
     - '.github/workflows/go.yml'
@@ -25,3 +26,4 @@ jobs:
         ~/.cache/go-build
         ~/go/pkg/mod
       cache-file: '**/go.sum'
+      nix-flake: true
