@@ -11,9 +11,20 @@
       url = "github:nix-community/gomod2nix";
       flake = false;
     };
+    nim-argparse = {
+      url = "github:iffy/nim-argparse";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, gitignore, gomod2nix-src }: flake-utils.lib.eachDefaultSystem (system: let
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+    gitignore,
+    gomod2nix-src,
+    nim-argparse
+  }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
     inherit (lib) hiPrio filterAttrs;
@@ -22,7 +33,6 @@
       gomod2nix = pkgs.callPackage "${gomod2nix-src}" { inherit (lib) buildGoApplication mkGoEnv; };
       lib = pkgs.callPackage "${gomod2nix-src}/builder" { inherit gomod2nix; };
     };
-
 
     # Get each directory with a `shell.nix`:
     languages = with builtins; lib.pipe ./. [
@@ -50,12 +60,20 @@
       pkgs.callPackage ./cpp/derivation.nix {
         inherit gitignoreSource ltoSupport debugSupport;
       };
+      
     mkGo = {...}: pkgs.callPackage ./go/derivation.nix {
       inherit gitignoreSource;
       inherit (gomod2nix'.lib) buildGoApplication;
       gomod2nix = gomod2nix'.gomod2nix;
     };
 
+    mkNim = {debugSupport ? false, speedSupport ? false}:
+      pkgs.callPackage ./nim/derivation.nix {
+        inherit (pkgs.nimPackages) buildNimPackage;
+        inherit gitignoreSource nim-argparse debugSupport speedSupport;
+        inherit (pkgs.llvmPackages_14) bintools;
+      };
+      
   in rec {
     packages = rec {
       cpp-release = mkCpp {};
@@ -65,9 +83,14 @@
       
       go = mkGo {};
 
+      nim-release = mkNim {};
+      nim-debug = mkNim { debugSupport = true; };
+      nim-speed = mkNim { speedSupport = true; };
+      nim = hiPrio nim-release;
+
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
-        paths = [ cpp go ];
+        paths = [ cpp go nim ];
       };
     };
 
@@ -76,6 +99,7 @@
       utils = utilsShell;
       cpp = pkgs.mkShell { inputsFrom = [ packages.cpp ]; buildInputs = packages.cpp.devTools; };
       go = pkgs.mkShell { buildInputs = with pkgs; [ go SDL2 pkg-config gomod2nix' ]; };
+      nim = pkgs.mkShell { inputsFrom = [ packages.nim ]; buildInputs = packages.nim.devTools; };
     };
   });
 }

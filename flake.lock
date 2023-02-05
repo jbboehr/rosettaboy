@@ -51,6 +51,22 @@
         "type": "github"
       }
     },
+    "nim-argparse": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1669660759,
+        "narHash": "sha256-rtA0NJbA7aQglw/4U/fhX8GTlGf0eYoXfuzlJsA38Q8=",
+        "owner": "iffy",
+        "repo": "nim-argparse",
+        "rev": "98c7c99bfbcaae750ac515a6fd603f85ed68668f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "iffy",
+        "repo": "nim-argparse",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1675512093,
@@ -72,6 +88,7 @@
         "flake-utils": "flake-utils",
         "gitignore": "gitignore",
         "gomod2nix-src": "gomod2nix-src",
+        "nim-argparse": "nim-argparse",
         "nixpkgs": "nixpkgs"
       }
     }
