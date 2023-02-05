@@ -18,6 +18,10 @@ stdenv.mkDerivation rec {
   name = "rosettaboy-zig";
   src = gitignoreSource ./.;
 
+  passthru = {
+    devTools = [ zig ];
+  };
+
   buildInputs = [ SDL2 ];
   nativeBuildInputs = [ zig pkg-config ]
     ++ lib.optional (!stdenv.isDarwin) autoPatchelfHook;
@@ -38,12 +42,13 @@ stdenv.mkDerivation rec {
     cp -aR ${zig-sdl}/ lib/sdl
     cp -aR ${zig-clap}/ lib/clap
     zig build $ZIG_FLAGS --prefix $out install
+    mv $out/bin/rosettaboy $out/bin/rosettaboy-zig
 
     runHook postInstall
   '';
 
   meta = with lib; {
     description = "rosettaboy-zig";
-    mainProgram = "rosettaboy";
+    mainProgram = "rosettaboy-zig";
   };
 }
