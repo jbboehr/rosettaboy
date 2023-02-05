@@ -61,27 +61,7 @@
     naersk' = pkgs.callPackage naersk {};
     zig = zig-overlay.packages.${system}.master-2022-11-29;
 
-    # Get each directory with a `shell.nix`:
-    languages = with builtins; lib.pipe ./. [
-      readDir
-      (lib.filterAttrs (_: value: value == "directory"))
-      attrNames
-      (filter (dir: pathExists (./${dir}/shell.nix)))
-      # Exclude `utils`:
-      (filter (dir: dir != "utils"))
-    ];
-
-    # For each language, expose `shell.nix` as a devShell:
-    #
-    # Also include the deps of `utils` in the shell.
-    utilsShell = import utils/shell.nix { inherit pkgs; };
-    langDevShells = lib.genAttrs languages (lang: pkgs.mkShell {
-      name = "rosettaboy-${lang}";
-      inputsFrom = [
-        (import ./${lang}/shell.nix { inherit pkgs; })
-        utilsShell
-      ];
-    });
+    utilsShell = import ./utils/shell.nix { inherit pkgs; };
 
     mkCpp = {ltoSupport ? false, debugSupport ? false}:
       pkgs.callPackage ./cpp/derivation.nix {
@@ -155,6 +135,7 @@
       zig-safe = mkZig { safeSupport = true; };
       zig = hiPrio zig-fast;
 
+      # I don't think we can join all of them because they collide
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
         paths = [ cpp go nim php py rs zig ];
@@ -164,15 +145,16 @@
       };
     };
 
-    devShells = langDevShells // {
-      default = pkgs.mkShell { inputsFrom = builtins.attrValues langDevShells; };
+    devShells = with builtins; let
+      langDevShells = mapAttrs (name: package: pkgs.mkShell {
+        inputsFrom = [ package ];
+        buildInputs = package.devTools or [];
+      }) packages;
+    in langDevShells // {
+      default = pkgs.mkShell {
+        inputsFrom = builtins.attrValues langDevShells;
+      };
       utils = utilsShell;
-      cpp = pkgs.mkShell { inputsFrom = [ packages.cpp ]; buildInputs = packages.cpp.devTools; };
-      go = pkgs.mkShell { buildInputs = with pkgs; [ go SDL2 pkg-config gomod2nix' ]; };
-      nim = pkgs.mkShell { inputsFrom = [ packages.nim ]; buildInputs = packages.nim.devTools; };
-      php = pkgs.mkShell { inputsFrom = [ packages.php ]; buildInputs = packages.php.devTools; };
-      rs = pkgs.mkShell { inputsFrom = [ packages.rs ]; buildInputs = packages.rs.devTools; };
-      zig = pkgs.mkShell { inputsFrom = [ packages.zig ]; buildInputs = packages.zig.devTools; };
       # not yet implemented
       pxd = pkgs.callPackage ./pxd/shell.nix {};
       # something wrong with using it in `inputsFrom`
