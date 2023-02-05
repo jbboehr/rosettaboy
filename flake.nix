@@ -3,6 +3,10 @@
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixos-22.11;
     flake-utils.url = github:numtide/flake-utils;
+    flake-compat = {
+      url = "github:edolstra/flake-compat";
+      flake = false;
+    };
     gitignore = {
       url = "github:hercules-ci/gitignore.nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -41,6 +45,7 @@
     self,
     nixpkgs,
     flake-utils,
+    flake-compat,
     gitignore,
     gomod2nix-src,
     nim-argparse,
