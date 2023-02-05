@@ -13,7 +13,7 @@ let
     setuptools
   ];
   python = pythonPackages.python.withPackages (pypkgs: pyPackages);
-  devTools = [python] ++ pyPackages;
+  devTools = [python pythonPackages.pip] ++ pyPackages;
 in
 
 pythonPackages.buildPythonApplication rec {
