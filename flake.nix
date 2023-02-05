@@ -154,6 +154,8 @@
       utils = utilsShell;
       # not yet implemented
       pxd = pkgs.callPackage ./pxd/shell.nix {};
+      # something wrong with using it in `inputsFrom`
+      py = pkgs.mkShell { buildInputs = packages.py.devTools; };
     };
   });
 }
