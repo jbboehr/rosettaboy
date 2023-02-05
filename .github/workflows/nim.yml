@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - 'nim/**'
     paths:
     - 'nim/**'
     - '.github/workflows/nim.yml'
@@ -21,3 +22,4 @@ jobs:
       workdir: nim
       with-nim: true
       build-pkgs: libsdl2-dev
+      nix-flake: true
