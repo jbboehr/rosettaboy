@@ -9,10 +9,14 @@ on:
     paths:
     - 'py/**'
     - '.github/workflows/py.yml'
+    - '.github/workflows/common.yml'
+    - 'flake.*'
   pull_request:
     paths:
     - 'py/**'
     - '.github/workflows/py.yml'
+    - '.github/workflows/common.yml'
+    - 'flake.*'
   workflow_dispatch:
 
 jobs:

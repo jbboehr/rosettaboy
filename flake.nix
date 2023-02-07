@@ -67,6 +67,7 @@
   }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
+    inherit (builtins) mapAttrs;
     inherit (lib) hiPrio filterAttrs;
     inherit (gitignore.lib) gitignoreSource;
     gomod2nix' = rec {
@@ -75,8 +76,6 @@
     };
     naersk' = pkgs.callPackage naersk {};
     zig = zig-overlay.packages.${system}.master-2022-11-29;
-
-    utilsShell = import ./utils/shell.nix { inherit pkgs; };
 
     utils = pkgs.callPackage ./utils/derivation.nix { inherit gb-autotest-roms cl-gameboy; };
 
@@ -178,7 +177,13 @@
       };
     };
 
-    devShells = with builtins; let
+    checks = let
+      # zig-safe is too slow - skip
+      packagesToCheck = filterAttrs (n: v: v.meta ? mainProgram && n != "zig-safe") packages;
+      mkBlargg = name: package: utils.mkBlargg name "${package}/bin/${package.meta.mainProgram}";
+    in mapAttrs mkBlargg packagesToCheck;
+
+    devShells = let
       shellHook = ''
           export GB_DEFAULT_AUTOTEST_ROM_DIR=${gb-autotest-roms}
           export GB_DEFAULT_BENCH_ROM=${cl-gameboy}/roms/opus5.gb
@@ -192,7 +197,6 @@
       default = pkgs.mkShell {
         inputsFrom = builtins.attrValues langDevShells;
       };
-      utils = utilsShell;
       # not yet implemented
       pxd = pkgs.callPackage ./pxd/shell.nix {};
       # something wrong with using it in `inputsFrom`

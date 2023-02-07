@@ -71,8 +71,8 @@ stdenv.mkDerivation rec {
     runHook postInstall
   '';
 
-  meta = with lib; {
-    description = "rosettaboy-zig";
-    mainProgram = "rosettaboy-zig";
+  meta = {
+    description = name;
+    mainProgram = name;
   };
 }

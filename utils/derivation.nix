@@ -1,6 +1,7 @@
 {
   lib,
   stdenvNoCC,
+  runCommand,
   makeWrapper,
   python3,
   wget,
@@ -11,12 +12,20 @@
   cl-gameboy
 }:
 
-stdenvNoCC.mkDerivation {
+stdenvNoCC.mkDerivation rec {
   name = "rosettaboy-utils";
 
   src = ./.;
 
   passthru = {
+    # we have to make $out or building will fail...
+    mkBlargg = name: bin: runCommand "rosettaboy-checks-blargg-${name}" {} ''
+        echo $(basename ${bin}) | tee $out
+        find ${gb-autotest-roms} -name '*.gb' \
+          | ${parallel}/bin/parallel --will-cite --line-buffer --keep-order \
+              "${bin} --turbo --silent --headless --frames 200" \
+          | tee -a $out
+      '';
     devTools = [ wget cacert parallel ]
       ++ lib.optional (!stdenvNoCC.isDarwin) elfutils;
   };
@@ -39,4 +48,8 @@ stdenvNoCC.mkDerivation {
       makeWrapper $out/libexec/rosettaboy-utils/blargg.py $out/bin/rosettaboy-blargg \
         --set-default "GB_DEFAULT_AUTOTEST_ROM_DIR" "${gb-autotest-roms}"
     '';
+
+  meta = {
+    description = name;
+  };
 }

@@ -15,7 +15,7 @@ let
   devTools = [ clang-tools ];
 in
 
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
   name = "rosettaboy-c";
 
   src = ./.;
@@ -35,8 +35,8 @@ stdenv.mkDerivation {
     ++ lib.optional ltoSupport "-DENABLE_LTO=On"
   ;
 
-  meta = with lib; {
-    description = "rosettaboy-c";
-    mainProgram = "rosettaboy-c";
+  meta = {
+    description = name;
+    mainProgram = name;
   };
 }
