@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - 'utils/**'
     paths:
     - 'utils/**'
     - '.github/workflows/utils.yml'
