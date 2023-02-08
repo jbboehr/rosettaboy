@@ -15,8 +15,6 @@ stdenv.mkDerivation rec {
 
   src = gitignoreSource ./.;
 
-  enableParallelBuilding = true;
-
   buildInputs = [ SDL2 ];
   nativeBuildInputs = [ cmake pkg-config ]
     ++ lib.optional (!stdenv.isDarwin) autoPatchelfHook;
