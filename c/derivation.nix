@@ -2,11 +2,8 @@
 , stdenv
 , cmake
 , SDL2
-, autoPatchelfHook
 , pkg-config
-, valgrind ? null
 , clang-tools ? null
-, nixpkgs-fmt ? null
 , ltoSupport ? false
 , debugSupport ? false
 }:
@@ -25,9 +22,7 @@ stdenv.mkDerivation rec {
   enableParallelBuilding = true;
 
   buildInputs = [ SDL2 ];
-  nativeBuildInputs = [ cmake pkg-config ]
-    ++ lib.optionals debugSupport devTools
-    ++ lib.optional (!stdenv.isDarwin) autoPatchelfHook;
+  nativeBuildInputs = [ cmake pkg-config ];
 
   cmakeFlags = [ ]
     ++ lib.optional debugSupport "-DCMAKE_BUILD_TYPE=Debug"
