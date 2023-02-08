@@ -161,10 +161,9 @@
       php-opcache = mkPhp { opcacheSupport = true; };
       php = hiPrio php-release;
 
-      py = mkPy {};
-      # match statement support is only in myypc master
-      # https://github.com/python/mypy/commit/d5e96e381f72ad3fafaae8707b688b3da320587d
-      # mypyc = mkPy { mypycSupport = true; };
+      py-release = mkPy {};
+      py-mypyc = mkPy { mypycSupport = true; };
+      py = hiPrio py-release;
       
       rs-debug = mkRs { debugSupport = true; };
       rs-release = mkRs { };
