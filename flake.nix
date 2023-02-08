@@ -28,16 +28,17 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     zig-overlay = {
-      url = "github:mitchellh/zig-overlay/17352071583eda4be43fa2a312f6e061326374f7";
+      url = "github:mitchellh/zig-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
+      inputs.flake-compat.follows = "flake-compat";
     };
     zig-sdl = {
-      url = "github:MasterQ32/SDL.zig/6a9e37687a4b9ae3c14c9ea148ec51d14e01c7db";
+      url = "github:MasterQ32/SDL.zig/6b33f1f4299ec8814e9fb3b206cda37791ced574";
       flake = false;
     };
     zig-clap = {
-      url = "github:Hejsil/zig-clap/e5d09c4b2d121025ad7195b2de704451e6306807";
+      url = "github:Hejsil/zig-clap/272d8e2088b2cae037349fb260dc05ec46bba422";
       flake = false;
     };
     gb-autotest-roms = {
@@ -81,7 +82,7 @@
       inherit nim-argparse;
       inherit (gomod2nix') gomod2nix buildGoApplication;
       naersk = pkgs.callPackage naersk {};
-      zig = zig-overlay.packages.${system}.master-2022-11-29;
+      zig = zig-overlay.packages.${system}.master-2023-02-06;
       inherit zig-clap zig-sdl;
     };
 

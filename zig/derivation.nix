@@ -53,10 +53,10 @@ stdenv.mkDerivation rec {
   dontConfigure = true;
   dontBuild = true;
 
-	ZIG_FLAGS = []
-		++ lib.optional safeSupport "-Drelease-safe=true"
-		++ lib.optional fastSupport "-Drelease-fast=true"
-		;
+  ZIG_FLAGS = []
+    ++ lib.optional fastSupport "-Doptimize=ReleaseFast"
+    ++ lib.optional safeSupport "-Doptimize=ReleaseSafe"
+    ;
 
   installPhase = ''
     runHook preInstall
