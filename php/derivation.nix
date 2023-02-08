@@ -45,7 +45,12 @@ stdenv.mkDerivation rec {
     mkdir -p $out/bin $out/libexec/$name
     cp src/* $out/libexec/$name
 
-    makeWrapper $out/libexec/$name/main.php $out/bin/$name
+    # Note: we have to invoke the interpreter explicitly instead of letting the
+    # shebang on `main.php` take care of it for us because the interpreter is
+    # actually a shell script (because of the PHP extensions we're adding) which
+    # is problematic on macOS: https://stackoverflow.com/a/67101108
+    makeWrapper ${lib.getBin php}/bin/php $out/bin/$name \
+      --add-flags $out/libexec/$name/main.php
 
     runHook postInstall
   '';
