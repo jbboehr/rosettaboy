@@ -112,7 +112,6 @@
     mkPy = {mypycSupport ? false}:
       pkgs.callPackage ./py/derivation.nix {
         inherit mypycSupport gitignoreSource;
-        pythonPackages = pkgs.python310Packages;
       };
 
     mkRs = {ltoSupport ? false, debugSupport ? false}:
