@@ -19,7 +19,8 @@ stdenv.mkDerivation {
   enableParallelBuilding = true;
 
   buildInputs = [ SDL2 fmt_8 ];
-  nativeBuildInputs = [ autoPatchelfHook cmake pkg-config ];
+  nativeBuildInputs = [ cmake pkg-config ]
+    ++ lib.optional (!stdenv.isDarwin) autoPatchelfHook;
 
   passthru = {
     devTools = [ clang-format ];

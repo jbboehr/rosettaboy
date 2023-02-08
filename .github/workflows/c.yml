@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - 'c/**'
     paths:
     - 'c/**'
     - '.github/workflows/c.yml'
@@ -24,3 +25,4 @@ jobs:
       cache-paths: |
         c/build
       cache-key: build
+      nix-flake: true

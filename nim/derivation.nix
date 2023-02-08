@@ -1,5 +1,6 @@
 {
   lib,
+  stdenvNoCC,
   buildNimPackage,
   gitignoreSource,
   nimPackages,
@@ -36,10 +37,8 @@ buildNimPackage {
     ++ lib.optionals speedSupport [ "-d:danger" "--opt:speed" "-d:lto" "--mm:arc" "--panics:on" ]
     ;
 
-  buildInputs = with nimPackages; [
-    argparse
-    sdl2
-  ];
+  buildInputs = with nimPackages; [ argparse ]
+    ++ lib.optional (!stdenvNoCC.isDarwin) sdl2;
 
   postInstall = ''
       mv $out/bin/rosettaboy $out/bin/rosettaboy-nim
