@@ -44,7 +44,7 @@ jobs:
       if: inputs.cache-paths
       uses: actions/cache@v3
       with:
-        path: ${{ inputs.cache-paths }} 
+        path: ${{ inputs.cache-paths }}
         key: ${{ inputs.workdir }}-format-${{ inputs.cache-key }}${{ hashFiles(inputs.cache-file) }}
         restore-keys: ${{ inputs.workdir }}-format-
     - name: Install Pkgs
@@ -76,7 +76,7 @@ jobs:
       if: inputs.cache-paths
       uses: actions/cache@v3
       with:
-        path: ${{ inputs.cache-paths }} 
+        path: ${{ inputs.cache-paths }}
         key: ${{ inputs.workdir }}-build-${{ inputs.cache-key }}${{ hashFiles(inputs.cache-file) }}
         restore-keys: ${{ inputs.workdir }}-build-
     - name: Install Pkgs
@@ -139,8 +139,7 @@ jobs:
       run: nix develop ..#${{ inputs.workdir }} --command bash -c './build.sh && ./rosettaboy-release --help'
     - name: Flake Checks
       if: inputs.nix-flake
-      # we need to do this to parallelize the checks
-      run: nix eval --impure --expr 'builtins.currentSystem' | xargs -i nix build -L ".#checks.{}.${{ inputs.workdir }}"
+      run: nix eval .#checks --apply '(import ./utils/get-checks-for-lang.nix { lang = "${{ inputs.workdir }}"; })' --impure  --raw | xargs nix build
     - name: Run Shell
       if: ${{ !inputs.nix-flake }}
       shell: bash
