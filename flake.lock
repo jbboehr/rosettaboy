@@ -151,7 +151,7 @@
         "type": "github"
       }
     },
-    "php-sdl": {
+    "php-sdl-src": {
       "flake": false,
       "locked": {
         "lastModified": 1672500911,
@@ -178,7 +178,7 @@
         "naersk": "naersk",
         "nim-argparse": "nim-argparse",
         "nixpkgs": "nixpkgs",
-        "php-sdl": "php-sdl",
+        "php-sdl-src": "php-sdl-src",
         "zig-clap": "zig-clap",
         "zig-overlay": "zig-overlay",
         "zig-sdl": "zig-sdl"
