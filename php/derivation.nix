@@ -1,19 +1,20 @@
-{ stdenv
-, lib
-, fetchFromGitHub
-, makeWrapper
-, php
-, php-sdl
-, SDL2
-, gitignoreSource
-, opcacheSupport ? false
+{
+ stdenv,
+ lib,
+ fetchFromGitHub,
+ makeWrapper,
+ php,
+ php-sdl-src,
+ SDL2,
+ gitignoreSource,
+ opcacheSupport ? false
 }@args:
 
 let
   sdl = php.buildPecl {
     pname = "sdl";
     version = "master";
-    src = php-sdl;
+    src = php-sdl-src;
     buildInputs = [ SDL2 ];
   };
 

@@ -1,11 +1,13 @@
-{ lib
-, stdenv
-, cmake
-, SDL2
-, pkg-config
-, clang-tools ? null
-, ltoSupport ? false
-, debugSupport ? false
+{
+ lib,
+ stdenv,
+ cmake,
+ SDL2,
+ pkg-config,
+ gitignoreSource,
+ clang-tools ? null,
+ ltoSupport ? false,
+ debugSupport ? false
 }:
 
 let
@@ -15,7 +17,7 @@ in
 stdenv.mkDerivation rec {
   name = "rosettaboy-c";
 
-  src = ./.;
+  src = gitignoreSource ./.;
 
   passthru = { inherit devTools; };
 

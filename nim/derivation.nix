@@ -1,7 +1,6 @@
 {
   lib,
   stdenvNoCC,
-  buildNimPackage,
   gitignoreSource,
   llvmPackages_14,
   nimPackages,
@@ -14,7 +13,7 @@
 }:
 
 let
-  argparse = buildNimPackage rec {
+  argparse = nimPackages.buildNimPackage rec {
     pname = "argparse";
     version = "master";
     src = nim-argparse;
@@ -29,7 +28,7 @@ let
   });
 in
 
-buildNimPackage rec {
+nimPackages.buildNimPackage rec {
   name = "rosettaboy-nim";
   src = gitignoreSource ./.;
 

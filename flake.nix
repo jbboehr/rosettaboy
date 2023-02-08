@@ -19,7 +19,7 @@
       url = "github:iffy/nim-argparse";
       flake = false;
     };
-    php-sdl = {
+    php-sdl-src = {
       url = "github:Ponup/php-sdl";
       flake = false;
     };
@@ -58,7 +58,7 @@
     gitignore,
     gomod2nix-src,
     nim-argparse,
-    php-sdl,
+    php-sdl-src,
     naersk,
     zig-overlay,
     zig-sdl,
@@ -70,59 +70,62 @@
     lib = pkgs.lib;
     inherit (builtins) mapAttrs;
     inherit (lib) hiPrio filterAttrs;
-    inherit (gitignore.lib) gitignoreSource;
     gomod2nix' = rec {
-      gomod2nix = pkgs.callPackage "${gomod2nix-src}" { inherit (lib) buildGoApplication mkGoEnv; };
-      lib = pkgs.callPackage "${gomod2nix-src}/builder" { inherit gomod2nix; };
+      gomod2nix = pkgs.callPackage "${gomod2nix-src}" { inherit buildGoApplication mkGoEnv; };
+      inherit (pkgs.callPackage "${gomod2nix-src}/builder" { inherit gomod2nix; }) buildGoApplication mkGoEnv;
     };
-    naersk' = pkgs.callPackage naersk {};
-    zig = zig-overlay.packages.${system}.master-2022-11-29;
+    callPackage = pkgs.newScope {
+      inherit gb-autotest-roms cl-gameboy;
+      inherit (gitignore.lib) gitignoreSource;
+      inherit php-sdl-src;
+      inherit nim-argparse;
+      inherit (gomod2nix') gomod2nix buildGoApplication;
+      naersk = pkgs.callPackage naersk {};
+      zig = zig-overlay.packages.${system}.master-2022-11-29;
+      inherit zig-clap zig-sdl;
+    };
 
-    utils = pkgs.callPackage ./utils/derivation.nix { inherit gb-autotest-roms cl-gameboy; };
+    utils = callPackage ./utils/derivation.nix {};
 
     mkC = {clangSupport ? false, ltoSupport ? false, debugSupport ? false}: 
-      pkgs.callPackage ./c/derivation.nix {
+      callPackage ./c/derivation.nix {
         stdenv = if clangSupport then pkgs.clangStdenv else pkgs.stdenv;
         inherit ltoSupport debugSupport;
       };
 
     mkCpp = {ltoSupport ? false, debugSupport ? false}:
-      pkgs.callPackage ./cpp/derivation.nix {
-        inherit gitignoreSource ltoSupport debugSupport;
+      callPackage ./cpp/derivation.nix {
+        inherit ltoSupport debugSupport;
       };
       
-    mkGo = {...}: pkgs.callPackage ./go/derivation.nix {
-      inherit gitignoreSource;
-      inherit (gomod2nix'.lib) buildGoApplication;
-      gomod2nix = gomod2nix'.gomod2nix;
-    };
+    mkGo = {...}:
+        callPackage ./go/derivation.nix {
+      };
 
     mkNim = {debugSupport ? false, speedSupport ? false}:
-      pkgs.callPackage ./nim/derivation.nix {
-        inherit (pkgs.nimPackages) buildNimPackage;
-        inherit gitignoreSource nim-argparse debugSupport speedSupport;
+      callPackage ./nim/derivation.nix {
+        inherit debugSupport speedSupport;
         inherit (pkgs.llvmPackages_14) bintools;
       };
 
     mkPhp = {opcacheSupport ? false}:
-      pkgs.callPackage ./php/derivation.nix {
-        inherit gitignoreSource php-sdl opcacheSupport;
+      callPackage ./php/derivation.nix {
+        inherit opcacheSupport;
       };
 
     mkPy = {mypycSupport ? false}:
-      pkgs.callPackage ./py/derivation.nix {
-        inherit mypycSupport gitignoreSource;
+      callPackage ./py/derivation.nix {
+        inherit mypycSupport;
       };
 
     mkRs = {ltoSupport ? false, debugSupport ? false}:
-      pkgs.callPackage ./rs/derivation.nix {
-        naersk = naersk';
-        inherit gitignoreSource ltoSupport debugSupport;
+      callPackage ./rs/derivation.nix {
+        inherit ltoSupport debugSupport;
       };
 
     mkZig = {safeSupport ? false, fastSupport ? false}:
-      pkgs.callPackage ./zig/derivation.nix {
-        inherit zig zig-sdl zig-clap safeSupport fastSupport gitignoreSource;
+      callPackage ./zig/derivation.nix {
+        inherit safeSupport fastSupport;
       };
 
   in rec {
@@ -179,7 +182,7 @@
 
     checks = let
       # zig-safe is too slow - skip
-      packagesToCheck = filterAttrs (n: _: n != "zig-safe") packages;
+      packagesToCheck = filterAttrs (n: p: p.meta ? mainProgram && n != "zig-safe") packages;
     in mapAttrs (_: utils.mkBlargg) packagesToCheck;
 
     devShells = let
@@ -197,7 +200,7 @@
         inputsFrom = builtins.attrValues langDevShells;
       };
       # not yet implemented
-      pxd = pkgs.callPackage ./pxd/shell.nix {};
+      pxd = callPackage ./pxd/shell.nix {};
       # something wrong with using it in `inputsFrom`
       py = pkgs.mkShell {
         buildInputs = packages.py.devTools;
