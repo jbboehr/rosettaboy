@@ -137,11 +137,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1675512093,
-        "narHash": "sha256-u1CY4feK14B57E6T+0Bhkuoj8dpBxCPrWO+SP87UVP8=",
+        "lastModified": 1675757258,
+        "narHash": "sha256-pIRer8vdsoherlRKpzfnHbMZ5TsAcvRlXHCIaHkIUbg=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "8e8240194eda25b61449f29bb5131e02b28a5486",
+        "rev": "af96094e9b8eb162d70a84fa3b39f4b7a8b264d2",
         "type": "github"
       },
       "original": {
@@ -187,22 +187,25 @@
     "zig-clap": {
       "flake": false,
       "locked": {
-        "lastModified": 1664794625,
-        "narHash": "sha256-wZaeOlEEzgFqHCtW9ztiu+HczRltL0geb0fHv1nrgpQ=",
+        "lastModified": 1675698794,
+        "narHash": "sha256-p541p6rmQu6uh/uhd72fM/PWo8UeliCEn59g6WJsktQ=",
         "owner": "Hejsil",
         "repo": "zig-clap",
-        "rev": "e5d09c4b2d121025ad7195b2de704451e6306807",
+        "rev": "272d8e2088b2cae037349fb260dc05ec46bba422",
         "type": "github"
       },
       "original": {
         "owner": "Hejsil",
         "repo": "zig-clap",
-        "rev": "e5d09c4b2d121025ad7195b2de704451e6306807",
+        "rev": "272d8e2088b2cae037349fb260dc05ec46bba422",
         "type": "github"
       }
     },
     "zig-overlay": {
       "inputs": {
+        "flake-compat": [
+          "flake-compat"
+        ],
         "flake-utils": [
           "flake-utils"
         ],
@@ -211,34 +214,33 @@
         ]
       },
       "locked": {
-        "lastModified": 1670113356,
-        "narHash": "sha256-43aMRMU0OuBin6M2LM+nxVG+whazyHuHnUvu92xoth0=",
+        "lastModified": 1675746787,
+        "narHash": "sha256-62E0b7i51LNHBsWbsi2ChG5gCqZfTb8/UaZren6DqXs=",
         "owner": "mitchellh",
         "repo": "zig-overlay",
-        "rev": "17352071583eda4be43fa2a312f6e061326374f7",
+        "rev": "6a76f5697bcf291d1a7d88b0ef8189c2f5c9b38f",
         "type": "github"
       },
       "original": {
         "owner": "mitchellh",
         "repo": "zig-overlay",
-        "rev": "17352071583eda4be43fa2a312f6e061326374f7",
         "type": "github"
       }
     },
     "zig-sdl": {
       "flake": false,
       "locked": {
-        "lastModified": 1663928269,
-        "narHash": "sha256-e4fNkVs6jsJJHNbBomdgtWR7+CLK1G6YxnkIgaMvvBo=",
+        "lastModified": 1675665690,
+        "narHash": "sha256-pmDzS6gDhYVqPq5nqoZzQRQ3BkKXebKbmNRYqeMjXLU=",
         "owner": "MasterQ32",
         "repo": "SDL.zig",
-        "rev": "6a9e37687a4b9ae3c14c9ea148ec51d14e01c7db",
+        "rev": "6b33f1f4299ec8814e9fb3b206cda37791ced574",
         "type": "github"
       },
       "original": {
         "owner": "MasterQ32",
         "repo": "SDL.zig",
-        "rev": "6a9e37687a4b9ae3c14c9ea148ec51d14e01c7db",
+        "rev": "6b33f1f4299ec8814e9fb3b206cda37791ced574",
         "type": "github"
       }
     }
