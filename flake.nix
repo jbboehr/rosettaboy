@@ -30,6 +30,7 @@
     zig-overlay = {
       url = "github:mitchellh/zig-overlay/17352071583eda4be43fa2a312f6e061326374f7";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
     zig-sdl = {
       url = "github:MasterQ32/SDL.zig/6a9e37687a4b9ae3c14c9ea148ec51d14e01c7db";
