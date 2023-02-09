@@ -7,7 +7,7 @@
   gomod2nix
 }:
 
-buildGoApplication {
+buildGoApplication rec {
   name = "rosettaboy-go";
   src = gitignoreSource ./.;
   modules = ./gomod2nix.toml;
@@ -23,8 +23,8 @@ buildGoApplication {
       mv $out/bin/src $out/bin/rosettaboy-go
     '';
 
-  meta = with lib; {
-    description = "rosettaboy-go";
-    mainProgram = "rosettaboy-go";
+  meta = {
+    description = name;
+    mainProgram = name;
   };
 }

@@ -20,7 +20,7 @@ let
   };
 in
 
-buildNimPackage {
+buildNimPackage rec {
   name = "rosettaboy-nim";
   src = gitignoreSource ./.;
 
@@ -43,9 +43,9 @@ buildNimPackage {
   postInstall = ''
       mv $out/bin/rosettaboy $out/bin/rosettaboy-nim
     '';
-    
-  meta = with lib; {
-    description = "rosettaboy-nim";
-    mainProgram = "rosettaboy-nim";
+
+  meta = {
+    description = name;
+    mainProgram = name;
   };
 }

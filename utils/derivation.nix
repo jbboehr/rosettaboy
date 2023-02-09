@@ -12,7 +12,7 @@
   cl-gameboy
 }:
 
-stdenvNoCC.mkDerivation {
+stdenvNoCC.mkDerivation rec {
   name = "rosettaboy-utils";
 
   src = ./.;
@@ -48,4 +48,8 @@ stdenvNoCC.mkDerivation {
       makeWrapper $out/libexec/rosettaboy-utils/blargg.py $out/bin/rosettaboy-blargg \
         --set-default "GB_DEFAULT_AUTOTEST_ROM_DIR" "${gb-autotest-roms}"
     '';
+
+  meta = {
+    description = name;
+  };
 }

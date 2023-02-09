@@ -26,7 +26,7 @@ let
   };
 in
 
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
   name = "rosettaboy-php";
 
   src = gitignoreSource ./.;
@@ -50,8 +50,8 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  meta = with lib; {
-    description = "rosettaboy-php";
-    mainProgram = "rosettaboy-php";
+  meta = {
+    description = name;
+    mainProgram = name;
   };
 }

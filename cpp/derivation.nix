@@ -10,7 +10,7 @@
 , debugSupport ? false
 }:
 
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
   name = "rosettaboy-cpp";
 
   src = gitignoreSource ./.;
@@ -30,9 +30,9 @@ stdenv.mkDerivation {
     ++ lib.optional (!debugSupport) "-DCMAKE_BUILD_TYPE=Release"
     ++ lib.optional ltoSupport "-DENABLE_LTO=On"
   ;
-  
-  meta = with lib; {
-    description = "rosettaboy-cpp";
-    mainProgram = "rosettaboy-cpp";
+
+  meta = {
+    description = name;
+    mainProgram = name;
   };
 }
