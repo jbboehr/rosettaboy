@@ -93,8 +93,9 @@
         inherit ltoSupport debugSupport;
       };
 
-    mkCpp = {ltoSupport ? false, debugSupport ? false}:
+    mkCpp = {ltoSupport ? false, debugSupport ? false, clangSupport ? false}:
       callPackage ./cpp/derivation.nix {
+        stdenv = if clangSupport then pkgs.clangStdenv else pkgs.stdenv;
         inherit ltoSupport debugSupport;
       };
       
@@ -143,6 +144,9 @@
       cpp-release = mkCpp {};
       cpp-debug = mkCpp { debugSupport = true; };
       cpp-lto = mkCpp { ltoSupport = true; };
+      cpp-clang-release = mkCpp { clangSupport = true; };
+      cpp-clang-debug = mkCpp { debugSupport = true; clangSupport = true; };
+      cpp-clang-lto = mkCpp { ltoSupport = true; clangSupport = true; };
       cpp = hiPrio cpp-release;
       
       go = mkGo {};
