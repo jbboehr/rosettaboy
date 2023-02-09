@@ -1,14 +1,14 @@
-{ lib
-, stdenv
-, cmake
-, SDL2
-, fmt_8
-, autoPatchelfHook
-, pkg-config
-, gitignoreSource
-, clang-format ? null
-, ltoSupport ? false
-, debugSupport ? false
+{
+  lib,
+  stdenv,
+  cmake,
+  SDL2,
+  fmt_8,
+  pkg-config,
+  gitignoreSource,
+  clang-format ? null,
+  ltoSupport ? false,
+  debugSupport ? false,
 }:
 
 stdenv.mkDerivation rec {
@@ -17,8 +17,7 @@ stdenv.mkDerivation rec {
   src = gitignoreSource ./.;
 
   buildInputs = [ SDL2 fmt_8 ];
-  nativeBuildInputs = [ cmake pkg-config ]
-    ++ lib.optional (!stdenv.isDarwin) autoPatchelfHook;
+  nativeBuildInputs = [ cmake pkg-config ];
 
   passthru = {
     devTools = [ clang-format ];
