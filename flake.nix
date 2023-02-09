@@ -179,9 +179,8 @@
 
     checks = let
       # zig-safe is too slow - skip
-      packagesToCheck = filterAttrs (n: v: v.meta ? mainProgram && n != "zig-safe") packages;
-      mkBlargg = name: package: utils.mkBlargg name "${package}/bin/${package.meta.mainProgram}";
-    in mapAttrs mkBlargg packagesToCheck;
+      packagesToCheck = filterAttrs (n: _: n != "zig-safe") packages;
+    in mapAttrs (_: utils.mkBlargg) packagesToCheck;
 
     devShells = let
       shellHook = ''

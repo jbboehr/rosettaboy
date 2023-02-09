@@ -19,11 +19,11 @@ stdenvNoCC.mkDerivation rec {
 
   passthru = {
     # we have to make $out or building will fail...
-    mkBlargg = name: bin: runCommand "rosettaboy-checks-blargg-${name}" {} ''
-        echo $(basename ${bin}) | tee $out
+    mkBlargg = pkg: runCommand "rosettaboy-checks-blargg-${pkg.name}" {} ''
+        echo ${pkg.name}
         find ${gb-autotest-roms} -name '*.gb' \
           | ${parallel}/bin/parallel --will-cite --line-buffer --keep-order \
-              "${bin} --turbo --silent --headless --frames 200" \
+              "${lib.getExe pkg} --turbo --silent --headless --frames 200" \
           | tee -a $out
       '';
     devTools = [ wget cacert parallel ]
@@ -39,7 +39,7 @@ stdenvNoCC.mkDerivation rec {
   installPhase = ''
       mkdir -p $out/bin $out/libexec/rosettaboy-utils/
       cp bench.py blargg.py cpudiff.py $out/libexec/rosettaboy-utils/
-      
+
       makeWrapper $out/libexec/rosettaboy-utils/bench.py $out/bin/rosettaboy-bench \
         --set-default "GB_DEFAULT_BENCH_ROM" "${cl-gameboy}/roms/opus5.gb"
 
