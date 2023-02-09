@@ -135,9 +135,9 @@
       c-debug = mkC { debugSupport = true; };
       c-lto = mkC { ltoSupport = true; };
       c-release = mkC { };
-      # c-clang-debug = mkC { debugSupport = true; clangSupport = true; };
-      # c-clang-lto = mkC { ltoSupport = true; clangSupport = true; };
-      # c-clang-release = mkC { clangSupport = true; };
+      c-clang-debug = mkC { debugSupport = true; clangSupport = true; };
+      c-clang-lto = mkC { ltoSupport = true; clangSupport = true; };
+      c-clang-release = mkC { clangSupport = true; };
       c = hiPrio c-release;
 
       cpp-release = mkCpp {};
