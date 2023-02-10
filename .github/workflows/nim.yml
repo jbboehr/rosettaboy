@@ -25,6 +25,6 @@ jobs:
     uses: ./.github/workflows/common.yml
     with:
       workdir: nim
-      with-nim: true
+      with-nim: stable
       build-pkgs: libsdl2-dev
       nix-flake: true
