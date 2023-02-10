@@ -74,7 +74,7 @@ stdenv.mkDerivation rec {
   #
   # Really, this should be fixed in upstream (zig) but for now we just strip out
   # the `-l` flags:
-  preInstall = ''
+  preInstall = lib.optionalString stdenv.isDarwin ''
     readonly ORIGINAL_NIX_LDFLAGS=($NIX_LDFLAGS)
 
     NIX_LDFLAGS=""
