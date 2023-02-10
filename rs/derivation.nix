@@ -1,20 +1,19 @@
-{
-  lib,
-  stdenv,
-  naersk,
-  SDL2,
-  pkg-config,
-  libiconv,
-  rustfmt,
-  rustc,
-  cargo,
-  gitignoreSource,
-  ltoSupport ? false,
-  debugSupport ? false
+{ lib
+, stdenv
+, naersk
+, SDL2
+, pkg-config
+, libiconv
+, rustfmt
+, rustc
+, cargo
+, gitignoreSource
+, ltoSupport ? false
+, debugSupport ? false
 }:
 
 let
-  devTools = [ rustfmt rustc cargo ] ++ lib.optional stdenv.isDarwin [libiconv];
+  devTools = [ rustfmt rustc cargo ] ++ lib.optional stdenv.isDarwin [ libiconv ];
 in
 
 naersk.buildPackage rec {
@@ -24,7 +23,7 @@ naersk.buildPackage rec {
   buildInputs = [ SDL2 ];
   nativeBuildInputs = [ pkg-config ];
 
-  cargoBuildOptions = input: input ++ (lib.optional ltoSupport ["--profile release-lto"]);
+  cargoBuildOptions = input: input ++ (lib.optional ltoSupport [ "--profile release-lto" ]);
 
   release = !debugSupport && !ltoSupport;
 

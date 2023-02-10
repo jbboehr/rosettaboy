@@ -1,10 +1,9 @@
-{
-  lib,
-  buildGoApplication,
-  gitignoreSource,
-  pkg-config,
-  SDL2,
-  gomod2nix
+{ lib
+, buildGoApplication
+, gitignoreSource
+, pkg-config
+, SDL2
+, gomod2nix
 }:
 
 buildGoApplication rec {
@@ -20,8 +19,8 @@ buildGoApplication rec {
   nativeBuildInputs = [ pkg-config ];
 
   postInstall = ''
-      mv $out/bin/src $out/bin/rosettaboy-go
-    '';
+    mv $out/bin/src $out/bin/rosettaboy-go
+  '';
 
   meta = {
     description = name;

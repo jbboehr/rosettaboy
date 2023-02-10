@@ -1,14 +1,14 @@
-{
-  lib,
-  stdenv,
-  cmake,
-  SDL2,
-  fmt_8,
-  pkg-config,
-  gitignoreSource,
-  clang-format ? null,
-  ltoSupport ? false,
-  debugSupport ? false,
+{ lib
+, stdenv
+, cmake
+, SDL2
+, fmt_8
+, pkg-config
+, gitignoreSource
+, clang-format ? null
+, ltoSupport ? false
+, debugSupport ? false
+,
 }:
 
 stdenv.mkDerivation rec {

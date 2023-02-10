@@ -1,15 +1,14 @@
-{
-  lib,
-  stdenvNoCC,
-  gitignoreSource,
-  llvmPackages_14,
-  nimPackages,
-  nim-argparse,
-  git,
-  cacert,
-  bintools,
-  debugSupport ? false,
-  speedSupport ? false
+{ lib
+, stdenvNoCC
+, gitignoreSource
+, llvmPackages_14
+, nimPackages
+, nim-argparse
+, git
+, cacert
+, bintools
+, debugSupport ? false
+, speedSupport ? false
 }:
 
 let
@@ -38,12 +37,12 @@ nimPackages.buildNimPackage rec {
 
   nimBinOnly = true;
 
-  nimFlags = []
+  nimFlags = [ ]
     ++ lib.optional debugSupport "-d:debug"
     ++ lib.optional (!debugSupport) "-d:release"
     ++ lib.optional (!speedSupport) "-d:nimDebugDlOpen"
     ++ lib.optionals speedSupport [ "-d:danger" "--opt:speed" "-d:lto" "--mm:arc" "--panics:on" ]
-    ;
+  ;
 
   buildInputs = [ argparse sdl2 ];
 
@@ -51,8 +50,8 @@ nimPackages.buildNimPackage rec {
   nativeBuildInputs = lib.optional stdenvNoCC.isDarwin llvmPackages_14.bintools;
 
   postInstall = ''
-      mv $out/bin/rosettaboy $out/bin/rosettaboy-nim
-    '';
+    mv $out/bin/rosettaboy $out/bin/rosettaboy-nim
+  '';
 
   meta = {
     description = name;

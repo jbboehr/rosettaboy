@@ -1,8 +1,7 @@
-{
-  lib,
-  python311,
-  gitignoreSource,
-  mypycSupport ? false
+{ lib
+, python311
+, gitignoreSource
+, mypycSupport ? false
 }:
 
 let
@@ -20,7 +19,7 @@ pythonPackages.buildPythonApplication rec {
 
   passthru.python = python.withPackages (p: runtimeDeps ++ devDeps);
   passthru.devTools = [ python ];
- 
+
   propagatedBuildInputs = runtimeDeps;
 
   ROSETTABOY_USE_MYPYC = mypycSupport;

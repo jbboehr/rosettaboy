@@ -1,13 +1,12 @@
-{
- stdenv,
- lib,
- fetchFromGitHub,
- makeWrapper,
- php,
- php-sdl-src,
- SDL2,
- gitignoreSource,
- opcacheSupport ? false
+{ stdenv
+, lib
+, fetchFromGitHub
+, makeWrapper
+, php
+, php-sdl-src
+, SDL2
+, gitignoreSource
+, opcacheSupport ? false
 }@args:
 
 let

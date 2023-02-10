@@ -1,13 +1,12 @@
-{
- lib,
- stdenv,
- cmake,
- SDL2,
- pkg-config,
- gitignoreSource,
- clang-tools ? null,
- ltoSupport ? false,
- debugSupport ? false
+{ lib
+, stdenv
+, cmake
+, SDL2
+, pkg-config
+, gitignoreSource
+, clang-tools ? null
+, ltoSupport ? false
+, debugSupport ? false
 }:
 
 let

@@ -1,19 +1,18 @@
-{ 
-  pkgs,
-  stdenv,
-  lib,
-  darwin,
-  libiconv,
-  zig,
-  pkg-config,
-  SDL2,
-  zig-sdl,
-  zig-clap,
-  symlinkJoin,
-  autoPatchelfHook,
-  gitignoreSource,
-	safeSupport ? false,
-	fastSupport ? false
+{ pkgs
+, stdenv
+, lib
+, darwin
+, libiconv
+, zig
+, pkg-config
+, SDL2
+, zig-sdl
+, zig-clap
+, symlinkJoin
+, autoPatchelfHook
+, gitignoreSource
+, safeSupport ? false
+, fastSupport ? false
 }:
 
 let
@@ -35,15 +34,23 @@ stdenv.mkDerivation rec {
 
   buildInputs = [ SDL2 ]
     ++ lib.optionals stdenv.isDarwin (with frameworks; [
-      IOKit GameController CoreAudio AudioToolbox QuartzCore Carbon Metal
-      Cocoa ForceFeedback CoreHaptics
-    ])
+    IOKit
+    GameController
+    CoreAudio
+    AudioToolbox
+    QuartzCore
+    Carbon
+    Metal
+    Cocoa
+    ForceFeedback
+    CoreHaptics
+  ])
     ++ lib.optional stdenv.isDarwin libiconv
-    ;
-  
+  ;
+
   nativeBuildInputs = [ zig pkg-config ]
     ++ lib.optional (!stdenv.isDarwin) autoPatchelfHook
-    ;
+  ;
 
   dontConfigure = true;
   dontBuild = true;
@@ -75,10 +82,10 @@ stdenv.mkDerivation rec {
     export NIX_LDFLAGS
   '';
 
-  ZIG_FLAGS = []
+  ZIG_FLAGS = [ ]
     ++ lib.optional fastSupport "-Doptimize=ReleaseFast"
     ++ lib.optional safeSupport "-Doptimize=ReleaseSafe"
-    ;
+  ;
 
   installPhase = ''
     runHook preInstall
