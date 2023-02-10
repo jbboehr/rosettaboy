@@ -9,10 +9,8 @@
   cacert,
   bintools,
   debugSupport ? false,
-  speedSupport ? false
-}:
-
-let
+  speedSupport ? false,
+}: let
   argparse = nimPackages.buildNimPackage rec {
     pname = "argparse";
     version = "master";
@@ -22,40 +20,41 @@ let
   # Upstream `nimPackages.sdl2` is marked broken on macOS but it actually works
   # fine:
   sdl2 = nimPackages.sdl2.overrideAttrs (o: {
-    meta = o.meta // {
-      platforms = o.meta.platforms ++ lib.platforms.darwin;
-    };
+    meta =
+      o.meta
+      // {
+        platforms = o.meta.platforms ++ lib.platforms.darwin;
+      };
   });
 in
+  nimPackages.buildNimPackage rec {
+    name = "rosettaboy-nim";
+    src = gitignoreSource ./.;
 
-nimPackages.buildNimPackage rec {
-  name = "rosettaboy-nim";
-  src = gitignoreSource ./.;
+    passthru = {
+      devTools = [nimPackages.nim git cacert];
+    };
 
-  passthru = {
-    devTools = [ nimPackages.nim git cacert ];
-  };
+    nimBinOnly = true;
 
-  nimBinOnly = true;
+    nimFlags =
+      []
+      ++ lib.optional debugSupport "-d:debug"
+      ++ lib.optional (!debugSupport) "-d:release"
+      ++ lib.optional (!speedSupport) "-d:nimDebugDlOpen"
+      ++ lib.optionals speedSupport ["-d:danger" "--opt:speed" "-d:lto" "--mm:arc" "--panics:on"];
 
-  nimFlags = []
-    ++ lib.optional debugSupport "-d:debug"
-    ++ lib.optional (!debugSupport) "-d:release"
-    ++ lib.optional (!speedSupport) "-d:nimDebugDlOpen"
-    ++ lib.optionals speedSupport [ "-d:danger" "--opt:speed" "-d:lto" "--mm:arc" "--panics:on" ]
-    ;
+    buildInputs = [argparse sdl2];
 
-  buildInputs = [ argparse sdl2 ];
+    # Wants `lld` on macOS:
+    nativeBuildInputs = lib.optional stdenvNoCC.isDarwin llvmPackages_14.bintools;
 
-  # Wants `lld` on macOS:
-  nativeBuildInputs = lib.optional stdenvNoCC.isDarwin llvmPackages_14.bintools;
-
-  postInstall = ''
+    postInstall = ''
       mv $out/bin/rosettaboy $out/bin/rosettaboy-nim
     '';
 
-  meta = {
-    description = name;
-    mainProgram = name;
-  };
-}
+    meta = {
+      description = name;
+      mainProgram = name;
+    };
+  }

@@ -4,24 +4,23 @@
   gitignoreSource,
   pkg-config,
   SDL2,
-  gomod2nix
+  gomod2nix,
 }:
-
 buildGoApplication rec {
   name = "rosettaboy-go";
   src = gitignoreSource ./.;
   modules = ./gomod2nix.toml;
 
   passthru = {
-    devTools = [ gomod2nix ];
+    devTools = [gomod2nix];
   };
 
-  buildInputs = [ SDL2 ];
-  nativeBuildInputs = [ pkg-config ];
+  buildInputs = [SDL2];
+  nativeBuildInputs = [pkg-config];
 
   postInstall = ''
-      mv $out/bin/src $out/bin/rosettaboy-go
-    '';
+    mv $out/bin/src $out/bin/rosettaboy-go
+  '';
 
   meta = {
     description = name;
