@@ -1,5 +1,4 @@
 {
-  lib,
   buildGoApplication,
   gitignoreSource,
   pkg-config,

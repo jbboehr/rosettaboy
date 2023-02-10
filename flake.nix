@@ -11,6 +11,14 @@
       url = "github:hercules-ci/gitignore.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    pre-commit-hooks = {
+      url = "github:cachix/pre-commit-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs-stable.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+      inputs.flake-compat.follows = "flake-compat";
+      inputs.gitignore.follows = "gitignore";
+    };
     gomod2nix-src = {
       url = "github:nix-community/gomod2nix";
       flake = false;
@@ -52,11 +60,10 @@
   };
 
   outputs = {
-    self,
     nixpkgs,
     flake-utils,
-    flake-compat,
     gitignore,
+    pre-commit-hooks,
     gomod2nix-src,
     nim-argparse,
     php-sdl-src,
@@ -65,7 +72,8 @@
     zig-sdl,
     zig-clap,
     gb-autotest-roms,
-    cl-gameboy
+    cl-gameboy,
+    ...
   }: flake-utils.lib.eachDefaultSystem (system: let
     pkgs = nixpkgs.legacyPackages.${system};
     lib = pkgs.lib;
@@ -130,6 +138,15 @@
         inherit safeSupport fastSupport;
       };
 
+    pre-commit-check = pre-commit-hooks.lib.${system}.run {
+      src = ./.;
+      hooks = {
+        actionlint.enable = true;
+        #deadnix.enable = true;
+        shellcheck.enable = true;
+      };
+    };
+
   in rec {
     packages = rec {
       inherit utils;
@@ -188,7 +205,9 @@
     checks = let
       # zig-safe is too slow - skip
       packagesToCheck = filterAttrs (n: p: p.meta ? mainProgram && n != "zig-safe") packages;
-    in mapAttrs (_: utils.mkBlargg) packagesToCheck;
+    in {
+      inherit pre-commit-check;
+    } // mapAttrs (_: utils.mkBlargg) packagesToCheck;
 
     devShells = let
       shellHook = ''
@@ -203,6 +222,7 @@
     in langDevShells // {
       default = pkgs.mkShell {
         inputsFrom = builtins.attrValues langDevShells;
+        inherit (pre-commit-check) shellHook;
       };
       # not yet implemented
       pxd = callPackage ./pxd/shell.nix {};

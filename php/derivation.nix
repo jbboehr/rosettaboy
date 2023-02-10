@@ -1,7 +1,6 @@
 {
  stdenv,
  lib,
- fetchFromGitHub,
  makeWrapper,
  php,
  php-sdl-src,

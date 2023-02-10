@@ -1,5 +1,4 @@
 { 
-  pkgs,
   stdenv,
   lib,
   darwin,
@@ -9,7 +8,6 @@
   SDL2,
   zig-sdl,
   zig-clap,
-  symlinkJoin,
   autoPatchelfHook,
   gitignoreSource,
 	safeSupport ? false,
