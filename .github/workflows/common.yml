@@ -128,20 +128,29 @@ jobs:
       # see: https://github.com/cachix/install-nix-action/issues/56#issuecomment-1300421537
     - name: "Import Nix Store Cache"
       if: "steps.nix-cache.outputs.cache-hit == 'true'"
-      run: "cat /tmp/nix-store.nar | nix-store --import"
+      run: "nix-store --import < /tmp/nix-store.nar"
     - name: Flake Build
       if: inputs.nix-flake
-      run: nix build .#${{ inputs.workdir }}
+      run: |
+        nix eval .#packages --impure --raw \
+            --apply '(import ./utils/get-builds-for-lang.nix { lang = "${{ inputs.workdir }}"; attr = "packages"; })' \
+          | xargs nix build -L
     - name: Flake Run
       if: inputs.nix-flake
-      run: nix run .#${{ inputs.workdir }} -- --help
+      run: |
+        nix eval .#packages --impure --raw \
+            --apply '(import ./utils/get-builds-for-lang.nix { lang = "${{ inputs.workdir }}"; prefix = ".#"; })' \
+          | xargs -n1 -I{} nix run {} -- --help
     - name: Flake Shell
       if: inputs.nix-flake
       working-directory: ${{ inputs.workdir }}
       run: nix develop ..#${{ inputs.workdir }} --command bash -c './build.sh && ./rosettaboy-release --help'
     - name: Flake Checks
       if: inputs.nix-flake
-      run: nix eval .#checks --apply '(import ./utils/get-checks-for-lang.nix { lang = "${{ inputs.workdir }}"; })' --impure  --raw | xargs nix build -L
+      run: |
+        nix eval .#checks --impure --raw \
+            --apply '(import ./utils/get-builds-for-lang.nix { lang = "${{ inputs.workdir }}"; attr = "checks"; })' \
+          | xargs nix build -L
     - name: Run Shell
       if: ${{ !inputs.nix-flake }}
       shell: bash
@@ -150,6 +159,8 @@ jobs:
     - name: "Export Nix Store Cache"
       # we could add devShells here but it might fill the cache fast...
       run: |
-        CURRENT_SYSTEM=$(nix eval --impure --expr 'builtins.currentSystem')
-        nix eval --raw ".#packages.$CURRENT_SYSTEM.${{ inputs.workdir }}" | \
-          xargs nix-store -qR | xargs nix-store --export > /tmp/nix-store.nar
+        nix eval .#packages --impure --raw \
+            --apply '(import ./utils/get-builds-for-lang.nix { lang = "${{ inputs.workdir }}"; attr = "packages"; })' \
+          | xargs -I{} bash -c "nix eval --raw {}; echo" \
+          | xargs nix-store -qR \
+          | xargs nix-store --export > /tmp/nix-store.nar
