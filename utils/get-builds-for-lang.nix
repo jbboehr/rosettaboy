@@ -8,7 +8,7 @@
 
 attrs: lib.pipe attrs.${system} [
   builtins.attrNames
-  (builtins.filter (lib.hasPrefix "${lang}-"))
+  (builtins.filter (x: x == lang || lib.hasPrefix "${lang}-" x))
   (builtins.map (x: "${prefix}${x}"))
   (builtins.concatStringsSep "\n")
 ]

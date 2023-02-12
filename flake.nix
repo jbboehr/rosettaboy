@@ -171,7 +171,8 @@
       cpp-clang-lto = mkCpp { ltoSupport = true; clangSupport = true; };
       cpp = hiPrio cpp-release;
       
-      go = mkGo {};
+      go-release = mkGo {};
+      go = hiPrio go-release;
 
       nim-release = mkNim {};
       nim-debug = mkNim { debugSupport = true; };
