@@ -5,6 +5,7 @@ on:
     branches:
     - master
     - develop
+    - 'pxd/**'
     paths:
     - 'pxd/**'
     - '.github/workflows/pxd.yml'
@@ -27,3 +28,4 @@ jobs:
       cache-paths: |
         pxd/venv
       cache-key: venv
+      nix-flake: true

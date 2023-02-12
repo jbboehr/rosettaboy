@@ -123,6 +123,9 @@
         inherit opcacheSupport;
       };
 
+    mkPxd = {}:
+      callPackage ./pxd/derivation.nix {};
+
     mkPy = {mypycSupport ? false}:
       callPackage ./py/derivation.nix {
         inherit mypycSupport;
@@ -181,6 +184,9 @@
       py-release = mkPy {};
       py-mypyc = mkPy { mypycSupport = true; };
       py = hiPrio py-release;
+
+      pxd-release = mkPxd {};
+      pxd = hiPrio pxd-release;
       
       rs-debug = mkRs { debugSupport = true; };
       rs-release = mkRs { };
@@ -194,7 +200,7 @@
       # I don't think we can join all of them because they collide
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
-        paths = [ c cpp go nim php py rs zig ];
+        paths = [ c cpp go nim php pxd py rs zig ];
         # if we use this without adding build tags to the executable,
         # it'll build all variants but not symlink them
         # paths = builtins.attrValues (filterAttrs (n: v: n != "default") packages);
@@ -223,8 +229,6 @@
         inputsFrom = builtins.attrValues langDevShells;
         inherit (pre-commit-check) shellHook;
       };
-      # not yet implemented
-      pxd = callPackage ./pxd/shell.nix {};
       # something wrong with using it in `inputsFrom`
       py = pkgs.mkShell {
         buildInputs = packages.py.devTools;
