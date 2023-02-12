@@ -197,6 +197,33 @@
       zig-safe = mkZig { safeSupport = true; };
       zig = hiPrio zig-fast;
 
+      dockerImages = rec {
+        base = pkgs.dockerTools.buildImage {
+          name = "rosettaboy-base";
+          copyToRoot = pkgs.buildEnv {
+            name = "image-root";
+            paths = [ pkgs.bashInteractive pkgs.busybox pkgs.SDL2 ];
+            pathsToLink = [ "/bin" ];
+          };
+        };
+        
+        c = pkgs.dockerTools.buildImage {
+          name = "rosettaboy-docker-c";
+          fromImage = base;
+          config = {
+            Cmd = [ (lib.getExe packages.c) ];
+          };
+        };
+
+        php = pkgs.dockerTools.buildImage {
+          name = "rosettaboy-docker-php";
+          fromImage = base;
+          config = {
+            Cmd = [ (lib.getExe packages.php) ];
+          };
+        };
+      };
+
       # I don't think we can join all of them because they collide
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
