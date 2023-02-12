@@ -1,7 +1,7 @@
 {
   lib,
   stdenvNoCC,
-  gitignoreSource,
+  cleanSource,
   llvmPackages_14,
   nimPackages,
   nim-argparse,
@@ -30,7 +30,10 @@ in
 
 nimPackages.buildNimPackage rec {
   name = "rosettaboy-nim";
-  src = gitignoreSource ./.;
+  src = cleanSource {
+    inherit name;
+    src = ./.;
+  };
 
   passthru = {
     devTools = [ nimPackages.nim git cacert ];

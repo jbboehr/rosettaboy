@@ -4,7 +4,7 @@
  cmake,
  SDL2,
  pkg-config,
- gitignoreSource,
+ cleanSource,
  clang-tools ? null,
  ltoSupport ? false,
  debugSupport ? false
@@ -16,8 +16,13 @@ in
 
 stdenv.mkDerivation rec {
   name = "rosettaboy-c";
-
-  src = gitignoreSource ./.;
+  src = cleanSource {
+    inherit name;
+    src = ./.;
+    extraRules = ''
+      .clang-format
+    '';
+  };
 
   passthru = { inherit devTools; };
 

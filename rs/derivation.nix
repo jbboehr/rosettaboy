@@ -8,7 +8,7 @@
   rustfmt,
   rustc,
   cargo,
-  gitignoreSource,
+  cleanSource,
   ltoSupport ? false,
   debugSupport ? false
 }:
@@ -19,7 +19,13 @@ in
 
 naersk.buildPackage rec {
   name = "rosettaboy-rs";
-  src = gitignoreSource ./.;
+  src = cleanSource {
+    inherit name;
+    src = ./.;
+    extraRules = ''
+      test_pgo.sh
+    '';
+  };
 
   buildInputs = [ SDL2 ];
   nativeBuildInputs = [ pkg-config ];

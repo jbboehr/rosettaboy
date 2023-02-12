@@ -9,7 +9,7 @@
   zig-sdl,
   zig-clap,
   autoPatchelfHook,
-  gitignoreSource,
+  cleanSource,
 	safeSupport ? false,
 	fastSupport ? false
 }:
@@ -25,7 +25,13 @@ in
 
 stdenv.mkDerivation rec {
   name = "rosettaboy-zig";
-  src = gitignoreSource ./.;
+  src = cleanSource {
+    inherit name;
+    src = ./.;
+    extraRules = ''
+      lib
+    '';
+  };
 
   passthru = {
     devTools = [ zig ];

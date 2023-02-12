@@ -1,6 +1,6 @@
 {
   python310,
-  gitignoreSource
+  cleanSource
 }:
 
 let
@@ -13,7 +13,13 @@ in
 
 pythonPackages.buildPythonApplication rec {
   name = "rosettaboy-pxd";
-  src = gitignoreSource ./.;
+  src = cleanSource {
+    inherit name;
+    src = ./.;
+    extraRules = ''
+      py_env.sh
+    '';
+  };
 
   passthru.python = python.withPackages (p: runtimeDeps ++ devDeps);
   passthru.devTools = [ python ];

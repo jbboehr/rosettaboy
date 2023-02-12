@@ -85,7 +85,8 @@
     };
     callPackage = pkgs.newScope {
       inherit gb-autotest-roms cl-gameboy;
-      inherit (gitignore.lib) gitignoreSource;
+      # inherit (gitignore.lib) gitignoreSource;
+      cleanSource = import ./utils/clean-source.nix { inherit (gitignore.lib) gitignoreFilterWith; inherit (lib) cleanSourceWith; };
       inherit php-sdl-src;
       inherit nim-argparse;
       inherit (gomod2nix') gomod2nix buildGoApplication;

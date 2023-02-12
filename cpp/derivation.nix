@@ -5,7 +5,7 @@
   SDL2,
   fmt_8,
   pkg-config,
-  gitignoreSource,
+  cleanSource,
   clang-format ? null,
   ltoSupport ? false,
   debugSupport ? false,
@@ -13,8 +13,13 @@
 
 stdenv.mkDerivation rec {
   name = "rosettaboy-cpp";
-
-  src = gitignoreSource ./.;
+  src = cleanSource {
+    inherit name;
+    src = ./.;
+    extraRules = ''
+      .clang-format
+    '';
+  };
 
   buildInputs = [ SDL2 fmt_8 ];
   nativeBuildInputs = [ cmake pkg-config ];

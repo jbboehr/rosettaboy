@@ -5,7 +5,7 @@
  php,
  php-sdl-src,
  SDL2,
- gitignoreSource,
+ cleanSource,
  opcacheSupport ? false
 }@args:
 
@@ -29,7 +29,14 @@ in
 stdenv.mkDerivation rec {
   name = "rosettaboy-php";
 
-  src = gitignoreSource ./.;
+  src = cleanSource {
+    inherit name;
+    src = ./.;
+    extraRules = ''
+      .phpstan.neon
+      .php-cs-fixer.dist.php
+    '';
+  };
 
   passthru = {
     inherit php;

@@ -1,7 +1,7 @@
 {
   lib,
   python311,
-  gitignoreSource,
+  cleanSource,
   fetchFromGitHub,
   mypycSupport ? false
 }:
@@ -32,7 +32,13 @@ in
 
 pythonPackages.buildPythonApplication rec {
   name = "rosettaboy-py";
-  src = gitignoreSource ./.;
+  src = cleanSource {
+    inherit name;
+    src = ./.;
+    extraRules = ''
+      py_env.sh
+    '';
+  };
 
   nativeBuildInputs = lib.optional mypycSupport mypy';
 
