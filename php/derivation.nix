@@ -40,7 +40,12 @@ stdenv.mkDerivation rec {
 
   passthru = {
     inherit php;
-    devTools = [ sdl php ];
+    devTools = [
+      sdl
+      php
+      php.packages.composer
+      php.packages.php-cs-fixer
+    ];
   };
 
   buildInputs = [ php ];
