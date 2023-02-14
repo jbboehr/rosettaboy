@@ -6,8 +6,9 @@
  php-sdl-src,
  SDL2,
  cleanSource,
+ makeBuildTag,
  opcacheSupport ? false
-}@args:
+} @ args:
 
 let
   sdl = php.buildPecl {
@@ -27,10 +28,11 @@ let
 in
 
 stdenv.mkDerivation rec {
-  name = "rosettaboy-php";
+  bname = "rosettaboy-php";
+  name = "${bname}-${makeBuildTag args}";
 
   src = cleanSource {
-    inherit name;
+    name = bname;
     src = ./.;
     extraRules = ''
       .phpstan.neon
@@ -63,6 +65,8 @@ stdenv.mkDerivation rec {
     # is problematic on macOS: https://stackoverflow.com/a/67101108
     makeWrapper ${lib.getBin php}/bin/php $out/bin/$name \
       --add-flags $out/libexec/$name/main.php
+    
+    ln -s $out/bin/$name $out/bin/$bname
 
     runHook postInstall
   '';

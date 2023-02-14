@@ -10,9 +10,10 @@
   zig-clap,
   autoPatchelfHook,
   cleanSource,
+  makeBuildTag,
 	safeSupport ? false,
 	fastSupport ? false
-}:
+} @ args:
 
 let
   # `apple_sdk` defaults to `10_12` instead of `11_0` on `x86_64-darwin` but we
@@ -24,9 +25,11 @@ let
 in
 
 stdenv.mkDerivation rec {
-  name = "rosettaboy-zig";
+  bname = "rosettaboy-zig";
+  name = "${bname}-${makeBuildTag args}";
+
   src = cleanSource {
-    inherit name;
+    name = bname;
     src = ./.;
     extraRules = ''
       lib
@@ -92,7 +95,8 @@ stdenv.mkDerivation rec {
     cp -aR ${zig-sdl}/ lib/sdl
     cp -aR ${zig-clap}/ lib/clap
     zig build $ZIG_FLAGS --prefix $out install
-    mv $out/bin/rosettaboy $out/bin/rosettaboy-zig
+    mv $out/bin/rosettaboy $out/bin/$name
+    ln -s $out/bin/$name $out/bin/$bname
 
     runHook postInstall
   '';

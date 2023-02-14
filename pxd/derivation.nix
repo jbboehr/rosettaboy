@@ -1,7 +1,8 @@
 {
   python310,
-  cleanSource
-}:
+  cleanSource,
+  makeBuildTag
+} @ args:
 
 let
   python = python310;
@@ -12,9 +13,11 @@ let
 in
 
 pythonPackages.buildPythonApplication rec {
-  name = "rosettaboy-pxd";
+  bname = "rosettaboy-pxd";
+  name = "${bname}-${makeBuildTag args}";
+
   src = cleanSource {
-    inherit name;
+    name = bname;
     src = ./.;
     extraRules = ''
       py_env.sh
@@ -27,6 +30,11 @@ pythonPackages.buildPythonApplication rec {
   propagatedBuildInputs = runtimeDeps;
 
   dontUseSetuptoolsCheck = true;
+
+  postInstall = ''
+      mv $out/bin/$bname $out/bin/$name
+      ln -s $out/bin/$name $out/bin/$bname
+    '';
 
   meta = {
     description = name;

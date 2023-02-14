@@ -3,8 +3,9 @@
   python311,
   cleanSource,
   fetchFromGitHub,
+  makeBuildTag,
   mypycSupport ? false
-}:
+} @ args:
 
 let
   python = python311;
@@ -31,9 +32,11 @@ let
 in
 
 pythonPackages.buildPythonApplication rec {
-  name = "rosettaboy-py";
+  bname = "rosettaboy-py";
+  name = "${bname}-${makeBuildTag args}";
+
   src = cleanSource {
-    inherit name;
+    name = bname;
     src = ./.;
     extraRules = ''
       py_env.sh
@@ -49,6 +52,11 @@ pythonPackages.buildPythonApplication rec {
 
   ROSETTABOY_USE_MYPYC = mypycSupport;
   dontUseSetuptoolsCheck = true;
+
+  postInstall = ''
+      mv $out/bin/$bname $out/bin/$name
+      ln -s $out/bin/$name $out/bin/$bname
+    '';
 
   meta = {
     description = name;

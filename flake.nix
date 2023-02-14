@@ -93,6 +93,12 @@
       naersk = pkgs.callPackage naersk {};
       zig = zig-overlay.packages.${system}.master-2023-02-06;
       inherit zig-clap zig-sdl;
+      makeBuildTag = attrs: lib.pipe attrs [
+        (lib.filterAttrs (k: v: lib.hasSuffix "Support" k && v))
+        (lib.mapAttrsToList (k: v: lib.replaceStrings ["Support"] [""] k))
+        (v: if builtins.length v > 0 then v else ["release"])
+        (builtins.concatStringsSep "-")
+      ];
     };
 
     utils = callPackage ./utils/derivation.nix {};

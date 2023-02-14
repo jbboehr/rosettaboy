@@ -8,9 +8,10 @@
   git,
   cacert,
   bintools,
+  makeBuildTag,
   debugSupport ? false,
   speedSupport ? false
-}:
+} @ args:
 
 let
   argparse = nimPackages.buildNimPackage rec {
@@ -29,9 +30,11 @@ let
 in
 
 nimPackages.buildNimPackage rec {
-  name = "rosettaboy-nim";
+  bname = "rosettaboy-nim";
+  name = "${bname}-${makeBuildTag args}";
+
   src = cleanSource {
-    inherit name;
+    name = bname;
     src = ./.;
   };
 
@@ -54,7 +57,8 @@ nimPackages.buildNimPackage rec {
   nativeBuildInputs = lib.optional stdenvNoCC.isDarwin llvmPackages_14.bintools;
 
   postInstall = ''
-      mv $out/bin/rosettaboy $out/bin/rosettaboy-nim
+      mv $out/bin/rosettaboy $out/bin/$name
+      ln -s $out/bin/$name $out/bin/$bname
     '';
 
   meta = {

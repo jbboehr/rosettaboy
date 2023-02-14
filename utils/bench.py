@@ -19,7 +19,7 @@ from pathlib import Path
 TEST_ROM_URL = "https://github.com/sjl/cl-gameboy/blob/master/roms/opus5.gb?raw=true"
 
 
-def build(lang: str, builder: str, sub: str) -> bool:
+def build(lang: Path, builder: str, sub: str) -> bool:
     proc = subprocess.run(
         [f"./{builder}"],
         cwd=lang,
@@ -28,20 +28,25 @@ def build(lang: str, builder: str, sub: str) -> bool:
         text=True,
     )
     if proc.returncode != 0:
-        print(f"{lang:>5s} / {sub:7s}: Failed\n{proc.stdout}")
+        print(f"{lang!s:>5s} / {sub:7s}: Failed\n{proc.stdout}")
         return False
     else:
-        print(f"{lang:>5s} / {sub:7s}: Built")
+        print(f"{lang!s:>5s} / {sub:7s}: Built")
         return True
 
 
-def test(lang: str, runner: str, sub: str, frames: int, profile: int, rom: Path) -> bool:
+def test(lang: Path, runner: Path, sub: str, frames: int, profile: int, rom: Path) -> bool:
     if not rom.is_absolute():
         rom = f"../{rom}"
     
+    if lang.is_dir():
+        cwd = lang
+    else:
+        cwd = "."
+    
     proc = subprocess.run(
         [
-            f"./{runner}",
+            runner,
             "--frames",
             str(frames),
             "--profile",
@@ -49,22 +54,22 @@ def test(lang: str, runner: str, sub: str, frames: int, profile: int, rom: Path)
             "--silent",
             "--headless",
             "--turbo",
-            f"{rom}",
+            rom,
         ],
-        cwd=lang,
+        cwd=cwd,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
     )
     if proc.returncode != 0:
-        print(f"{lang:>5s} / {sub:7s}: Failed\n{proc.stdout}")
+        print(f"{lang!s:>5s} / {sub:7s}: Failed\n{proc.stdout}")
         return False
     else:
         frames = ""
         for line in proc.stdout.split("\n"):
             if "frames" in line:
                 frames = line
-        print(f"{lang:>5s} / {sub:7s}: {frames}")
+        print(f"{lang!s:>5s} / {sub:7s}: {frames}")
         return True
 
 
@@ -95,7 +100,13 @@ def main() -> int:
         help="Which test rom to run",
         metavar="ROM"
     )
-    parser.add_argument("langs", default=[], nargs="*", help="Which languages to test")
+    parser.add_argument(
+        "langs",
+        type=Path,
+        default=[x.parent for x in Path(".").glob("*/build.sh")],
+        nargs="*",
+        help="Which languages to test"
+    )
     args = parser.parse_args()
 
     if not os.path.exists(args.test_rom):
@@ -110,36 +121,41 @@ def main() -> int:
     if args.frames == 0 and args.profile == 0:
         args.profile = 10
 
-    for lang_builder in glob("*/build*.sh"):
-        lang = os.path.dirname(lang_builder)
-        builder = os.path.basename(lang_builder)
-        sub = "release"
-        if match := re.match("build_(.*).sh", builder):
-            sub = match.group(1)
+    for lang in args.langs:
+        if not lang.is_dir():
+            continue
+        for lang_builder in lang.glob("build*.sh"):
+            builder = f"{lang_builder.name}"
+            sub = "release"
+            if match := re.match("build_(.*).sh", builder):
+                sub = match.group(1)
 
-        if args.langs and lang not in args.langs:
-            continue
-        if args.default and sub != "release":
-            continue
-        if lang == "utils":
-            continue
-        build(lang, builder, sub)
+            if args.default and sub != "release":
+                continue
+            build(lang, builder, sub)
 
     tests_to_run = []
-    for lang_runner in glob("*/rosettaboy*"):
-        lang = os.path.dirname(lang_runner)
-        runner = os.path.basename(lang_runner)
+    for lang in args.langs:
         sub = "release"
-        if match := re.match("rosettaboy-(.*)", runner):
-            sub = match.group(1)
+        if not lang.is_dir():
+            if match := re.match("rosettaboy-(.*)", f"{lang}"):
+                sub = match.group(1)
+            
+            tests_to_run.append((lang, lang, sub, args.frames, args.profile, args.test_rom))
+        else:
+            for lang_runner in lang.glob("*/rosettaboy*"):
+                runner = lang_runner.name
+                sub = "release"
+                if match := re.match("rosettaboy-(.*)", runner):
+                    sub = match.group(1)
 
-        if not os.access(lang_runner, os.X_OK):
-            continue
-        if args.langs and lang not in args.langs:
-            continue
-        if args.default and sub != "release":
-            continue
-        tests_to_run.append((lang, runner, sub, args.frames, args.profile, args.test_rom))
+                if not os.access(lang_runner, os.X_OK):
+                    continue
+                if args.langs and lang not in args.langs:
+                    continue
+                if args.default and sub != "release":
+                    continue
+                tests_to_run.append((lang, runner, sub, args.frames, args.profile, args.test_rom))
 
     p = ThreadPool(args.threads)
     results = p.starmap(test, tests_to_run)

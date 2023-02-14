@@ -6,15 +6,18 @@
   fmt_8,
   pkg-config,
   cleanSource,
+  makeBuildTag,
   clang-format ? null,
   ltoSupport ? false,
   debugSupport ? false,
-}:
+} @ args:
 
 stdenv.mkDerivation rec {
-  name = "rosettaboy-cpp";
+  bname = "rosettaboy-cpp";
+  name = "${bname}-${makeBuildTag args}";
+
   src = cleanSource {
-    inherit name;
+    name = bname;
     src = ./.;
     extraRules = ''
       .clang-format
@@ -33,6 +36,11 @@ stdenv.mkDerivation rec {
     ++ lib.optional (!debugSupport) "-DCMAKE_BUILD_TYPE=Release"
     ++ lib.optional ltoSupport "-DENABLE_LTO=On"
   ;
+
+  postInstall = ''
+      mv $out/bin/rosettaboy-cpp $out/bin/${name}
+      ln -s $out/bin/${name} $out/bin/rosettaboy-cpp
+    '';
 
   meta = {
     description = name;

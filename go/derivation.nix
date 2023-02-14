@@ -3,15 +3,19 @@
   cleanSource,
   pkg-config,
   SDL2,
-  gomod2nix
-}:
+  gomod2nix,
+  makeBuildTag
+} @ args:
 
 buildGoApplication rec {
-  name = "rosettaboy-go";
+  bname = "rosettaboy-go";
+  name = "${bname}-${makeBuildTag args}";
+
   src = cleanSource {
-    inherit name;
+    name = bname;
     src = ./.;
   };
+
   modules = ./gomod2nix.toml;
 
   passthru.devTools = [ gomod2nix ];
@@ -20,7 +24,8 @@ buildGoApplication rec {
   nativeBuildInputs = [ pkg-config ];
 
   postInstall = ''
-      mv $out/bin/src $out/bin/rosettaboy-go
+      mv $out/bin/src $out/bin/$name
+      ln -s $out/bin/$name $out/bin/$bname
     '';
 
   meta = {
