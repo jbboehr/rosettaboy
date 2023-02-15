@@ -2,10 +2,6 @@ name: Python
 
 on:
   push:
-    branches:
-    - master
-    - develop
-    - 'py/**'
     paths:
     - 'py/**'
     - '.github/workflows/py.yml'
