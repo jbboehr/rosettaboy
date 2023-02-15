@@ -170,7 +170,7 @@ jobs:
       run: |
         nix eval .#packages --impure --raw \
             --apply '(import ./utils/get-builds-for-lang.nix { lang = "${{ inputs.workdir }}"; prefix = ".#"; })' \
-          | xargs -n1 -I{} nix run {} -- --help
+          | xargs -I{} nix run {} -- --help
     - name: Flake Shell
       shell: bash
       working-directory: ${{ inputs.workdir }}
