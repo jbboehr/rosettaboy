@@ -151,10 +151,7 @@
       };
     };
 
-  in rec {
-    packages = rec {
-      inherit utils;
-      
+    languagePackages = rec {
       c-debug = mkC { debugSupport = true; };
       c-lto = mkC { ltoSupport = true; };
       c-release = mkC { };
@@ -198,23 +195,39 @@
       zig-fast = mkZig { fastSupport = true; };
       zig-safe = mkZig { safeSupport = true; };
       zig = hiPrio zig-fast;
+    };
+
+  in rec {
+    packages = languagePackages // {
+      inherit utils;
+
+      bench = pkgs.writeScriptBin "rosettaboy-bench" (lib.pipe languagePackages [
+        (lib.mapAttrsToList (_: v: "${v}/bin/"))
+        (lib.concatStringsSep " \\\n    ")
+        (str: ''
+          #!/usr/bin/env bash
+          export GB_DEFAULT_BENCH_ROM="${cl-gameboy}/roms/opus5.gb"
+          exec ${lib.getExe pkgs.python3} ${./all.py} bench ${str}
+        '')
+      ]);
 
       # I don't think we can join all of them because they collide
       default = pkgs.symlinkJoin {
         name = "rosettaboy";
-        paths = [ c cpp go nim php pxd py rs zig ];
+        paths = with languagePackages; [ c cpp go nim php pxd py rs zig ];
         # if we use this without adding build tags to the executable,
         # it'll build all variants but not symlink them
         # paths = builtins.attrValues (filterAttrs (n: v: n != "default") packages);
       };
     };
 
-    checks = let
-      # zig-safe is too slow - skip
-      packagesToCheck = filterAttrs (n: p: p.meta ? mainProgram && n != "zig-safe") packages;
-    in {
+    checks = {
       inherit pre-commit-check;
-    } // mapAttrs (_: utils.mkBlargg) packagesToCheck;
+    } // lib.pipe languagePackages [
+      # zig-safe is too slow - skip
+      (filterAttrs (n: p: n != "zig-safe"))
+      (mapAttrs (_: utils.mkBlargg))
+    ];
 
     devShells = let
       shellHook = ''
